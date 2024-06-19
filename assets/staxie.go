@@ -200,9 +200,7 @@ func (s *Staxie) calculatePositions() {
 				}
 				y += s.FrameHeight
 			}
-			y += s.FrameHeight
 		}
-		y += s.FrameHeight
 	}
 }
 
