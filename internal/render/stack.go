@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/ebijam24/assets"
@@ -59,14 +60,17 @@ func (s *Stack) Draw(o Options) {
 
 	opts := ebiten.DrawImageOptions{}
 	// Rotate about center.
-	opts.GeoM.Translate(-float64(s.data.FrameWidth)/2, -float64(s.data.FrameHeight)/2)
+	hw := math.Round(float64(s.data.FrameWidth) / 2)
+	hh := math.Round(float64(s.data.FrameHeight) / 2)
+	opts.GeoM.Scale(2, 2)
+	opts.GeoM.Translate(-hw, -hh)
 	opts.GeoM.Rotate(s.rotation)
-	opts.GeoM.Translate(float64(s.data.FrameWidth)/2, float64(s.data.FrameHeight)/2)
+	opts.GeoM.Translate(hw, hh)
 	// Position.
 	opts.GeoM.Translate(float64(s.x), float64(s.y))
 	// Uh... this might come before? FIXME later
 	opts.GeoM.Concat(o.DrawImageOptions.GeoM)
-	// Draw our slices from bottom up!
+	// Draw our slices from!
 	for _, slice := range s.currentFrame.Slices {
 		o.Screen.DrawImage(slice.Image, &opts)
 		opts.GeoM.Translate(0, -1)

@@ -29,7 +29,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Init() {
-	stack, err := render.NewStack("walls/base", "", "")
+	stack, err := render.NewStack("walls/pie", "", "")
 	if err != nil {
 		panic(err)
 	}
