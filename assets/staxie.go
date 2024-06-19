@@ -1,10 +1,57 @@
 package assets
 
+import (
+	"bytes"
+	"image"
+	_ "image/png"
+
+	"github.com/hajimehoshi/ebiten/v2"
+)
+
+var stax = make(map[string]*Staxie)
+
+func LoadStaxie(name string) (*Staxie, error) {
+	if staxie, ok := stax[name]; ok {
+		return staxie, nil
+	}
+
+	b, err := FS.ReadFile(name + ".png")
+	if err != nil {
+		return nil, err
+	}
+
+	r := bytes.NewReader(b)
+	i, _, err := image.Decode(r)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert the image to an Ebiten image.
+	eimg := ebiten.NewImageFromImage(i)
+
+	// Read our staxie PNG data.
+	staxie := &Staxie{}
+	err = staxie.FromBytes(b)
+	if err != nil {
+		return nil, err
+	}
+
+	staxie.image = eimg
+
+	staxie.calculatePositions()
+	staxie.acquireSliceImages()
+
+	stax[name] = staxie
+
+	return staxie, nil
+}
+
 // Staxie is the structure extracted from a Staxie PNG file.
 type Staxie struct {
 	Stacks      map[string]StaxieStack
 	FrameWidth  int
 	FrameHeight int
+	image       *ebiten.Image
 }
 
 // FromBytes reads the given PNG bytes into a staxie structure, providing it has a stAx section.
@@ -104,6 +151,7 @@ func (s *Staxie) FromBytes(data []byte) error {
 							offset++
 							frame.Slices = append(frame.Slices, slice)
 						}
+						frame.Index = k
 						animation.Frames = append(animation.Frames, frame)
 					}
 					stack.Animations[animationName] = animation
@@ -119,9 +167,46 @@ func (s *Staxie) FromBytes(data []byte) error {
 	return nil
 }
 
+// acquireSliceImages acquires the subimages for each slice from the Stack's Image.
+func (s *Staxie) acquireSliceImages() {
+	for _, stack := range s.Stacks {
+		for _, animation := range stack.Animations {
+			for _, frame := range animation.Frames {
+				for i, slice := range frame.Slices {
+					img := s.image.SubImage(image.Rect(slice.X, slice.Y, slice.X+s.FrameWidth, slice.Y+s.FrameHeight)).(*ebiten.Image)
+					frame.Slices[i].Image = img
+				}
+			}
+		}
+	}
+}
+
+func (s *Staxie) calculatePositions() {
+	y := 0
+	for _, stack := range s.Stacks {
+		for _, animation := range stack.Animations {
+			for _, frame := range animation.Frames {
+				for i, slice := range frame.Slices {
+					slice.X = i * s.FrameWidth
+					slice.Y = y
+					frame.Slices[i] = slice
+				}
+				y += s.FrameHeight
+			}
+			y += s.FrameHeight
+		}
+		y += s.FrameHeight
+	}
+}
+
 type StaxieStack struct {
 	SliceCount int
 	Animations map[string]StaxieAnimation
+}
+
+func (s *StaxieStack) GetAnimation(name string) (StaxieAnimation, bool) {
+	animation, ok := s.Animations[name]
+	return animation, ok
 }
 
 type StaxieAnimation struct {
@@ -129,7 +214,15 @@ type StaxieAnimation struct {
 	Frames    []StaxieFrame
 }
 
+func (s *StaxieAnimation) GetFrame(index int) (*StaxieFrame, bool) {
+	if index < 0 || index >= len(s.Frames) {
+		return nil, false
+	}
+	return &s.Frames[index], true
+}
+
 type StaxieFrame struct {
+	Index  int // ehh... why not
 	Slices []StaxieSlice
 }
 
@@ -137,4 +230,6 @@ type StaxieSlice struct {
 	Shading uint8
 	X       int
 	Y       int
+	// Might as well store the ebitengine subimage here for efficiency's sake.
+	Image *ebiten.Image
 }
