@@ -1,7 +1,7 @@
 package render
 
 type Renderable interface {
-	Draw(Options)
+	Draw(*Options)
 	Update()
 	Position() (float64, float64)
 	SetPosition(float64, float64)

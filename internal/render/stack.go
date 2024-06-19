@@ -53,7 +53,7 @@ func NewStack(name string, stackName string, animationName string) (*Stack, erro
 	return &Stack{data: staxie, currentAnimation: &animation, currentFrame: frame}, nil
 }
 
-func (s *Stack) Draw(o Options) {
+func (s *Stack) Draw(o *Options) {
 	if s.currentFrame == nil {
 		return
 	}
@@ -73,7 +73,8 @@ func (s *Stack) Draw(o Options) {
 	// Draw our slices from!
 	for _, slice := range s.currentFrame.Slices {
 		o.Screen.DrawImage(slice.Image, &opts)
-		opts.GeoM.Translate(0, -1)
+		opts.GeoM.Translate(0, -o.Camera.Pitch)
+		//opts.GeoM.Skew(-0.002, 0.002) // Might be able to sine this with delta to create a wave effect...
 	}
 }
 

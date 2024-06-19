@@ -8,6 +8,7 @@ import (
 
 type Game struct {
 	renderables []render.Renderable
+	camera      render.Camera
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -15,6 +16,27 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func (g *Game) Update() error {
+	if ebiten.IsKeyPressed(ebiten.KeyUp) {
+		g.camera.Pitch += 0.01
+	} else if ebiten.IsKeyPressed(ebiten.KeyDown) {
+		g.camera.Pitch -= 0.01
+	}
+	if g.camera.Pitch < 0 {
+		g.camera.Pitch = 0
+	}
+
+	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
+		g.camera.SetRotation(g.camera.Rotation() - 0.01)
+	} else if ebiten.IsKeyPressed(ebiten.KeyRight) {
+		g.camera.SetRotation(g.camera.Rotation() + 0.01)
+	}
+
+	if ebiten.IsKeyPressed(ebiten.KeyZ) {
+		g.camera.Zoom += 0.01
+	} else if ebiten.IsKeyPressed(ebiten.KeyX) {
+		g.camera.Zoom -= 0.01
+	}
+
 	for _, r := range g.renderables {
 		r.Update()
 		r.SetRotation(r.Rotation() + 0.01)
@@ -23,8 +45,12 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	options := render.Options{Screen: screen, Camera: &g.camera}
+
+	g.camera.Transform(&options)
+
 	for _, r := range g.renderables {
-		r.Draw(render.Options{Screen: screen})
+		r.Draw(&options)
 	}
 }
 
@@ -35,6 +61,7 @@ func (g *Game) Init() {
 	}
 	stack.SetPosition(100, 100)
 	g.renderables = append(g.renderables, stack)
+	g.camera = *render.NewCamera(-100, -100)
 }
 
 func New() *Game {
