@@ -1,6 +1,10 @@
 package game
 
-import "github.com/hajimehoshi/ebiten/v2"
+import (
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/kettek/ebijam24/assets"
+	_ "github.com/kettek/ebijam24/assets"
+)
 
 type Game struct {
 }
@@ -14,6 +18,10 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+}
+
+func (g *Game) Init() {
+	assets.LoadStack(("walls/base"))
 }
 
 func New() *Game {

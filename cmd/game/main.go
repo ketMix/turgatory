@@ -8,6 +8,7 @@ import (
 
 func main() {
 	g := game.New()
+	g.Init()
 
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	ebiten.SetWindowTitle("ebijam24")

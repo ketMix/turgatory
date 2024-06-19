@@ -8,6 +8,8 @@ github.com/hajimehoshi/ebiten/v2 v2.7.5 h1:jN6FnhCd9NGYCsm5GtrweuikrlyVGCSUpH5Yg
 github.com/hajimehoshi/ebiten/v2 v2.7.5/go.mod h1:H2pHVgq29rfm5yeQ7jzWOM3VHsjo7/AyucODNLOhsVY=
 github.com/jezek/xgb v1.1.1 h1:bE/r8ZZtSv7l9gk6nU0mYx51aXrvnyb44892TwSaqS4=
 github.com/jezek/xgb v1.1.1/go.mod h1:nrhwO0FX/enq75I7Y7G8iN1ubpSGZEiA3v9e9GyRFlk=
+github.com/kettek/go-multipath/v2 v2.0.0-alpha.11 h1:2dGEDzaX3bb5MZYKoWCRYqxsJfZgJwMcoBp4z6XewFU=
+github.com/kettek/go-multipath/v2 v2.0.0-alpha.11/go.mod h1:N19LisaLAGDM1CckkBFpN0RKVd8Km80AeYPsIfq9mxc=
 github.com/kettek/gobl v0.3.1 h1:/WYwdAmkWqP1+1xmHa3kXqabK21fHkG+0KO0lq86e2A=
 github.com/kettek/gobl v0.3.1/go.mod h1:x08Yfd9JU5Xqv69pggE1ieWICu+sZeMphOmhx1TSud4=
 github.com/radovskyb/watcher v1.0.7 h1:AYePLih6dpmS32vlHfhCeli8127LzkIgwJGcwwe8tUE=
