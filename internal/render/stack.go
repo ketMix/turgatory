@@ -59,15 +59,24 @@ func (s *Stack) Draw(o Options) {
 	}
 
 	opts := ebiten.DrawImageOptions{}
-	// Rotate about center.
-	hw := math.Round(float64(s.data.FrameWidth) / 2)
-	hh := math.Round(float64(s.data.FrameHeight) / 2)
-	opts.GeoM.Scale(2, 2)
-	opts.GeoM.Translate(-hw, -hh)
-	opts.GeoM.Rotate(s.rotation)
-	opts.GeoM.Translate(hw, hh)
-	// Position.
-	opts.GeoM.Translate(float64(s.x), float64(s.y))
+
+	rotation := s.rotation
+
+	// calculate the new position based on the rotation
+	dx := math.Cos(rotation) * s.rotationDistance
+	dy := math.Sin(rotation) * s.rotationDistance
+
+	// apply the rotation and rotation offset for the stack
+	// rotation offset potentially unique to stack, hardcoded to pie for now
+	// account for rotation distance
+	opts.GeoM.Rotate(rotation)
+
+	// translate the stack to the new position
+	screen := o.Screen
+	screenWidth, screenHeight := screen.Bounds().Dx(), screen.Bounds().Dy()
+	centerX, centerY := float64(screenWidth/2), float64(screenHeight/2)
+	opts.GeoM.Translate(centerX+dx, centerY+dy)
+
 	// Uh... this might come before? FIXME later
 	opts.GeoM.Concat(o.DrawImageOptions.GeoM)
 	// Draw our slices from!
