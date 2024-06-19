@@ -19,7 +19,7 @@ func main() {
 	Task("run").
 		Exec(runArgs...)
 	Task("watch").
-		Watch("cmd/game/*", "internal/game/*").
+		Watch("cmd/game/*", "internal/game/*", "internal/render/*", "assets/*", "assets/walls/*").
 		Signaler(SigQuit).
 		Run("build").
 		Run("run")
