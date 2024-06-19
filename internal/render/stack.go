@@ -12,6 +12,7 @@ type Stack struct {
 	Positionable
 	Rotateable
 	data             *assets.Staxie // Reference to the underlying stack data for subimages, etc.
+	currentStack     *assets.StaxieStack
 	currentAnimation *assets.StaxieAnimation
 	currentFrame     *assets.StaxieFrame
 	frameCounter     int
@@ -50,7 +51,7 @@ func NewStack(name string, stackName string, animationName string) (*Stack, erro
 		return nil, fmt.Errorf("frame 0 does not exist in %s", animationName)
 	}
 
-	return &Stack{data: staxie, currentAnimation: &animation, currentFrame: frame}, nil
+	return &Stack{data: staxie, currentStack: &stack, currentAnimation: &animation, currentFrame: frame}, nil
 }
 
 func (s *Stack) Draw(o *Options) {
@@ -97,4 +98,33 @@ func (s *Stack) Update() {
 		}
 		s.currentFrame = nextFrame
 	}
+}
+
+func (s *Stack) SetStack(name string) error {
+	stack, ok := s.data.Stacks[name]
+	if !ok {
+		return fmt.Errorf("stack %s", name)
+	}
+	s.currentStack = &stack
+
+	return s.SetAnimation(s.currentAnimation.Name)
+}
+
+func (s *Stack) SetAnimation(name string) error {
+	animation, ok := s.currentStack.GetAnimation(name)
+	if !ok {
+		return fmt.Errorf("animation %s", name)
+	}
+	s.currentAnimation = &animation
+
+	return s.SetFrame(0)
+}
+
+func (s *Stack) SetFrame(index int) error {
+	frame, ok := s.currentAnimation.GetFrame(index)
+	if !ok {
+		return fmt.Errorf("frame %d", index)
+	}
+	s.currentFrame = frame
+	return nil
 }

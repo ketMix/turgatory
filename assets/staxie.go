@@ -131,6 +131,7 @@ func (s *Staxie) FromBytes(data []byte) error {
 				animationCount := readUint16()
 
 				stack.SliceCount = int(sliceCount)
+				stack.Name = name
 
 				for j := 0; j < int(animationCount); j++ {
 					animation := StaxieAnimation{}
@@ -139,6 +140,7 @@ func (s *Staxie) FromBytes(data []byte) error {
 					frameCount := readUint16()
 
 					animation.Frametime = frameTime
+					animation.Name = animationName
 
 					for k := 0; k < int(frameCount); k++ {
 						frame := StaxieFrame{}
@@ -205,6 +207,7 @@ func (s *Staxie) calculatePositions() {
 }
 
 type StaxieStack struct {
+	Name       string // For convenience
 	SliceCount int
 	Animations map[string]StaxieAnimation
 }
@@ -215,6 +218,7 @@ func (s *StaxieStack) GetAnimation(name string) (StaxieAnimation, bool) {
 }
 
 type StaxieAnimation struct {
+	Name      string // For convenience
 	Frametime uint32
 	Frames    []StaxieFrame
 }
