@@ -173,7 +173,14 @@ func (s *Staxie) acquireSliceImages() {
 		for _, animation := range stack.Animations {
 			for _, frame := range animation.Frames {
 				for i, slice := range frame.Slices {
-					img := s.image.SubImage(image.Rect(slice.X, slice.Y, slice.X+s.FrameWidth, slice.Y+s.FrameHeight)).(*ebiten.Image)
+					// FIXME: This would be more efficient, _however_ it renders 1px wide vertical lines at random positions! (Well, this isn't random, presumably it's because of some texture wrapping with a rounding error) -- TODO: bring this up as an issue in Ebitengine!
+					//img := s.image.SubImage(image.Rect(slice.X, slice.Y, slice.X+s.FrameWidth, slice.Y+s.FrameHeight)).(*ebiten.Image)
+
+					img := ebiten.NewImage(s.FrameWidth, s.FrameHeight)
+					opts := &ebiten.DrawImageOptions{}
+					opts.GeoM.Translate(float64(-slice.X), float64(-slice.Y))
+					img.DrawImage(s.image, opts)
+
 					frame.Slices[i].Image = img
 				}
 			}
