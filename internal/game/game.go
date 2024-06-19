@@ -59,9 +59,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 func (g *Game) Init() {
 	// creates 4 slices of pie with positions to evenly spread them
 	for i := 0; i < 4; i++ {
-		stack, err := render.NewStack("walls/pie", "", "")
+		stack, err := render.NewStack("floors/base", "", "")
 		if err != nil {
 			panic(err)
+		}
+		if i%2 == 0 {
+			stack.SetStack("rocky")
 		}
 
 		rotationAngle := math.Pi / 2 * float64(i)
@@ -72,7 +75,7 @@ func (g *Game) Init() {
 		// Append the stack to the renderables
 		g.renderables = append(g.renderables, stack)
 	}
-	g.camera = *render.NewCamera(-100, -100)
+	g.camera = *render.NewCamera(0, 0)
 }
 
 func New() *Game {
