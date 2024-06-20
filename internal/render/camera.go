@@ -31,4 +31,6 @@ func (c *Camera) Transform(options *Options) {
 	options.DrawImageOptions.GeoM.Scale(c.Zoom, c.Zoom)
 
 	options.DrawImageOptions.GeoM.Translate(ox, oy)
+
+	options.Pitch = c.Pitch * c.Zoom
 }

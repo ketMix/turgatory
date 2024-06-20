@@ -83,7 +83,7 @@ func (s *Stack) Draw(o *Options) {
 	// Draw our slices from!
 	for _, slice := range s.currentFrame.Slices {
 		o.Screen.DrawImage(slice.Image, &opts)
-		opts.GeoM.Translate(0, -o.Camera.Pitch)
+		opts.GeoM.Translate(0, -o.Pitch)
 		//opts.GeoM.Skew(-0.002, 0.002) // Might be able to sine this with delta to create a wave effect...
 	}
 }
