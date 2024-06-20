@@ -1,5 +1,7 @@
 package render
 
+import "math"
+
 type Camera struct {
 	Originable
 	Positionable
@@ -26,4 +28,30 @@ func (c *Camera) Transform(options *Options) {
 	options.DrawImageOptions.GeoM.Translate(ox, oy)
 
 	options.Pitch = c.Pitch * c.Zoom
+}
+
+func (c *Camera) ScreenToWorld(x, y float64) (float64, float64) {
+	cx, cy := c.Position()
+	ox, oy := c.Origin()
+	x = (x - cx - ox) / c.Zoom
+	y = (y - cy - oy) / c.Zoom
+
+	rads := c.Rotation()
+
+	x, y = x*math.Cos(rads)+y*math.Sin(rads), y*math.Cos(rads)-x*math.Sin(rads)
+
+	return x, y
+}
+
+func (c *Camera) WorldToScreen(x, y float64) (float64, float64) {
+	cx, cy := c.Position()
+	ox, oy := c.Origin()
+	rads := c.Rotation()
+
+	x, y = x*math.Cos(-rads)+y*math.Sin(-rads), y*math.Cos(-rads)-x*math.Sin(-rads)
+
+	x = x*c.Zoom + cx + ox
+	y = y*c.Zoom + cy + oy
+
+	return x, y
 }

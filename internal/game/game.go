@@ -1,15 +1,20 @@
 package game
 
 import (
+	"fmt"
+
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	_ "github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
 )
 
 type Game struct {
-	renderables []render.Renderable
-	camera      render.Camera
-	level       *Level
+	renderables      []render.Renderable
+	camera           render.Camera
+	mouseX, mouseY   int
+	cursorX, cursorY float64
+	level            *Level
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -20,6 +25,10 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func (g *Game) Update() error {
+	g.mouseX, g.mouseY = ebiten.CursorPosition()
+	// Transform mouse coordinates by camera.
+	g.cursorX, g.cursorY = g.camera.ScreenToWorld(float64(g.mouseX), float64(g.mouseY))
+
 	// Move this stuff elsewhere, probs.
 	if ebiten.IsKeyPressed(ebiten.KeyUp) {
 		g.camera.Pitch += 0.01
@@ -65,6 +74,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	for _, r := range g.renderables {
 		r.Draw(&options)
 	}
+
+	// Debug render
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%0.1fx%0.1f", g.cursorX, g.cursorY), g.mouseX, g.mouseY-16)
 }
 
 func (g *Game) Init() {
