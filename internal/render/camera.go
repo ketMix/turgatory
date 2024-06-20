@@ -10,7 +10,7 @@ type Camera struct {
 func NewCamera(x, y float64) *Camera {
 	return &Camera{
 		Positionable: Positionable{x: x, y: y},
-		Pitch:        1.0,
+		Pitch:        0.9,
 		Zoom:         3.0,
 	}
 }
