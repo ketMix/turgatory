@@ -11,7 +11,7 @@ func NewCamera(x, y float64) *Camera {
 	return &Camera{
 		Positionable: Positionable{x: x, y: y},
 		Pitch:        1.0,
-		Zoom:         1.0,
+		Zoom:         3.0,
 	}
 }
 
