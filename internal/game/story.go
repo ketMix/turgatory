@@ -21,7 +21,7 @@ func NewStory(size int) *Story {
 	story.rooms = make([]*Room, size)
 
 	for i := 0; i < 4; i++ {
-		stack, err := render.NewStack("floors/base", "", "")
+		stack, err := render.NewStack("walls/pie", "", "")
 		if err != nil {
 			continue
 		}
@@ -56,6 +56,8 @@ func (s *Story) Update() {
 
 // Draw draws the rooms.
 func (s *Story) Draw(o *render.Options) {
+
+	// TODO: We need to sort our draw operations based upon the rotation of the camera vs. the rotation+position of the stack...
 	for _, stack := range s.floorStacks {
 		stack.Draw(o)
 	}
