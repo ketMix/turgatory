@@ -99,7 +99,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 func (g *Game) Init() {
 	lvl := NewLevel()
 	tower := NewTower()
-	tower.AddStory(NewStory(8))
+	tower.AddStory(NewStory())
+	tower.AddStory(NewStoryWithSize(16))
 	lvl.AddTower(tower)
 
 	g.level = lvl

@@ -16,8 +16,11 @@ type Story struct {
 // StoryHeight is the height of a story in da tower.
 const StoryHeight = 45
 
-// NewStory creates a grand new story.
-func NewStory(size int) *Story {
+// NewStory creates a grand new spankin' story.
+func NewStory() *Story {
+	return NewStoryWithSize(8)
+}
+func NewStoryWithSize(size int) *Story {
 	story := &Story{}
 	story.rooms = make([]*Room, size)
 
