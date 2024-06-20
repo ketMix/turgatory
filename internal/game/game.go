@@ -61,9 +61,9 @@ func (g *Game) Update() error {
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyZ) {
-		g.camera.Zoom += 0.01
+		g.camera.Zoom += g.camera.Zoom * 0.01
 	} else if ebiten.IsKeyPressed(ebiten.KeyX) {
-		g.camera.Zoom -= 0.01
+		g.camera.Zoom -= g.camera.Zoom * 0.01
 	}
 
 	// Update the level, yo.
