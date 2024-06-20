@@ -39,9 +39,9 @@ func (g *Game) Update() error {
 		g.camera.Pitch = 0
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
+	if ebiten.IsKeyPressed(ebiten.KeyQ) {
 		g.camera.SetRotation(g.camera.Rotation() - 0.01)
-	} else if ebiten.IsKeyPressed(ebiten.KeyRight) {
+	} else if ebiten.IsKeyPressed(ebiten.KeyE) {
 		g.camera.SetRotation(g.camera.Rotation() + 0.01)
 	}
 

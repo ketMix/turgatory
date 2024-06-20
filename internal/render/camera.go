@@ -23,9 +23,11 @@ func (c *Camera) Transform(options *Options) {
 	ox, oy := c.Origin()
 
 	options.DrawImageOptions.GeoM.Translate(cx, cy)
-	options.DrawImageOptions.GeoM.Rotate(c.Rotation())
+	//options.DrawImageOptions.GeoM.Rotate(c.Rotation()) // c'ya camera rotation
 	options.DrawImageOptions.GeoM.Scale(c.Zoom, c.Zoom)
 	options.DrawImageOptions.GeoM.Translate(ox, oy)
+
+	options.TowerRotation = c.Rotation()
 
 	options.Pitch = c.Pitch * c.Zoom
 }

@@ -8,16 +8,16 @@ import (
 
 // Story is a single story in the tower. It contains rooms.
 type Story struct {
-	rooms       []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
-	floorStacks []*render.Stack
-	vgroup      *render.VGroup
+	rooms  []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
+	stacks render.Stacks
+	vgroup *render.VGroup
 }
 
 // StoryHeight is the height of a story in da tower.
-const StoryHeight = 61        // StoryHeight is used to space stories apart from each other vertically.
+const StoryHeight = 20        // StoryHeight is used to space stories apart from each other vertically.
 const StorySlices = 20        // The amount of slices used for the frame buffers, should be equal to maximum staxie slice count used in a story.
-const StoryVGroupWidth = 128  // Framebuffer's maximum width for rendering.
-const StoryVGroupHeight = 128 // Framebuffer's maximum height for rendering.
+const StoryVGroupWidth = 256  // Framebuffer's maximum width for rendering.
+const StoryVGroupHeight = 256 // Framebuffer's maximum height for rendering.
 
 // NewStory creates a grand new spankin' story.
 func NewStory() *Story {
@@ -39,7 +39,17 @@ func NewStoryWithSize(size int) *Story {
 		y := float64(StoryVGroupHeight) / 2
 		stack.SetPosition(x, y)
 
-		story.floorStacks = append(story.floorStacks, stack)
+		story.stacks.Add(stack)
+	}
+
+	// Test
+	{
+		dude, err := render.NewStack("dudes/liltest", "", "")
+		if err != nil {
+			panic(err)
+		}
+		dude.SetPosition(StoryVGroupWidth/2-32, StoryVGroupHeight/2-32)
+		story.stacks = append(story.stacks, dude)
 	}
 
 	story.vgroup = render.NewVGroup(StoryVGroupWidth, StoryVGroupHeight, StorySlices) // For now...
@@ -50,9 +60,9 @@ func NewStoryWithSize(size int) *Story {
 // Update updates the rooms.
 func (s *Story) Update() {
 	// Update the floors in case they have sweet animations.
-	for _, stack := range s.floorStacks {
+	for _, stack := range s.stacks {
 		stack.Update()
-		stack.SetRotation(stack.Rotation() + 0.01) // Spin the floors. FIXME: Camera no longer works due to fake perspective trick, so we spin here.
+		//stack.SetRotation(stack.Rotation() + 0.01) // Spin the floors. FIXME: Camera no longer works due to fake perspective trick, so we spin here.
 	}
 	// Update the rooms.
 	var updatedRooms []*Room
@@ -79,9 +89,12 @@ func (s *Story) Draw(o *render.Options) {
 		VGroup: s.vgroup,
 	}
 
-	for _, stack := range s.floorStacks {
-		stack.Draw(opts)
-	}
+	// We can't use the camera's own functionality, so we do it ourselves here.
+	opts.DrawImageOptions.GeoM.Translate(-StoryVGroupWidth/2, -StoryVGroupHeight/2)
+	opts.DrawImageOptions.GeoM.Rotate(o.TowerRotation)
+	opts.DrawImageOptions.GeoM.Translate(StoryVGroupWidth/2, StoryVGroupHeight/2)
+
+	s.stacks.Draw(opts)
 
 	for _, room := range s.rooms {
 		if room != nil {
