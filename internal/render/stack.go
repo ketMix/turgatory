@@ -81,7 +81,15 @@ func (s *Stack) Draw(o *Options) {
 	// Uh... this might come before? FIXME later
 	opts.GeoM.Concat(o.DrawImageOptions.GeoM)
 	// Draw our slices from!
-	for _, slice := range s.currentFrame.Slices {
+	for i, slice := range s.currentFrame.Slices {
+
+		c := float64(i) / float64(len(s.currentFrame.Slices))
+		c = math.Min(1.0, math.Max(0.5, c))
+		color := float32(c)
+
+		opts.ColorScale.Reset()
+		opts.ColorScale.Scale(color, color, color, 1.0)
+
 		o.Screen.DrawImage(slice.Image, &opts)
 		opts.GeoM.Translate(0, -o.Pitch)
 		//opts.GeoM.Skew(-0.002, 0.002) // Might be able to sine this with delta to create a wave effect...
