@@ -14,7 +14,10 @@ type Story struct {
 }
 
 // StoryHeight is the height of a story in da tower.
-const StoryHeight = 45
+const StoryHeight = 61        // StoryHeight is used to space stories apart from each other vertically.
+const StorySlices = 20        // The amount of slices used for the frame buffers, should be equal to maximum staxie slice count used in a story.
+const StoryVGroupWidth = 128  // Framebuffer's maximum width for rendering.
+const StoryVGroupHeight = 128 // Framebuffer's maximum height for rendering.
 
 // NewStory creates a grand new spankin' story.
 func NewStory() *Story {
@@ -32,14 +35,14 @@ func NewStoryWithSize(size int) *Story {
 		stack.SetRotation(float64(i) * (math.Pi / 2))
 
 		// This feels hacky atm, but position from the center of our vgroup.
-		x := 128.0 / 2
-		y := 128.0 / 2
+		x := float64(StoryVGroupWidth) / 2
+		y := float64(StoryVGroupHeight) / 2
 		stack.SetPosition(x, y)
 
 		story.floorStacks = append(story.floorStacks, stack)
 	}
 
-	story.vgroup = render.NewVGroup(128, 128, 16) // For now...
+	story.vgroup = render.NewVGroup(StoryVGroupWidth, StoryVGroupHeight, StorySlices) // For now...
 
 	return story
 }
