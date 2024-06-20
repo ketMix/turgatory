@@ -14,7 +14,7 @@ type Story struct {
 }
 
 // StoryHeight is the height of a story in da tower.
-const StoryHeight = 16
+const StoryHeight = 45
 
 // NewStory creates a grand new story.
 func NewStory(size int) *Story {
