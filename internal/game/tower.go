@@ -13,6 +13,22 @@ func NewTower() *Tower {
 	return &Tower{}
 }
 
+// Update the tower.
+func (t *Tower) Update() {
+	// TODO: Should this only update "active" stories?
+	for _, s := range t.Stories {
+		s.Update()
+	}
+}
+
+// Draw our glorious tower.
+func (t *Tower) Draw(o *render.Options) {
+	for _, s := range t.Stories {
+		s.Draw(o)
+		o.DrawImageOptions.GeoM.Translate(0, -StoryHeight) // Transform our rendering, ofc
+	}
+}
+
 // AddStory does as it says.
 func (t *Tower) AddStory(s *Story) {
 	t.Stories = append(t.Stories, s)

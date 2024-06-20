@@ -1,16 +1,70 @@
 package game
 
+import (
+	"math"
+
+	"github.com/kettek/ebijam24/internal/render"
+)
+
 // Story is a single story in the tower. It contains rooms.
 type Story struct {
-	rooms []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
+	rooms       []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
+	floorStacks []*render.Stack
 }
+
+// StoryHeight is the height of a story in da tower.
+const StoryHeight = 16
 
 // NewStory creates a grand new story.
 func NewStory(size int) *Story {
 	story := &Story{}
 	story.rooms = make([]*Room, size)
 
+	for i := 0; i < 4; i++ {
+		stack, err := render.NewStack("floors/base", "", "")
+		if err != nil {
+			continue
+		}
+		stack.SetRotation(float64(i) * (math.Pi / 2))
+		stack.SetRotationDistance(0)
+		story.floorStacks = append(story.floorStacks, stack)
+	}
+
 	return story
+}
+
+// Update updates the rooms.
+func (s *Story) Update() {
+	// Update the floors in case they have sweet animations.
+	for _, stack := range s.floorStacks {
+		stack.Update()
+	}
+	// Update the rooms.
+	var updatedRooms []*Room
+	for _, room := range s.rooms {
+		if room != nil {
+			for _, updatedRoom := range updatedRooms {
+				if updatedRoom == room {
+					continue
+				}
+			}
+			room.Update()
+			updatedRooms = append(updatedRooms, room)
+		}
+	}
+}
+
+// Draw draws the rooms.
+func (s *Story) Draw(o *render.Options) {
+	for _, stack := range s.floorStacks {
+		stack.Draw(o)
+	}
+	// NOTE: Maybe we should actually apply room GeoM rotations here? This would make it so everything in a room is transformed appropriately. Technically, we could store unit/thing/positions in cartesian coordinates, then transform them into polar coordinates(???)???
+	for _, room := range s.rooms {
+		if room != nil {
+			room.Draw(o)
+		}
+	}
 }
 
 // Complete returns if the story is considered complete based upon full room saturation.
