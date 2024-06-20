@@ -22,7 +22,7 @@ func (c *Camera) Transform(options *Options) {
 	cx, cy := c.Position()
 	ox, oy := c.Origin()
 
-	options.DrawImageOptions.GeoM.Translate(-cx, -cy)
+	options.DrawImageOptions.GeoM.Translate(cx, cy)
 	options.DrawImageOptions.GeoM.Rotate(c.Rotation())
 	options.DrawImageOptions.GeoM.Scale(c.Zoom, c.Zoom)
 	options.DrawImageOptions.GeoM.Translate(ox, oy)
@@ -33,10 +33,10 @@ func (c *Camera) Transform(options *Options) {
 func (c *Camera) ScreenToWorld(x, y float64) (float64, float64) {
 	cx, cy := c.Position()
 	ox, oy := c.Origin()
+	rads := c.Rotation()
+
 	x = (x - cx - ox) / c.Zoom
 	y = (y - cy - oy) / c.Zoom
-
-	rads := c.Rotation()
 
 	x, y = x*math.Cos(rads)+y*math.Sin(rads), y*math.Cos(rads)-x*math.Sin(rads)
 

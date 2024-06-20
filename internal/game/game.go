@@ -45,6 +45,21 @@ func (g *Game) Update() error {
 		g.camera.SetRotation(g.camera.Rotation() + 0.01)
 	}
 
+	if ebiten.IsKeyPressed(ebiten.KeyA) {
+		x, y := g.camera.Position()
+		g.camera.SetPosition(x-1, y)
+	} else if ebiten.IsKeyPressed(ebiten.KeyD) {
+		x, y := g.camera.Position()
+		g.camera.SetPosition(x+1, y)
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyW) {
+		x, y := g.camera.Position()
+		g.camera.SetPosition(x, y-1)
+	} else if ebiten.IsKeyPressed(ebiten.KeyS) {
+		x, y := g.camera.Position()
+		g.camera.SetPosition(x, y+1)
+	}
+
 	if ebiten.IsKeyPressed(ebiten.KeyZ) {
 		g.camera.Zoom += 0.01
 	} else if ebiten.IsKeyPressed(ebiten.KeyX) {
@@ -77,6 +92,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// Debug render
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%0.1fx%0.1f", g.cursorX, g.cursorY), g.mouseX, g.mouseY-16)
+	ox, oy := g.camera.WorldToScreen(0, 0)
+	ebitenutil.DebugPrintAt(screen, "0x0", int(ox)-8, int(oy)-8)
 }
 
 func (g *Game) Init() {
