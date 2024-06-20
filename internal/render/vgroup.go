@@ -61,7 +61,18 @@ func (vg *VGroup) Draw(o *Options) {
 	// TODO: We could actually do some matrix math here to "tilt" the rendered layers "away" from the camera, which would enhance the 3D look. Shame I'm bad at math.
 
 	for _, img := range vg.Images {
-		o.Screen.DrawImage(img, &opts)
+		// lol, this might be okay...
+		w, h := img.Bounds().Dx(), img.Bounds().Dy()
+		for i := 0; i < h; i++ {
+			opts2 := ebiten.DrawImageOptions{}
+
+			opts2.GeoM.Concat(opts.GeoM)
+			opts2.GeoM.Translate(0, float64(h)) // It seems okay to shunt it down like this..
+			opts2.GeoM.Translate(0, float64(i))
+
+			o.Screen.DrawImage(img.SubImage(image.Rect(0, i, w, i+1)).(*ebiten.Image), &opts2)
+		}
+		//o.Screen.DrawImage(img, &opts)
 		opts.GeoM.Translate(0, -o.Pitch)
 	}
 }

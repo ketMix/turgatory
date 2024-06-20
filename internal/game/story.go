@@ -29,14 +29,14 @@ func NewStory(size int) *Story {
 		stack.SetRotation(float64(i) * (math.Pi / 2))
 
 		// This feels hacky atm, but position from the center of our vgroup.
-		x := 256.0 / 2
-		y := 256.0 / 2
+		x := 128.0 / 2
+		y := 128.0 / 2
 		stack.SetPosition(x, y)
 
 		story.floorStacks = append(story.floorStacks, stack)
 	}
 
-	story.vgroup = render.NewVGroup(256, 256, 16) // For now...
+	story.vgroup = render.NewVGroup(128, 128, 16) // For now...
 
 	return story
 }
@@ -46,6 +46,7 @@ func (s *Story) Update() {
 	// Update the floors in case they have sweet animations.
 	for _, stack := range s.floorStacks {
 		stack.Update()
+		stack.SetRotation(stack.Rotation() + 0.01) // Spin the floors. FIXME: Camera no longer works due to fake perspective trick, so we spin here.
 	}
 	// Update the rooms.
 	var updatedRooms []*Room
