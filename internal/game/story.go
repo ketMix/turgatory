@@ -10,6 +10,7 @@ import (
 type Story struct {
 	rooms       []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
 	floorStacks []*render.Stack
+	vgroup      *render.VGroup
 }
 
 // StoryHeight is the height of a story in da tower.
@@ -26,9 +27,16 @@ func NewStory(size int) *Story {
 			continue
 		}
 		stack.SetRotation(float64(i) * (math.Pi / 2))
-		stack.SetRotationDistance(0)
+
+		// This feels hacky atm, but position from the center of our vgroup.
+		x := 256.0 / 2
+		y := 256.0 / 2
+		stack.SetPosition(x, y)
+
 		story.floorStacks = append(story.floorStacks, stack)
 	}
+
+	story.vgroup = render.NewVGroup(256, 256, 16) // For now...
 
 	return story
 }
@@ -56,17 +64,25 @@ func (s *Story) Update() {
 
 // Draw draws the rooms.
 func (s *Story) Draw(o *render.Options) {
+	s.vgroup.Clear()
 
-	// TODO: We need to sort our draw operations based upon the rotation of the camera vs. the rotation+position of the stack...
-	for _, stack := range s.floorStacks {
-		stack.Draw(o)
+	opts := &render.Options{
+		Screen: o.Screen,
+		Pitch:  o.Pitch,
+		VGroup: s.vgroup,
 	}
-	// NOTE: Maybe we should actually apply room GeoM rotations here? This would make it so everything in a room is transformed appropriately. Technically, we could store unit/thing/positions in cartesian coordinates, then transform them into polar coordinates(???)???
+
+	for _, stack := range s.floorStacks {
+		stack.Draw(opts)
+	}
+
 	for _, room := range s.rooms {
 		if room != nil {
-			room.Draw(o)
+			room.Draw(opts)
 		}
 	}
+
+	s.vgroup.Draw(o)
 }
 
 // Complete returns if the story is considered complete based upon full room saturation.

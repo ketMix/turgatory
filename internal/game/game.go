@@ -13,6 +13,9 @@ type Game struct {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
+	// Always set the camera's origin to be half the size of the screen.
+	g.camera.SetOrigin(float64(outsideWidth/2), float64(outsideHeight/2))
+
 	return outsideWidth, outsideHeight
 }
 

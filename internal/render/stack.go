@@ -11,6 +11,7 @@ import (
 type Stack struct {
 	Positionable
 	Rotateable
+	Originable
 	data             *assets.Staxie // Reference to the underlying stack data for subimages, etc.
 	currentStack     *assets.StaxieStack
 	currentAnimation *assets.StaxieAnimation
@@ -61,28 +62,20 @@ func (s *Stack) Draw(o *Options) {
 
 	opts := ebiten.DrawImageOptions{}
 
-	rotation := s.rotation
+	// Rotate about origin.
+	ox, oy := s.Origin()
+	opts.GeoM.Translate(-ox, -oy)
+	opts.GeoM.Rotate(s.Rotation())
+	opts.GeoM.Translate(ox, oy)
 
-	// calculate the new position based on the rotation
-	dx := math.Cos(rotation) * s.rotationDistance
-	dy := math.Sin(rotation) * s.rotationDistance
+	// Translate to position.
+	opts.GeoM.Translate(s.Position())
 
-	// apply the rotation and rotation offset for the stack
-	// rotation offset potentially unique to stack, hardcoded to pie for now
-	// account for rotation distance
-	opts.GeoM.Rotate(rotation)
-
-	// translate the stack to the new position
-	screen := o.Screen
-	screenWidth, screenHeight := screen.Bounds().Dx(), screen.Bounds().Dy()
-	centerX, centerY := float64(screenWidth/2), float64(screenHeight/2)
-	opts.GeoM.Translate(centerX+dx, centerY+dy)
-
-	// Uh... this might come before? FIXME later
+	// Add additional transforms.
 	opts.GeoM.Concat(o.DrawImageOptions.GeoM)
-	// Draw our slices from!
 	for i, slice := range s.currentFrame.Slices {
 
+		// TODO: Make this configurable
 		c := float64(i) / float64(len(s.currentFrame.Slices))
 		c = math.Min(1.0, math.Max(0.5, c))
 		color := float32(c)
@@ -90,8 +83,12 @@ func (s *Stack) Draw(o *Options) {
 		opts.ColorScale.Reset()
 		opts.ColorScale.Scale(color, color, color, 1.0)
 
-		o.Screen.DrawImage(slice.Image, &opts)
-		opts.GeoM.Translate(0, -o.Pitch)
+		if o.VGroup != nil {
+			o.VGroup.Images[i].DrawImage(slice.Image, &opts)
+		} else if o.Screen != nil {
+			o.Screen.DrawImage(slice.Image, &opts)
+			opts.GeoM.Translate(0, -o.Pitch)
+		}
 		//opts.GeoM.Skew(-0.002, 0.002) // Might be able to sine this with delta to create a wave effect...
 	}
 }
