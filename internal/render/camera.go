@@ -48,6 +48,9 @@ func (c *Camera) WorldToScreen(x, y float64) (float64, float64) {
 	ox, oy := c.Origin()
 	rads := c.Rotation()
 
+	cx = cx * c.Zoom
+	cy = cy * c.Zoom
+
 	x, y = x*math.Cos(-rads)+y*math.Sin(-rads), y*math.Cos(-rads)-x*math.Sin(-rads)
 
 	x = x*c.Zoom + cx + ox
