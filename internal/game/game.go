@@ -99,7 +99,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 func (g *Game) Init() {
 	lvl := NewLevel()
 	tower := NewTower()
-	tower.AddStory(NewStory())
+
+	firstStory := NewStory()
+	stairs, err := render.NewStack("walls/stairs", "", "")
+	if err != nil {
+		panic(err)
+	}
+	stairs.SetPosition(StoryVGroupWidth/2, StoryVGroupHeight/2+TowerStairs)
+	firstStory.stacks.Add(stairs)
+	tower.AddStory(firstStory)
+
 	tower.AddStory(NewStoryWithSize(16))
 	lvl.AddTower(tower)
 

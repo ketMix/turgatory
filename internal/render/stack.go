@@ -19,6 +19,7 @@ type Stack struct {
 	frameCounter     int
 	MaxSliceIndex    int
 	SliceOffset      int
+	HeightOffset     float64
 }
 
 func NewStack(name string, stackName string, animationName string) (*Stack, error) {
@@ -75,6 +76,8 @@ func (s *Stack) Draw(o *Options) {
 
 	// Add additional transforms.
 	opts.GeoM.Concat(o.DrawImageOptions.GeoM)
+
+	opts.GeoM.Translate(0, s.HeightOffset)
 
 	for index := 0; index < len(s.currentFrame.Slices); index++ {
 		if index+s.SliceOffset >= len(s.currentFrame.Slices) {

@@ -10,12 +10,13 @@ import (
 type DudeActivity int
 
 const (
-	Idle      DudeActivity = iota
-	GoingUp                // Entering the room from a staircase, this basically does the fancy slice offset/limiting.
-	Centering              // Move the dude to the center of the room.
-	Moving                 // Move the dude counter-clockwise.
-	Leaving                // Move the dude to the stairs.
-	GoingDown              // Leaving the room to the stairs, opposite of GoingUp.
+	Idle          DudeActivity = iota
+	FirstEntering              // First entering the tower.
+	GoingUp                    // Entering the room from a staircase, this basically does the fancy slice offset/limiting.
+	Centering                  // Move the dude to the center of the room.
+	Moving                     // Move the dude counter-clockwise.
+	Leaving                    // Move the dude to the stairs.
+	GoingDown                  // Leaving the room to the stairs, opposite of GoingUp.
 )
 
 type Dude struct {
@@ -41,7 +42,8 @@ func NewDude() *Dude {
 
 	dude.stack = stack
 
-	dude.activity = GoingUp
+	dude.activity = FirstEntering
+	dude.stack.HeightOffset = 20
 
 	return dude
 }
@@ -51,6 +53,25 @@ func (d *Dude) Update(story *Story) {
 	switch d.activity {
 	case Idle:
 		// Do nothing.
+	case FirstEntering:
+		cx, cy := d.Position()
+		distance := story.DistanceFromCenter(cx, cy)
+		if distance < 50+d.variation {
+			d.activity = Centering
+			d.stack.HeightOffset = 0
+		} else {
+			r := story.AngleFromCenter(cx, cy)
+			nx, ny := story.PositionFromCenter(r, distance-d.speed*100)
+
+			face := math.Atan2(ny-cy, nx-cx)
+
+			d.SetRotation(face)
+			d.SetPosition(nx, ny)
+			d.stack.HeightOffset -= 0.15
+			if d.stack.HeightOffset <= 0 {
+				d.stack.HeightOffset = 0
+			}
+		}
 	case GoingUp:
 		d.timer++
 		if d.stack.SliceOffset == 0 {
