@@ -133,3 +133,7 @@ func (s *Stack) SetFrame(index int) error {
 	s.currentFrame = frame
 	return nil
 }
+
+func (s *Stack) SetOriginToCenter() {
+	s.SetOrigin(float64(s.currentFrame.Slices[0].Image.Bounds().Dx())/2, float64(s.currentFrame.Slices[0].Image.Bounds().Dy())/2)
+}

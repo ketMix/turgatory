@@ -9,6 +9,7 @@ import (
 // Story is a single story in the tower. It contains rooms.
 type Story struct {
 	rooms  []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
+	dudes  []*Dude
 	stacks render.Stacks
 	vgroup *render.VGroup
 }
@@ -47,25 +48,20 @@ func NewStoryWithSize(size int) *Story {
 		panic(err)
 	}
 
-	room2 := NewRoom(Large, Combat)
+	/*room2 := NewRoom(Large, Combat)
 	if err := story.PlaceRoom(room2, 1); err != nil {
 		panic(err)
-	}
+	}*/
 
 	room3 := NewRoom(Medium, Combat)
-	if err := story.PlaceRoom(room3, 5); err != nil {
+	if err := story.PlaceRoom(room3, 3); err != nil {
 		panic(err)
 	}
 
-	// Test
-	{
-		dude, err := render.NewStack("dudes/liltest", "", "")
-		if err != nil {
-			panic(err)
-		}
-		dude.SetPosition(StoryVGroupWidth/2-32, StoryVGroupHeight/2-32)
-		story.stacks = append(story.stacks, dude)
-	}
+	// Test dude
+	dude := NewDude()
+	dude.stack.SetPosition(story.PositionFromCenter(math.Pi/2, 12))
+	story.AddDude(dude)
 
 	story.vgroup = render.NewVGroup(StoryVGroupWidth, StoryVGroupHeight, StorySlices) // For now...
 
@@ -79,6 +75,7 @@ func (s *Story) Update() {
 		stack.Update()
 		//stack.SetRotation(stack.Rotation() + 0.01) // Spin the floors. FIXME: Camera no longer works due to fake perspective trick, so we spin here.
 	}
+
 	// Update the rooms.
 	var updatedRooms []*Room
 	for _, room := range s.rooms {
@@ -91,6 +88,11 @@ func (s *Story) Update() {
 			room.Update()
 			updatedRooms = append(updatedRooms, room)
 		}
+	}
+
+	// Update the dudes (maybe should be just handled in rooms?)
+	for _, dude := range s.dudes {
+		dude.Update(s)
 	}
 }
 
@@ -117,6 +119,10 @@ func (s *Story) Draw(o *render.Options) {
 		}
 	}
 
+	for _, dude := range s.dudes {
+		dude.Draw(opts)
+	}
+
 	s.vgroup.Draw(o)
 }
 
@@ -128,6 +134,19 @@ func (s *Story) Complete() bool {
 		}
 	}
 	return true
+}
+
+func (s *Story) AddDude(d *Dude) {
+	s.dudes = append(s.dudes, d)
+}
+
+func (s *Story) RemoveDude(d *Dude) {
+	for i, v := range s.dudes {
+		if v == d {
+			s.dudes = append(s.dudes[:i], s.dudes[i+1:]...)
+			return
+		}
+	}
 }
 
 // PlaceRoom places a room in the story, populating the rooms slice's pointer references accordingly.
@@ -186,6 +205,24 @@ func (s *Story) RemoveRoom(index int) error {
 		s.rooms[index+i] = nil
 	}
 	return nil
+}
+
+func (s *Story) AngleFromCenter(x, y float64) float64 {
+	cx := float64(StoryVGroupWidth) / 2
+	cy := float64(StoryVGroupHeight) / 2
+	return math.Atan2(y-cy, x-cx)
+}
+
+func (s *Story) PositionFromCenter(rads float64, amount float64) (float64, float64) {
+	cx := float64(StoryVGroupWidth) / 2
+	cy := float64(StoryVGroupHeight) / 2
+	return cx + math.Cos(rads)*amount, cy + math.Sin(rads)*amount
+}
+
+func (s *Story) DistanceFromCenter(x, y float64) float64 {
+	cx := float64(StoryVGroupWidth) / 2
+	cy := float64(StoryVGroupHeight) / 2
+	return math.Sqrt(math.Pow(x-cx, 2) + math.Pow(y-cy, 2))
 }
 
 const (
