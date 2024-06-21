@@ -2,6 +2,7 @@ package game
 
 import (
 	"math"
+	"math/rand"
 
 	"github.com/kettek/ebijam24/internal/render"
 )
@@ -22,6 +23,7 @@ type Dude struct {
 	speed        float64
 	activity     DudeActivity
 	activityDone bool
+	variation    float64
 }
 
 func NewDude() *Dude {
@@ -35,6 +37,7 @@ func NewDude() *Dude {
 
 	dude.speed = 0.002
 	dude.activity = Centering
+	dude.variation = -3 + rand.Float64()*6
 
 	dude.stack = stack
 
@@ -50,7 +53,7 @@ func (d *Dude) Update(story *Story) {
 	case Centering:
 		cx, cy := d.Position()
 		distance := story.DistanceFromCenter(cx, cy)
-		if distance >= 48 {
+		if distance >= 48+d.variation {
 			d.activity = Moving
 		} else {
 			r := story.AngleFromCenter(cx, cy)
@@ -64,7 +67,7 @@ func (d *Dude) Update(story *Story) {
 	case Moving:
 		cx, cy := d.Position()
 		r := story.AngleFromCenter(cx, cy)
-		nx, ny := story.PositionFromCenter(r-d.speed, 48)
+		nx, ny := story.PositionFromCenter(r-d.speed, 48+d.variation)
 
 		face := math.Atan2(ny-cy, nx-cx)
 
