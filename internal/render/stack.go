@@ -123,6 +123,14 @@ func (s *Stack) SliceCount() int {
 	return len(s.currentFrame.Slices)
 }
 
+func (s *Stack) Width() int {
+	return s.currentFrame.Slices[0].Image.Bounds().Dx()
+}
+
+func (s *Stack) Height() int {
+	return s.currentFrame.Slices[0].Image.Bounds().Dy()
+}
+
 func (s *Stack) SetStack(name string) error {
 	stack, ok := s.data.Stacks[name]
 	if !ok {
