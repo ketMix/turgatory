@@ -58,6 +58,16 @@ func NewStoryWithSize(size int) *Story {
 		panic(err)
 	}
 
+	{
+		center, err := render.NewStack("rooms/center", "", "")
+		if err != nil {
+			panic(err)
+		}
+		center.SetPosition(float64(StoryVGroupWidth)/2-16, float64(StoryVGroupHeight)/2-16)
+		center.SetOriginToCenter()
+		story.stacks.Add(center)
+	}
+
 	// Test dude
 	dude := NewDude()
 	dude.stack.SetPosition(story.PositionFromCenter(math.Pi/2, RoomStairsEntrance))
