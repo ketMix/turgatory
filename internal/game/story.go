@@ -29,10 +29,7 @@ func NewStoryWithSize(size int) *Story {
 	story.rooms = make([]*Room, size)
 
 	for i := 0; i < 4; i++ {
-		stack, err := render.NewStack("walls/pie", "template", "")
-		if err != nil {
-			continue
-		}
+		stack := Must(render.NewStack("walls/pie", "template", ""))
 		stack.SetRotation(float64(i) * (math.Pi / 2))
 
 		// This feels hacky atm, but position from the center of our vgroup.
@@ -44,29 +41,17 @@ func NewStoryWithSize(size int) *Story {
 	}
 
 	room := NewRoom(Small, Combat)
-	if err := story.PlaceRoom(room, 4); err != nil {
-		panic(err)
-	}
+	PanicIfErr(story.PlaceRoom(room, 4))
 
-	/*room2 := NewRoom(Large, Combat)
-	if err := story.PlaceRoom(room2, 1); err != nil {
-		panic(err)
-	}*/
+	room2 := NewRoom(Medium, Armory)
+	PanicIfErr(story.PlaceRoom(room2, 0))
 
-	room3 := NewRoom(Medium, Armory)
-	if err := story.PlaceRoom(room3, 0); err != nil {
-		panic(err)
-	}
-
-	{
-		center, err := render.NewStack("rooms/center", "", "")
-		if err != nil {
-			panic(err)
-		}
+	/*{
+		center := Must(render.NewStack("rooms/center", "", ""))
 		center.SetPosition(float64(StoryVGroupWidth)/2-16, float64(StoryVGroupHeight)/2-16)
 		center.SetOriginToCenter()
 		story.stacks.Add(center)
-	}
+	}*/
 
 	// Test dude
 	dude := NewDude()

@@ -101,12 +101,6 @@ func (g *Game) Init() {
 	tower := NewTower()
 
 	firstStory := NewStory()
-	stairs, err := render.NewStack("walls/stairs", "", "")
-	if err != nil {
-		panic(err)
-	}
-	stairs.SetPosition(StoryVGroupWidth/2, StoryVGroupHeight/2+TowerStairs)
-	firstStory.stacks.Add(stairs)
 	tower.AddStory(firstStory)
 
 	tower.AddStory(NewStoryWithSize(16))
