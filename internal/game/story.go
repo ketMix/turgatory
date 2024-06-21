@@ -28,7 +28,7 @@ func NewStoryWithSize(size int) *Story {
 	story.rooms = make([]*Room, size)
 
 	for i := 0; i < 4; i++ {
-		stack, err := render.NewStack("walls/pie", "", "")
+		stack, err := render.NewStack("walls/pie", "template", "")
 		if err != nil {
 			continue
 		}
@@ -40,6 +40,21 @@ func NewStoryWithSize(size int) *Story {
 		stack.SetPosition(x, y)
 
 		story.stacks.Add(stack)
+	}
+
+	room := NewRoom(Small, Combat)
+	if err := story.PlaceRoom(room, 0); err != nil {
+		panic(err)
+	}
+
+	room2 := NewRoom(Large, Combat)
+	if err := story.PlaceRoom(room2, 1); err != nil {
+		panic(err)
+	}
+
+	room3 := NewRoom(Medium, Combat)
+	if err := story.PlaceRoom(room3, 5); err != nil {
+		panic(err)
 	}
 
 	// Test
@@ -128,6 +143,22 @@ func (s *Story) PlaceRoom(r *Room, index int) error {
 			return ErrRoomNoSpace
 		}
 	}
+
+	x := float64(StoryVGroupWidth) / 2
+	y := float64(StoryVGroupHeight) / 2
+
+	// Assign position and origin offsets as needed due to different pie sizes having different origins. FIXME: This should be controlled by the room itself, not here. Additionally, using the "plural" stack assignment won't apply to any stacks that are added to the room (such as monsters, etc.), so this should be readjusted so that it applies to DrawImageOptions in Draw() or similar.
+	if r.size == Large {
+		r.stacks.SetPositions(x, y-LargeOriginY)
+		r.stacks.SetOrigins(0, LargeOriginY)
+	} else if r.size == Huge {
+		r.stacks.SetPositions(x, y-HugeOriginY)
+		r.stacks.SetOrigins(0, HugeOriginY)
+	} else {
+		r.stacks.SetPositions(x, y)
+	}
+
+	r.stacks.SetRotations(float64(index) * -(math.Pi / 4)) // We go counter-clockwise...
 	for i := 0; i < int(r.size); i++ {
 		s.rooms[index+i] = r
 	}
