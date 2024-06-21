@@ -2,8 +2,10 @@ package render
 
 import (
 	"image"
+	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 // VGroup manages a slice of images intended to be rendered at offsets. This is basically an offscreen framebuffer for stack slice rendering.
@@ -12,6 +14,7 @@ type VGroup struct {
 	Images []*ebiten.Image
 	Width  int
 	Height int
+	Debug  bool
 }
 
 // NewVGroup creates a new VGroup. Destroy() _MUST_ be called once the VGroup is no longer needed.
@@ -61,6 +64,13 @@ func (vg *VGroup) Draw(o *Options) {
 	// TODO: We could actually do some matrix math here to "tilt" the rendered layers "away" from the camera, which would enhance the 3D look. Shame I'm bad at math.
 
 	for _, img := range vg.Images {
+		//img.Fill(color.NRGBA{255, 0, 0, 255})
+		if vg.Debug {
+			ebitenutil.DrawLine(img, 1, 1, float64(vg.Width), 1, color.NRGBA{255, 0, 255, 64})
+			ebitenutil.DrawLine(img, 1, 1, 1, float64(vg.Height), color.NRGBA{255, 0, 255, 64})
+			ebitenutil.DrawLine(img, float64(vg.Width), 1, float64(vg.Width), float64(vg.Height), color.NRGBA{255, 0, 255, 64})
+			ebitenutil.DrawLine(img, 1, float64(vg.Height), float64(vg.Width), float64(vg.Height), color.NRGBA{255, 0, 255, 64})
+		}
 		// lol, this might be okay...
 		w, h := img.Bounds().Dx(), img.Bounds().Dy()
 		for i := 0; i < h; i++ {
