@@ -17,6 +17,8 @@ type Stack struct {
 	currentAnimation *assets.StaxieAnimation
 	currentFrame     *assets.StaxieFrame
 	frameCounter     int
+	MaxSliceIndex    int
+	SliceOffset      int
 }
 
 func NewStack(name string, stackName string, animationName string) (*Stack, error) {
@@ -73,10 +75,19 @@ func (s *Stack) Draw(o *Options) {
 
 	// Add additional transforms.
 	opts.GeoM.Concat(o.DrawImageOptions.GeoM)
-	for i, slice := range s.currentFrame.Slices {
+
+	for index := 0; index < len(s.currentFrame.Slices); index++ {
+		if index+s.SliceOffset >= len(s.currentFrame.Slices) {
+			break
+		}
+		if s.MaxSliceIndex != 0 && index >= s.MaxSliceIndex {
+			break
+		}
+		slice := s.currentFrame.Slices[index+s.SliceOffset]
+		i := index
 
 		// TODO: Make this configurable
-		c := float64(i) / float64(len(s.currentFrame.Slices))
+		c := float64(index) / float64(len(s.currentFrame.Slices))
 		c = math.Min(1.0, math.Max(0.5, c))
 		color := float32(c)
 
@@ -103,6 +114,10 @@ func (s *Stack) Update() {
 		}
 		s.currentFrame = nextFrame
 	}
+}
+
+func (s *Stack) SliceCount() int {
+	return len(s.currentFrame.Slices)
 }
 
 func (s *Stack) SetStack(name string) error {

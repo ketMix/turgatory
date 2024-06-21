@@ -21,6 +21,7 @@ const (
 type Dude struct {
 	stack        *render.Stack
 	speed        float64
+	timer        int
 	activity     DudeActivity
 	activityDone bool
 	variation    float64
@@ -36,10 +37,11 @@ func NewDude() *Dude {
 	stack.SetOriginToCenter()
 
 	dude.speed = 0.002
-	dude.activity = Centering
 	dude.variation = -3 + rand.Float64()*6
 
 	dude.stack = stack
+
+	dude.activity = GoingUp
 
 	return dude
 }
@@ -50,7 +52,30 @@ func (d *Dude) Update(story *Story) {
 	case Idle:
 		// Do nothing.
 	case GoingUp:
-		// TODO
+		d.timer++
+		if d.stack.SliceOffset == 0 {
+			d.stack.SliceOffset = d.stack.SliceCount()
+			d.stack.MaxSliceIndex = 1
+			cx, cy := d.Position()
+			distance := story.DistanceFromCenter(cx, cy)
+			r := story.AngleFromCenter(cx, cy)
+			nx, ny := story.PositionFromCenter(r, distance+d.speed*100)
+
+			face := math.Atan2(ny-cy, nx-cx)
+
+			d.SetRotation(face)
+			d.SetPosition(nx, ny)
+		}
+		if d.timer >= 15 {
+			d.stack.SliceOffset--
+			d.stack.MaxSliceIndex++
+			d.timer = 0
+		}
+		if d.stack.SliceOffset <= 0 {
+			d.stack.SliceOffset = 0
+			d.stack.MaxSliceIndex = 0
+			d.activity = Centering
+		}
 	case Centering:
 		cx, cy := d.Position()
 		distance := story.DistanceFromCenter(cx, cy)
