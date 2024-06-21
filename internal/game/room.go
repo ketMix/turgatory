@@ -43,6 +43,20 @@ const RoomStairsEntrance = 12
 // RoomKind is an enumeration of the different kinds of rooms in za toweru.
 type RoomKind int
 
+func (r *RoomKind) String() string {
+	switch *r {
+	case Armory:
+		return "armory"
+	case HealingShrine:
+		return "healing"
+	case Combat:
+		//return "combat"
+		return "template"
+	default:
+		return "Unknown"
+	}
+}
+
 const (
 	Empty RoomKind = iota
 	// Armory provide... armor up? damage up? Maybe should be different types.
@@ -68,7 +82,7 @@ func NewRoom(size RoomSize, kind RoomKind) *Room {
 		kind: kind,
 	}
 
-	stack, err := render.NewStack(fmt.Sprintf("rooms/%s", size.String()), "", "")
+	stack, err := render.NewStack(fmt.Sprintf("rooms/%s", size.String()), kind.String(), "")
 	if err != nil {
 		panic(err)
 	}

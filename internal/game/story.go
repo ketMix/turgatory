@@ -44,7 +44,7 @@ func NewStoryWithSize(size int) *Story {
 	}
 
 	room := NewRoom(Small, Combat)
-	if err := story.PlaceRoom(room, 0); err != nil {
+	if err := story.PlaceRoom(room, 4); err != nil {
 		panic(err)
 	}
 
@@ -53,8 +53,8 @@ func NewStoryWithSize(size int) *Story {
 		panic(err)
 	}*/
 
-	room3 := NewRoom(Medium, Combat)
-	if err := story.PlaceRoom(room3, 3); err != nil {
+	room3 := NewRoom(Medium, Armory)
+	if err := story.PlaceRoom(room3, 0); err != nil {
 		panic(err)
 	}
 
