@@ -15,7 +15,7 @@ type Story struct {
 }
 
 // StoryHeight is the height of a story in da tower.
-const StoryHeight = 20        // StoryHeight is used to space stories apart from each other vertically.
+const StoryHeight = 28        // StoryHeight is used to space stories apart from each other vertically.
 const StorySlices = 20        // The amount of slices used for the frame buffers, should be equal to maximum staxie slice count used in a story.
 const StoryVGroupWidth = 256  // Framebuffer's maximum width for rendering.
 const StoryVGroupHeight = 256 // Framebuffer's maximum height for rendering.
