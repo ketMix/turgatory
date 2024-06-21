@@ -37,6 +37,9 @@ const (
 	HugeOriginY  = 64
 )
 
+// RoomStairsEntrance is the distance from the center that a room's stairs is expected to be at.
+const RoomStairsEntrance = 12
+
 // RoomKind is an enumeration of the different kinds of rooms in za toweru.
 type RoomKind int
 

@@ -45,6 +45,7 @@ func NewDude() *Dude {
 }
 
 func (d *Dude) Update(story *Story) {
+	// NOTE: We should replace Centering/Moving direct position/rotation setting with a "pathing node" that the dude seeks to follow. This would allow more smoothly doing turns and such, as we could have a turn limit the dude would follow automatically...
 	switch d.activity {
 	case Idle:
 		// Do nothing.

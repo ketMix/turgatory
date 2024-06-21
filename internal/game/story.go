@@ -60,7 +60,7 @@ func NewStoryWithSize(size int) *Story {
 
 	// Test dude
 	dude := NewDude()
-	dude.stack.SetPosition(story.PositionFromCenter(math.Pi/2, 12))
+	dude.stack.SetPosition(story.PositionFromCenter(math.Pi/2, RoomStairsEntrance))
 	story.AddDude(dude)
 
 	story.vgroup = render.NewVGroup(StoryVGroupWidth, StoryVGroupHeight, StorySlices) // For now...
