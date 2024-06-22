@@ -13,6 +13,7 @@ type Story struct {
 	stacks render.Stacks
 	vgroup *render.VGroup
 	level  int
+	open   bool
 }
 
 // StoryHeight is the height of a story in da tower.
@@ -67,6 +68,11 @@ func (s *Story) Update(req *ActivityRequests) {
 	for _, stack := range s.stacks {
 		stack.Update()
 		//stack.SetRotation(stack.Rotation() + 0.01) // Spin the floors. FIXME: Camera no longer works due to fake perspective trick, so we spin here.
+	}
+
+	// Bail if the story is not yet open.
+	if !s.open {
+		return
 	}
 
 	// Update the rooms.
@@ -133,6 +139,12 @@ func (s *Story) Draw(o *render.Options) {
 	opts.DrawImageOptions.GeoM.Translate(-StoryVGroupWidth/2, -StoryVGroupHeight/2)
 	opts.DrawImageOptions.GeoM.Rotate(o.TowerRotation)
 	opts.DrawImageOptions.GeoM.Translate(StoryVGroupWidth/2, StoryVGroupHeight/2)
+
+	// If the story is not yet open, just draw the tower exterior stacks.
+	if !s.open {
+		// TODO: Maybe just use the s.stacks pie pieces, but set to a particular stack or animation?
+		return
+	}
 
 	s.stacks.Draw(opts)
 
