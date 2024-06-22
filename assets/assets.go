@@ -7,7 +7,7 @@ import (
 	"github.com/kettek/go-multipath/v2"
 )
 
-//go:embed **/*.png
+//go:embed **/*.png **/*.txt
 var embedFS embed.FS
 var FS multipath.FS
 

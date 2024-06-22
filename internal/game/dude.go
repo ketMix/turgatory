@@ -4,6 +4,7 @@ import (
 	"math"
 	"math/rand"
 
+	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
 )
 
@@ -20,6 +21,7 @@ const (
 )
 
 type Dude struct {
+	name         string
 	room         *Room // current room the dude is in
 	stack        *render.Stack
 	speed        float64
@@ -38,6 +40,7 @@ func NewDude() *Dude {
 	}
 	stack.SetOriginToCenter()
 
+	dude.name = assets.GetRandomName()
 	dude.speed = 0.002
 	dude.variation = -3 + rand.Float64()*6
 
@@ -153,4 +156,8 @@ func (d *Dude) Room() *Room {
 
 func (d *Dude) SetRoom(r *Room) {
 	d.room = r
+}
+
+func (d *Dude) Name() string {
+	return d.name
 }

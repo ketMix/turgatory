@@ -98,9 +98,9 @@ func (s *Story) Update() {
 			roomIndex := s.RoomIndexFromAngle(s.AngleFromCenter(u.x, u.y))
 			if room := s.rooms[roomIndex]; room != u.initiator.Room() {
 				if room == nil {
-					fmt.Println("Dude is in an empty room")
+					fmt.Println(u.initiator.Name(), "is in an empty room")
 				} else {
-					fmt.Println("Dude is moving to a new room: ", room.size.String(), room.kind.String())
+					fmt.Println(u.initiator.Name(), "is moving to a new room: ", room.size.String(), room.kind.String())
 				}
 				u.initiator.SetRoom(room)
 			}

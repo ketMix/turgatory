@@ -20,6 +20,7 @@ type PositionRotator interface {
 
 type Actor interface {
 	PositionRotator
+	Name() string
 	Room() *Room
 	SetRoom(r *Room)
 }
