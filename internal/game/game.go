@@ -110,6 +110,15 @@ func (g *Game) Init() {
 
 	g.level = lvl
 
+	// Add dudes of testing.
+	professions := []ProfessionKind{Knight, Vagabond, Ranger, Cleric}
+	dudeLimit := 10
+	for i := 0; i < dudeLimit; i++ {
+		pk := professions[i%len(professions)]
+		dude := NewDude(pk, 1)
+		tower.AddDude(dude)
+	}
+
 	g.camera = *render.NewCamera(0, 0)
 }
 

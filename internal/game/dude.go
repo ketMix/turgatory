@@ -52,12 +52,9 @@ func NewDude(pk ProfessionKind, level int) *Dude {
 	profession := NewProfession(pk, level)
 	dude.stats = profession.StartingStats()
 	dude.equipment = profession.StartingEquipment()
-	dude.variation = -3 + rand.Float64()*6
+	dude.variation = -6 + rand.Float64()*12
 
 	dude.stack = stack
-
-	dude.activity = FirstEntering
-	dude.stack.HeightOffset = 20
 
 	return dude
 }

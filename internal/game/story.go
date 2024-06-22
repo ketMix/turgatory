@@ -47,21 +47,11 @@ func NewStoryWithSize(size int) *Story {
 	room2 := NewRoom(Medium, Armory)
 	PanicIfErr(story.PlaceRoom(room2, 0))
 
-	/*{
+	{
 		center := Must(render.NewStack("rooms/center", "", ""))
 		center.SetPosition(float64(StoryVGroupWidth)/2-16, float64(StoryVGroupHeight)/2-16)
 		center.SetOriginToCenter()
 		story.stacks.Add(center)
-	}*/
-
-	// Test dudes
-	professions := []ProfessionKind{Knight, Vagabond, Ranger, Cleric}
-	dudeLimit := 10
-	for i := 0; i < dudeLimit; i++ {
-		pk := professions[i%len(professions)]
-		dude := NewDude(pk, 1)
-		dude.stack.SetPosition(story.PositionFromCenter(math.Pi/2, TowerEntrance))
-		story.AddDude(dude)
 	}
 
 	story.vgroup = render.NewVGroup(StoryVGroupWidth, StoryVGroupHeight, StorySlices) // For now...

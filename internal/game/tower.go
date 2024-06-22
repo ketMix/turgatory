@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/kettek/ebijam24/internal/render"
 )
@@ -71,4 +72,16 @@ func (t *Tower) Draw(o *render.Options) {
 // AddStory does as it says.
 func (t *Tower) AddStory(s *Story) {
 	t.Stories = append(t.Stories, s)
+}
+
+// AddDude adds a new dude at the lowest story of the tower and assigns the dude's appropriate activity state.
+func (t *Tower) AddDude(d *Dude) {
+	if len(t.Stories) == 0 {
+		return
+	}
+	story := t.Stories[0]
+	story.AddDude(d)
+	d.activity = FirstEntering
+	d.stack.HeightOffset = 20
+	d.SetPosition(story.PositionFromCenter(math.Pi/2, TowerEntrance+d.variation))
 }
