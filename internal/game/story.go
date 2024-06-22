@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/kettek/ebijam24/internal/render"
@@ -86,8 +87,30 @@ func (s *Story) Update() {
 	}
 
 	// Update the dudes (maybe should be just handled in rooms?)
+	var updates ActivityRequests
 	for _, dude := range s.dudes {
-		dude.Update(s)
+		dude.Update(s, &updates)
+	}
+	for _, update := range updates {
+		success := true
+		switch u := update.(type) {
+		case MoveActivity:
+			roomIndex := s.RoomIndexFromAngle(s.AngleFromCenter(u.x, u.y))
+			if room := s.rooms[roomIndex]; room != u.initiator.Room() {
+				if room == nil {
+					fmt.Println("Dude is in an empty room")
+				} else {
+					fmt.Println("Dude is moving to a new room: ", room.size.String(), room.kind.String())
+				}
+				u.initiator.SetRoom(room)
+			}
+		}
+		if success {
+			update.Apply()
+		}
+		if cb := update.Cb(); cb != nil {
+			cb(success)
+		}
 	}
 }
 
@@ -200,6 +223,17 @@ func (s *Story) RemoveRoom(index int) error {
 		s.rooms[index+i] = nil
 	}
 	return nil
+}
+
+// RoomIndexFromAngle returns the room index based upon the radians provided.
+func (s *Story) RoomIndexFromAngle(rads float64) int {
+	rads -= math.Pi / 2 // Adjust a lil
+	// We go counter-clockwise, so we need to reverse the angle.
+	rads = -rads
+	if rads < 0 {
+		rads += math.Pi * 2
+	}
+	return int(math.Floor(rads/(math.Pi/4))) % len(s.rooms)
 }
 
 func (s *Story) AngleFromCenter(x, y float64) float64 {

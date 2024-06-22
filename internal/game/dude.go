@@ -20,6 +20,7 @@ const (
 )
 
 type Dude struct {
+	room         *Room // current room the dude is in
 	stack        *render.Stack
 	speed        float64
 	timer        int
@@ -48,7 +49,7 @@ func NewDude() *Dude {
 	return dude
 }
 
-func (d *Dude) Update(story *Story) {
+func (d *Dude) Update(story *Story, req *ActivityRequests) {
 	// NOTE: We should replace Centering/Moving direct position/rotation setting with a "pathing node" that the dude seeks to follow. This would allow more smoothly doing turns and such, as we could have a turn limit the dude would follow automatically...
 	switch d.activity {
 	case Idle:
@@ -65,12 +66,12 @@ func (d *Dude) Update(story *Story) {
 
 			face := math.Atan2(ny-cy, nx-cx)
 
-			d.SetRotation(face)
-			d.SetPosition(nx, ny)
-			d.stack.HeightOffset -= 0.15
-			if d.stack.HeightOffset <= 0 {
-				d.stack.HeightOffset = 0
-			}
+			req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny, cb: func(success bool) {
+				d.stack.HeightOffset -= 0.15
+				if d.stack.HeightOffset <= 0 {
+					d.stack.HeightOffset = 0
+				}
+			}})
 		}
 	case GoingUp:
 		d.timer++
@@ -84,8 +85,7 @@ func (d *Dude) Update(story *Story) {
 
 			face := math.Atan2(ny-cy, nx-cx)
 
-			d.SetRotation(face)
-			d.SetPosition(nx, ny)
+			req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny})
 		}
 		if d.timer >= 15 {
 			d.stack.SliceOffset--
@@ -108,8 +108,7 @@ func (d *Dude) Update(story *Story) {
 
 			face := math.Atan2(ny-cy, nx-cx)
 
-			d.SetRotation(face)
-			d.SetPosition(nx, ny)
+			req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny})
 		}
 	case Moving:
 		cx, cy := d.Position()
@@ -118,8 +117,7 @@ func (d *Dude) Update(story *Story) {
 
 		face := math.Atan2(ny-cy, nx-cx)
 
-		d.SetRotation(face)
-		d.SetPosition(nx, ny)
+		req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny})
 	case Leaving:
 		// TODO
 	case GoingDown:
@@ -147,4 +145,12 @@ func (d *Dude) Rotation() float64 {
 
 func (d *Dude) SetRotation(r float64) {
 	d.stack.SetRotation(r)
+}
+
+func (d *Dude) Room() *Room {
+	return d.room
+}
+
+func (d *Dude) SetRoom(r *Room) {
+	d.room = r
 }
