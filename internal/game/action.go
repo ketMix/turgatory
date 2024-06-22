@@ -70,3 +70,16 @@ func (r RoomLeaveActivity) Apply() {
 func (r RoomLeaveActivity) Cb() func(success bool) {
 	return r.cb
 }
+
+type RoomCenterActivity struct {
+	initiator Actor
+	room      *Room
+	cb        func(success bool)
+}
+
+func (r RoomCenterActivity) Apply() {
+}
+
+func (r RoomCenterActivity) Cb() func(success bool) {
+	return r.cb
+}

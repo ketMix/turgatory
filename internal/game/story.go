@@ -16,10 +16,12 @@ type Story struct {
 }
 
 // StoryHeight is the height of a story in da tower.
-const StoryHeight = 28        // StoryHeight is used to space stories apart from each other vertically.
-const StorySlices = 28        // The amount of slices used for the frame buffers, should be equal to maximum staxie slice count used in a story.
-const StoryVGroupWidth = 256  // Framebuffer's maximum width for rendering.
-const StoryVGroupHeight = 256 // Framebuffer's maximum height for rendering.
+const StoryHeight = 28                       // StoryHeight is used to space stories apart from each other vertically.
+const StorySlices = 28                       // The amount of slices used for the frame buffers, should be equal to maximum staxie slice count used in a story.
+const StoryVGroupWidth = 256                 // Framebuffer's maximum width for rendering.
+const StoryVGroupHeight = 256                // Framebuffer's maximum height for rendering.
+const TowerCenterX = StoryVGroupWidth/2 - 5  // Center of the tower. Have to offset lightly for some dumb reason...
+const TowerCenterY = StoryVGroupHeight/2 - 5 // Center of the tower.
 
 // NewStory creates a grand new spankin' story.
 func NewStory() *Story {
@@ -91,8 +93,20 @@ func (s *Story) Update(req *ActivityRequests) {
 		switch u := u.(type) {
 		case MoveActivity:
 			roomIndex := s.RoomIndexFromAngle(s.AngleFromCenter(u.x, u.y))
-			if room := s.rooms[roomIndex]; room != u.initiator.Room() {
+			room := s.rooms[roomIndex]
+			if room != u.initiator.Room() {
 				req.Add(RoomEnterActivity{initiator: u.initiator, room: room})
+			}
+			// Check if the initiator is in the center of the room and update as appropriate.
+			if room != nil {
+				if s.IsInCenterOfRoom(s.AngleFromCenter(u.x, u.y), roomIndex) {
+					if !room.IsActorInCenter(u.initiator) {
+						room.AddActorToCenter(u.initiator)
+						req.Add(RoomCenterActivity{initiator: u.initiator, room: room})
+					}
+				} else if room.IsActorInCenter(u.initiator) {
+					room.RemoveActorFromCenter(u.initiator)
+				}
 			}
 		}
 		if success {
@@ -192,6 +206,7 @@ func (s *Story) PlaceRoom(r *Room, index int) error {
 		s.rooms[index+i] = r
 	}
 	r.story = s
+	r.index = index
 	return nil
 }
 
@@ -216,6 +231,7 @@ func (s *Story) RemoveRoom(index int) error {
 		s.rooms[index+i] = nil
 	}
 	room.story = nil
+	room.index = -1
 	return nil
 }
 
@@ -230,21 +246,40 @@ func (s *Story) RoomIndexFromAngle(rads float64) int {
 	return int(math.Floor(rads/(math.Pi/4))) % len(s.rooms)
 }
 
+func (s *Story) IsInCenterOfRoom(rads float64, roomIndex int) bool {
+	room := s.rooms[roomIndex]
+	if room == nil {
+		return false
+	}
+	rads -= math.Pi / 2 // Adjust a lil
+	rads = -rads
+	if rads < 0 {
+		rads += math.Pi * 2
+	}
+
+	start := float64(room.index) * (math.Pi / 4)
+	start += math.Pi / 8
+	end := start + float64(room.size)*(math.Pi/4)
+	end -= math.Pi / 8 * 2 // I don't know why, but the end adjustment is off, so x2 kinda fixes it...
+
+	return rads >= start && rads <= end
+}
+
 func (s *Story) AngleFromCenter(x, y float64) float64 {
-	cx := float64(StoryVGroupWidth) / 2
-	cy := float64(StoryVGroupHeight) / 2
+	cx := float64(TowerCenterX)
+	cy := float64(TowerCenterY)
 	return math.Atan2(y-cy, x-cx)
 }
 
 func (s *Story) PositionFromCenter(rads float64, amount float64) (float64, float64) {
-	cx := float64(StoryVGroupWidth) / 2
-	cy := float64(StoryVGroupHeight) / 2
+	cx := float64(TowerCenterX)
+	cy := float64(TowerCenterY)
 	return cx + math.Cos(rads)*amount, cy + math.Sin(rads)*amount
 }
 
 func (s *Story) DistanceFromCenter(x, y float64) float64 {
-	cx := float64(StoryVGroupWidth) / 2
-	cy := float64(StoryVGroupHeight) / 2
+	cx := float64(TowerCenterX)
+	cy := float64(TowerCenterY)
 	return math.Sqrt(math.Pow(x-cx, 2) + math.Pow(y-cy, 2))
 }
 

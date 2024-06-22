@@ -52,6 +52,10 @@ func (t *Tower) Update() {
 				}
 				dude.Trigger(EventEnterRoom{room: u.room, dude: dude})
 			}
+		case RoomCenterActivity:
+			if dude, ok := u.initiator.(*Dude); ok {
+				dude.Trigger(EventCenterRoom{room: u.room, dude: dude})
+			}
 		}
 		u.Apply()
 		if cb := u.Cb(); cb != nil {

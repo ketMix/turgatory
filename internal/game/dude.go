@@ -71,7 +71,7 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 			d.activity = Centering
 			d.stack.HeightOffset = 0
 		} else {
-			r := story.AngleFromCenter(cx, cy)
+			r := story.AngleFromCenter(cx, cy) + d.variation/5000
 			nx, ny := story.PositionFromCenter(r, distance-d.Speed()*100)
 
 			face := math.Atan2(ny-cy, nx-cx)
@@ -110,10 +110,10 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 	case Centering:
 		cx, cy := d.Position()
 		distance := story.DistanceFromCenter(cx, cy)
-		if distance >= 48+d.variation {
+		if distance >= RoomPath+d.variation {
 			d.activity = Moving
 		} else {
-			r := story.AngleFromCenter(cx, cy)
+			r := story.AngleFromCenter(cx, cy) + d.variation/5000
 			nx, ny := story.PositionFromCenter(r, distance+d.Speed()*100)
 
 			face := math.Atan2(ny-cy, nx-cx)
@@ -122,8 +122,8 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 		}
 	case Moving:
 		cx, cy := d.Position()
-		r := story.AngleFromCenter(cx, cy)
-		nx, ny := story.PositionFromCenter(r-d.Speed(), 48+d.variation)
+		r := story.AngleFromCenter(cx, cy) + d.variation/5000
+		nx, ny := story.PositionFromCenter(r-d.Speed(), RoomPath+d.variation)
 
 		face := math.Atan2(ny-cy, nx-cx)
 

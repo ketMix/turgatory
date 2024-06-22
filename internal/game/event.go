@@ -25,6 +25,16 @@ func (e EventLeaveRoom) String() string {
 	return "Leave Room"
 }
 
+// EventCenterRoom is triggered when a dude is roughly in the center of a room
+type EventCenterRoom struct {
+	room *Room
+	dude *Dude
+}
+
+func (e EventCenterRoom) String() string {
+	return "Center of Room"
+}
+
 // EventEquip is triggered when a dude equips an item
 type EventEquip struct {
 	dude      *Dude

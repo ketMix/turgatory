@@ -39,6 +39,7 @@ const (
 
 // RoomStairsEntrance is the distance from the center that a room's stairs is expected to be at.
 const RoomStairsEntrance = 12
+const RoomPath = 55
 const TowerStairs = 60
 const TowerEntrance = 80
 
@@ -72,11 +73,13 @@ const (
 // Room is a room within a story of za toweru.
 type Room struct {
 	story *Story
+	index int // Reference to the index within the story.
 	kind  RoomKind
 	size  RoomSize
 	power int // ???
 
-	stacks render.Stacks
+	stacks         render.Stacks
+	actorsInCenter []Actor
 }
 
 func NewRoom(size RoomSize, kind RoomKind) *Room {
@@ -102,4 +105,26 @@ func (r *Room) Update() {
 // Draw our room bits and bobs.
 func (r *Room) Draw(o *render.Options) {
 	r.stacks.Draw(o)
+}
+
+func (r *Room) AddActorToCenter(a Actor) {
+	r.actorsInCenter = append(r.actorsInCenter, a)
+}
+
+func (r *Room) RemoveActorFromCenter(a Actor) {
+	for i, actor := range r.actorsInCenter {
+		if actor == a {
+			r.actorsInCenter = append(r.actorsInCenter[:i], r.actorsInCenter[i+1:]...)
+			return
+		}
+	}
+}
+
+func (r *Room) IsActorInCenter(a Actor) bool {
+	for _, actor := range r.actorsInCenter {
+		if actor == a {
+			return true
+		}
+	}
+	return false
 }
