@@ -1,6 +1,10 @@
 package game
 
-import "github.com/kettek/ebijam24/internal/render"
+import (
+	"fmt"
+
+	"github.com/kettek/ebijam24/internal/render"
+)
 
 // Tower is our glorious tower :o
 type Tower struct {
@@ -25,8 +29,27 @@ func NewTower() *Tower {
 func (t *Tower) Update() {
 	t.stairs.Update()
 	// TODO: Should this only update "active" stories?
+	var storyUpdates ActivityRequests
 	for _, s := range t.Stories {
-		s.Update()
+		s.Update(&storyUpdates)
+	}
+	for _, u := range storyUpdates {
+		switch u := u.(type) {
+		case RoomEnterActivity:
+			if u.room == nil {
+				fmt.Printf("%s is in an empty room\n", u.initiator.Name())
+			} else {
+				var level int
+				if story := u.room.story; story != nil {
+					level = story.level
+				}
+				fmt.Printf("%s in story %d is moving to %s %s\n", u.initiator.Name(), level, u.room.size.String(), u.room.kind.String())
+			}
+		}
+		u.Apply()
+		if cb := u.Cb(); cb != nil {
+			cb(true)
+		}
 	}
 }
 

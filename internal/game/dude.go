@@ -22,7 +22,8 @@ const (
 
 type Dude struct {
 	name         string
-	room         *Room // current room the dude is in
+	story        *Story // current story da dude be in
+	room         *Room  // current room the dude is in
 	stack        *render.Stack
 	speed        float64
 	timer        int

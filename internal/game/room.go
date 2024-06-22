@@ -71,6 +71,7 @@ const (
 
 // Room is a room within a story of za toweru.
 type Room struct {
+	story *Story
 	kind  RoomKind
 	size  RoomSize
 	power int // ???

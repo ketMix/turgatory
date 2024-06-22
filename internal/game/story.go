@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/kettek/ebijam24/internal/render"
@@ -13,6 +12,7 @@ type Story struct {
 	dudes  []*Dude
 	stacks render.Stacks
 	vgroup *render.VGroup
+	level  int
 }
 
 // StoryHeight is the height of a story in da tower.
@@ -65,7 +65,7 @@ func NewStoryWithSize(size int) *Story {
 }
 
 // Update updates the rooms.
-func (s *Story) Update() {
+func (s *Story) Update(req *ActivityRequests) {
 	// Update the floors in case they have sweet animations.
 	for _, stack := range s.stacks {
 		stack.Update()
@@ -87,28 +87,23 @@ func (s *Story) Update() {
 	}
 
 	// Update the dudes (maybe should be just handled in rooms?)
-	var updates ActivityRequests
+	var dudeUpdates ActivityRequests
 	for _, dude := range s.dudes {
-		dude.Update(s, &updates)
+		dude.Update(s, &dudeUpdates)
 	}
-	for _, update := range updates {
+	for _, u := range dudeUpdates {
 		success := true
-		switch u := update.(type) {
+		switch u := u.(type) {
 		case MoveActivity:
 			roomIndex := s.RoomIndexFromAngle(s.AngleFromCenter(u.x, u.y))
 			if room := s.rooms[roomIndex]; room != u.initiator.Room() {
-				if room == nil {
-					fmt.Println(u.initiator.Name(), "is in an empty room")
-				} else {
-					fmt.Println(u.initiator.Name(), "is moving to a new room: ", room.size.String(), room.kind.String())
-				}
-				u.initiator.SetRoom(room)
+				req.Add(RoomEnterActivity{initiator: u.initiator, room: room})
 			}
 		}
 		if success {
-			update.Apply()
+			u.Apply()
 		}
-		if cb := update.Cb(); cb != nil {
+		if cb := u.Cb(); cb != nil {
 			cb(success)
 		}
 	}
@@ -155,12 +150,14 @@ func (s *Story) Complete() bool {
 }
 
 func (s *Story) AddDude(d *Dude) {
+	d.story = s
 	s.dudes = append(s.dudes, d)
 }
 
 func (s *Story) RemoveDude(d *Dude) {
 	for i, v := range s.dudes {
 		if v == d {
+			d.story = nil
 			s.dudes = append(s.dudes[:i], s.dudes[i+1:]...)
 			return
 		}
@@ -199,6 +196,7 @@ func (s *Story) PlaceRoom(r *Room, index int) error {
 	for i := 0; i < int(r.size); i++ {
 		s.rooms[index+i] = r
 	}
+	r.story = s
 	return nil
 }
 
@@ -222,6 +220,7 @@ func (s *Story) RemoveRoom(index int) error {
 	for i := 0; i < int(room.size); i++ {
 		s.rooms[index+i] = nil
 	}
+	room.story = nil
 	return nil
 }
 

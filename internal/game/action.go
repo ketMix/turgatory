@@ -41,3 +41,31 @@ func (m MoveActivity) Apply() {
 func (m MoveActivity) Cb() func(success bool) {
 	return m.cb
 }
+
+type RoomEnterActivity struct {
+	initiator Actor
+	room      *Room
+	cb        func(success bool)
+}
+
+func (r RoomEnterActivity) Apply() {
+	r.initiator.SetRoom(r.room)
+}
+
+func (r RoomEnterActivity) Cb() func(success bool) {
+	return r.cb
+}
+
+type RoomLeaveActivity struct {
+	initiator Actor
+	room      *Room
+	cb        func(success bool)
+}
+
+func (r RoomLeaveActivity) Apply() {
+	r.initiator.SetRoom(nil)
+}
+
+func (r RoomLeaveActivity) Cb() func(success bool) {
+	return r.cb
+}
