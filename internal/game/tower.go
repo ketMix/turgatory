@@ -65,7 +65,7 @@ func (t *Tower) Draw(o *render.Options) {
 		s.Draw(o)
 		o.DrawImageOptions.GeoM.Translate(0, -StoryHeight*o.Camera.Zoom) // Transform our rendering, ofc
 	}
-	t.stairs.Draw(o) // We draw the stairs first and allow the stories to be drawn overtop.
+	//t.stairs.Draw(o) // We draw the stairs first and allow the stories to be drawn overtop.
 }
 
 // AddStory does as it says.
