@@ -83,3 +83,17 @@ func (r RoomCenterActivity) Apply() {
 func (r RoomCenterActivity) Cb() func(success bool) {
 	return r.cb
 }
+
+type RoomEndActivity struct {
+	initiator Actor
+	room      *Room
+	lastRoom  bool
+	cb        func(success bool)
+}
+
+func (r RoomEndActivity) Apply() {
+}
+
+func (r RoomEndActivity) Cb() func(success bool) {
+	return r.cb
+}

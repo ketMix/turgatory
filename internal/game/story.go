@@ -106,6 +106,7 @@ func (s *Story) Update(req *ActivityRequests) {
 					}
 				} else if room.IsActorInCenter(u.initiator) {
 					room.RemoveActorFromCenter(u.initiator)
+					req.Add(RoomEndActivity{initiator: u.initiator, room: room})
 				}
 			}
 		}

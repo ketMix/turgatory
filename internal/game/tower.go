@@ -56,6 +56,16 @@ func (t *Tower) Update() {
 			if dude, ok := u.initiator.(*Dude); ok {
 				dude.Trigger(EventCenterRoom{room: u.room, dude: dude})
 			}
+		case RoomEndActivity:
+			if dude, ok := u.initiator.(*Dude); ok {
+				dude.Trigger(EventEndRoom{room: u.room, dude: dude})
+			}
+			fmt.Println("end of room", u.room.index)
+			if u.room.index == 7 {
+				// TODO: If the next story is not open, then create a portal stack and have the lil dudes walk into + dematerialize (fade out).
+				// TODO: If the next story is open, then move to center stairs, set dude state to GoUpStairs, upon which the success of will cause an Activity of "EnterStory", which will move the dude to the next story and set the ComeFromStairs state.
+				fmt.Println("END OF STORY, OH GOSH")
+			}
 		}
 		u.Apply()
 		if cb := u.Cb(); cb != nil {
