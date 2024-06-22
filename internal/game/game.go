@@ -92,6 +92,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// Debug render
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%0.1fx%0.1f", g.cursorX, g.cursorY), g.mouseX, g.mouseY-16)
+	// Print fps
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%0.2f", ebiten.CurrentFPS()), 0, 0)
 	ox, oy := g.camera.WorldToScreen(0, 0)
 	ebitenutil.DebugPrintAt(screen, "0x0", int(ox)-8, int(oy)-8)
 }

@@ -54,10 +54,15 @@ func NewStoryWithSize(size int) *Story {
 		story.stacks.Add(center)
 	}*/
 
-	// Test dude
-	dude := NewDude()
-	dude.stack.SetPosition(story.PositionFromCenter(math.Pi/2, TowerEntrance))
-	story.AddDude(dude)
+	// Test dudes
+	professions := []ProfessionKind{Knight, Vagabond, Ranger, Cleric}
+	dudeLimit := 10
+	for i := 0; i < dudeLimit; i++ {
+		pk := professions[i%len(professions)]
+		dude := NewDude(pk, 1)
+		dude.stack.SetPosition(story.PositionFromCenter(math.Pi/2, TowerEntrance))
+		story.AddDude(dude)
+	}
 
 	story.vgroup = render.NewVGroup(StoryVGroupWidth, StoryVGroupHeight, StorySlices) // For now...
 

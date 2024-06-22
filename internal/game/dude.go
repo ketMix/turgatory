@@ -21,18 +21,22 @@ const (
 )
 
 type Dude struct {
-	name         string
-	story        *Story // current story da dude be in
-	room         *Room  // current room the dude is in
-	stack        *render.Stack
-	speed        float64
-	timer        int
-	activity     DudeActivity
-	activityDone bool
-	variation    float64
+	name           string
+	xp             int
+	gold           float32
+	professionKind ProfessionKind
+	stats          Stats
+	equipment      []*Equipment
+	story          *Story // current story da dude be in
+	room           *Room  // current room the dude is in
+	stack          *render.Stack
+	timer          int
+	activity       DudeActivity
+	activityDone   bool
+	variation      float64
 }
 
-func NewDude() *Dude {
+func NewDude(pk ProfessionKind, level int) *Dude {
 	dude := &Dude{}
 
 	stack, err := render.NewStack("dudes/liltest", "", "")
@@ -42,7 +46,12 @@ func NewDude() *Dude {
 	stack.SetOriginToCenter()
 
 	dude.name = assets.GetRandomName()
-	dude.speed = 0.002
+	dude.xp = 0
+	dude.gold = 0
+	dude.professionKind = pk
+	profession := NewProfession(pk, level)
+	dude.stats = profession.StartingStats()
+	dude.equipment = profession.StartingEquipment()
 	dude.variation = -3 + rand.Float64()*6
 
 	dude.stack = stack
@@ -66,7 +75,7 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 			d.stack.HeightOffset = 0
 		} else {
 			r := story.AngleFromCenter(cx, cy)
-			nx, ny := story.PositionFromCenter(r, distance-d.speed*100)
+			nx, ny := story.PositionFromCenter(r, distance-d.Speed()*100)
 
 			face := math.Atan2(ny-cy, nx-cx)
 
@@ -85,7 +94,7 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 			cx, cy := d.Position()
 			distance := story.DistanceFromCenter(cx, cy)
 			r := story.AngleFromCenter(cx, cy)
-			nx, ny := story.PositionFromCenter(r, distance+d.speed*100)
+			nx, ny := story.PositionFromCenter(r, distance+d.Speed()*100)
 
 			face := math.Atan2(ny-cy, nx-cx)
 
@@ -108,7 +117,7 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 			d.activity = Moving
 		} else {
 			r := story.AngleFromCenter(cx, cy)
-			nx, ny := story.PositionFromCenter(r, distance+d.speed*100)
+			nx, ny := story.PositionFromCenter(r, distance+d.Speed()*100)
 
 			face := math.Atan2(ny-cy, nx-cx)
 
@@ -117,7 +126,7 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 	case Moving:
 		cx, cy := d.Position()
 		r := story.AngleFromCenter(cx, cy)
-		nx, ny := story.PositionFromCenter(r-d.speed, 48+d.variation)
+		nx, ny := story.PositionFromCenter(r-d.Speed(), 48+d.variation)
 
 		face := math.Atan2(ny-cy, nx-cx)
 
@@ -161,4 +170,29 @@ func (d *Dude) SetRoom(r *Room) {
 
 func (d *Dude) Name() string {
 	return d.name
+}
+
+func (d *Dude) Level() int {
+	return d.stats.Level()
+}
+
+// Scale speed with agility
+// Thinkin we probably shouldn't calculate this like this...
+func (d *Dude) Speed() float64 {
+	// This values probably belong somewhere else
+	speedScale := 0.1
+	baseSpeed := 0.005
+	return baseSpeed * (1 + float64(d.stats.Agility())*speedScale)
+}
+
+func (d *Dude) Stats() *Stats {
+	return &d.stats
+}
+
+func (d *Dude) Profession() ProfessionKind {
+	return d.professionKind
+}
+
+func (d *Dude) UpdateGold(gold float32) {
+	d.gold += gold
 }
