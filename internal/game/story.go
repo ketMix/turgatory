@@ -186,6 +186,11 @@ func (s *Story) RemoveDude(d *Dude) {
 	}
 }
 
+// Open marks the story as being open. This activates full updates and rendering.
+func (s *Story) Open() {
+	s.open = true
+}
+
 // PlaceRoom places a room in the story, populating the rooms slice's pointer references accordingly.
 func (s *Story) PlaceRoom(r *Room, index int) error {
 	if index < 0 || index >= len(s.rooms) {

@@ -103,6 +103,7 @@ func (g *Game) Init() {
 	tower := NewTower()
 
 	firstStory := NewStory()
+	firstStory.Open()
 	tower.AddStory(firstStory)
 
 	//tower.AddStory(NewStoryWithSize(16))
