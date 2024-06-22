@@ -31,7 +31,7 @@ type Equipment struct {
 	breakable   bool             // Whether the equipment can break
 
 	source *RoomKind     // The room the equipment can be found in
-	perk   *Perk         // Perk of the equipment (if any)
+	perk   Perk          // Perk of the equipment (if any)
 	stats  *Stats        // Stats of the equipment (if any)
 	stack  *render.Stack // How to draw the equipment
 	Draw   func(*render.Options)
@@ -55,7 +55,7 @@ func (eq EquipmentQuality) String() string {
 }
 
 // NewEquipment creates a new equipment.
-func NewEquipment(name string, level int, quality EquipmentQuality, description string, breakable bool, perk *Perk, stack *render.Stack, source *RoomKind) *Equipment {
+func NewEquipment(name string, level int, quality EquipmentQuality, description string, breakable bool, perk Perk, stack *render.Stack, source *RoomKind) *Equipment {
 	// Total uses is the quality + 1
 	totalUses := int(quality) + 1
 
@@ -184,17 +184,17 @@ func (e *Equipment) Description() string {
 
 // Probably not necessary?
 // // Perk returns the perk of the equipment.
-// func (e *Equipment) Perk() *Perk {
+// func (e *Equipment) Perk() Perk {
 // 	return e.perk
 // }
 
 // Activate the equipment's perk and decrement the uses.
-func (e *Equipment) Activate(event *Event, dude *Dude) {
+func (e *Equipment) Activate(event Event) {
 	if e.perk == nil || e.uses == 0 {
 		return
 	}
 
-	activated := e.perk.Activate(event, dude, e)
+	activated := e.perk.Check(event)
 	if !activated || e.breakable {
 		return
 	}

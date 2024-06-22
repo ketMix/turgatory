@@ -23,6 +23,7 @@ type Actor interface {
 	Name() string
 	Room() *Room
 	SetRoom(r *Room)
+	Trigger(Event)
 }
 
 type MoveActivity struct {

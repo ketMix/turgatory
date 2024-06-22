@@ -144,6 +144,18 @@ func (d *Dude) Draw(o *render.Options) {
 	d.stack.Draw(o)
 }
 
+func (d *Dude) Trigger(e Event) {
+	switch e := e.(type) {
+	case EventEnterRoom:
+		d.room = e.room
+	case EventLeaveRoom:
+		d.room = nil
+	}
+	for _, eq := range d.equipment {
+		eq.Activate(e)
+	}
+}
+
 func (d *Dude) Position() (float64, float64) {
 	return d.stack.Position()
 }

@@ -45,6 +45,12 @@ func (t *Tower) Update() {
 				}
 				fmt.Printf("%s in story %d is moving to %s %s\n", u.initiator.Name(), level, u.room.size.String(), u.room.kind.String())
 			}
+			if dude, ok := u.initiator.(*Dude); ok {
+				if dude.room != nil {
+					dude.Trigger(EventLeaveRoom{room: dude.room, dude: dude})
+				}
+				dude.Trigger(EventEnterRoom{room: u.room, dude: dude})
+			}
 		}
 		u.Apply()
 		if cb := u.Cb(); cb != nil {

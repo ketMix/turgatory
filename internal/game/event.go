@@ -1,73 +1,46 @@
 package game
 
-type EventName int
-
-const (
-	EventUnknown   EventName = iota
-	EventEnterRoom           // EventEnterRoom is triggered when a dude enters a room
-	EventLeaveRoom           // EventLeaveRoom is triggered when a dude leaves a room
-	EventEquip               // EventEquip is triggered when a dude equips an item
-	EventUnequip             // EventUnequip is triggered when a dude unequips an item
-)
-
-func (e EventName) String() string {
-	switch e {
-	case EventEnterRoom:
-		return "Enter Room"
-	case EventLeaveRoom:
-		return "Leave Room"
-	case EventEquip:
-		return "Equip"
-	case EventUnequip:
-		return "Unequip"
-	case EventUnknown:
-	default:
-	}
-	return "Unknown"
+// Event represents when something in the game has happened, such as entering a room, a dude dying, etc.
+type Event interface {
+	String() string
 }
 
-type IEvent interface {
-	Name() EventName
-	Data() interface{}
+// EventEnterRoom is triggered when a dude enters a room
+type EventEnterRoom struct {
+	room *Room
+	dude *Dude
 }
 
-type Event struct {
-	name EventName
-	data interface{}
+func (e EventEnterRoom) String() string {
+	return "Enter Room"
 }
 
-func (e *Event) Name() EventName {
-	return e.name
+// EventLeaveRoom is triggered when a dude leaves a room
+type EventLeaveRoom struct {
+	room *Room
+	dude *Dude
 }
 
-func (e *Event) Data() interface{} {
-	return e.data
+func (e EventLeaveRoom) String() string {
+	return "Leave Room"
 }
 
-func NewEnterRoomEvent(room *Room) *Event {
-	return &Event{
-		name: EventEnterRoom,
-		data: room,
-	}
+// EventEquip is triggered when a dude equips an item
+type EventEquip struct {
+	dude      *Dude
+	equipment *Equipment
 }
 
-func NewLeaveRoomEvent(room *Room) *Event {
-	return &Event{
-		name: EventLeaveRoom,
-		data: room,
-	}
+func (e EventEquip) String() string {
+	return "Equip"
 }
 
-func NewEquipEvent(equipment *Equipment) *Event {
-	return &Event{
-		name: EventEquip,
-		data: equipment,
-	}
+// EventUnequip is triggered when a dude unequips an item
+type EventUnequip struct {
+	dude      *Dude
+	equipment *Equipment
 }
 
-func NewUnequipEvent(equipment *Equipment) *Event {
-	return &Event{
-		name: EventUnequip,
-		data: equipment,
-	}
+func (e EventUnequip) String() string {
+	return "Unequip"
 }
