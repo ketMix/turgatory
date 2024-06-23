@@ -327,11 +327,13 @@ func (s *Story) IsInCenterOfRoom(rads float64, roomIndex int) bool {
 	}
 
 	start := float64(room.index) * (math.Pi / 4)
-	start += math.Pi / 8
 	end := start + float64(room.size)*(math.Pi/4)
-	end -= math.Pi / 8 * 2 // I don't know why, but the end adjustment is off, so x2 kinda fixes it...
 
-	return rads >= start && rads <= end
+	center := (start + end) / 2
+	centerRad := math.Pi / 16
+	centerStart := center - centerRad
+	centerEnd := center + centerRad
+	return rads >= centerStart && rads <= centerEnd
 }
 
 func (s *Story) AngleFromCenter(x, y float64) float64 {
