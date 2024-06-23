@@ -96,7 +96,7 @@ type Equipment struct {
 // Used for creating equipment in the game.
 // Should find the equipment by name from loaded equipment
 func NewEquipment(name string, level int, quality EquipmentQuality, perk IPerk) *Equipment {
-	baseEquipment, err := assets.LoadEquipment(name)
+	baseEquipment, err := assets.GetEquipment(name)
 	if err != nil {
 		fmt.Println("Error loading equipment: ", err)
 		return nil
@@ -353,4 +353,17 @@ func (e *Equipment) RestoreUses(i int) {
 	if e.uses > e.totalUses {
 		e.uses = e.totalUses
 	}
+}
+
+func GetEquipmentNamesWithTypes(equipmentTypes []EquipmentType) []*string {
+	equipmentStrings := make([]string, len(equipmentTypes))
+	for i, et := range equipmentTypes {
+		equipmentStrings[i] = string(et)
+	}
+	equipmentList := assets.GetEquipmentWithTypes(equipmentStrings)
+	names := make([]*string, len(equipmentList))
+	for i, e := range equipmentList {
+		names[i] = &e.Name
+	}
+	return names
 }

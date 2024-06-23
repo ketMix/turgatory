@@ -70,14 +70,16 @@ func (r *RoomKind) String() string {
 
 // Equipment you can find in room
 // hmm, kinda defeats the current structure of equipment in yaml if we have to add new equipment here
-func (r *RoomKind) Equipment() []string {
+func (r *RoomKind) Equipment() []*string {
 	switch *r {
 	case Armory:
-		return []string{"Sword", "Shield", "Bow", "Book", "Robe", "Plate", "Leather"}
+		types := []EquipmentType{EquipmentTypeWeapon, EquipmentTypeArmor}
+		return GetEquipmentNamesWithTypes(types)
 	case HealingShrine:
-		return []string{"Ring", "Necklace"} // temporary
+		types := []EquipmentType{EquipmentTypeAccessory}
+		return GetEquipmentNamesWithTypes(types)
 	}
-	return []string{}
+	return nil
 }
 
 const (
@@ -209,7 +211,7 @@ func (r *Room) RollLoot(luck int) *Equipment {
 	// Create equipment
 	list := r.kind.Equipment()
 	equipmentName := list[rand.Intn(len(list))]
-	equipment := NewEquipment(equipmentName, 1, initialQuality, perk)
+	equipment := NewEquipment(*equipmentName, 1, initialQuality, perk)
 	if equipment == nil {
 		return nil
 	}

@@ -1,0 +1,9 @@
+book
+bow
+leather
+necklace
+plate
+ring
+robe
+shield
+sword
