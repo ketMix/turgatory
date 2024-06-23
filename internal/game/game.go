@@ -135,10 +135,11 @@ func (g *Game) Init() {
 
 	// Add dudes of testing.
 	professions := []ProfessionKind{Knight, Vagabond, Ranger, Cleric}
-	dudeLimit := 10
+	dudeLimit := 1
 	for i := 0; i < dudeLimit; i++ {
 		pk := professions[i%len(professions)]
 		dude := NewDude(pk, 1)
+		dude.stats.agility = 20
 		g.dudes = append(g.dudes, dude)
 		tower.AddDude(dude)
 	}

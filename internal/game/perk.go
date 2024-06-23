@@ -109,31 +109,35 @@ type Perk struct {
 	quality PerkQuality
 }
 
-func (p Perk) String() string {
+func (p *Perk) String() string {
 	return "What is zis, zis is nothing!"
 }
-func (p Perk) Description() string {
+func (p *Perk) Description() string {
 	return ""
 }
-func (p Perk) Quality() PerkQuality {
+func (p *Perk) Quality() PerkQuality {
 	return p.quality
 }
 
-func (p Perk) Check(e Event) bool {
+func (p *Perk) Check(e Event) bool {
 	return false
 }
-func (p Perk) LevelUp(maxQuality PerkQuality) {
+func (p *Perk) LevelUp(maxQuality PerkQuality) {
 	if p.quality >= maxQuality {
 		return
 	}
-	p.quality++
+	p.quality += 1
 }
 
-func (p Perk) LevelDown() {
+func (p *Perk) LevelDown() {
 	if p.quality <= PerkQualityTrash {
 		return
 	}
 	p.quality--
+}
+
+func (p *Perk) Name() string {
+	return "Perk"
 }
 
 // PerkNone represents an empty perk. Not sure if this will be used.
@@ -148,7 +152,7 @@ func (p PerkNone) Quality() PerkQuality {
 // PerkFindGold finds gold based upon the quality of the perk.
 // +0.25 per quality level per room.
 type PerkFindGold struct {
-	Perk
+	*Perk
 }
 
 func (p PerkFindGold) chance() float64 {
@@ -181,12 +185,13 @@ func (p PerkFindGold) Check(e Event) bool {
 // PerkStatBoost is a perk that modifies a stat based on teh quality of the perk.
 // +1 target stat per quality level.
 type PerkStatBoost struct {
-	Perk
+	*Perk
 	stat Stat
 }
 
 func (p PerkStatBoost) Name() string {
-	return "Stat Boost"
+	statStr := string(p.stat)
+	return constructName("Stat Boost", p.quality, &statStr)
 }
 
 func (p PerkStatBoost) String() string {
@@ -215,7 +220,7 @@ func (p PerkStatBoost) Check(e Event) bool {
 
 // PerkHeal heals dude based on wisdom when entering a room.
 type PerkHealOnRoomEnter struct {
-	Perk
+	*Perk
 }
 
 func (p PerkHealOnRoomEnter) amount(wisdom int) int {
@@ -223,7 +228,7 @@ func (p PerkHealOnRoomEnter) amount(wisdom int) int {
 }
 
 func (p PerkHealOnRoomEnter) Name() string {
-	return "Heal On Room Enter"
+	return constructName("Heal On Room Enter", p.quality, nil)
 }
 
 func (p PerkHealOnRoomEnter) String() string {
@@ -244,22 +249,23 @@ func (p PerkHealOnRoomEnter) Check(e Event) bool {
 
 // PerkHeal heals all dudes based on quality when equip is sold
 type PerkHealOnSell struct {
-	Perk
+	*Perk
 }
 
 func (p PerkHealOnSell) amount() int {
 	return int(p.quality) * 10
 }
+
 func (p PerkHealOnSell) Name() string {
 	return "Heal On Sell"
 }
 
 func (p PerkHealOnSell) String() string {
-	return constructName(p.Name(), p.quality, nil)
+	return constructName("Heal on Sell", p.quality, nil)
 }
 
 func (p PerkHealOnSell) Description() string {
-	return fmt.Sprintf("Heals %d when sold", p.amount())
+	return fmt.Sprintf("Heals all dudes for %d when sold", p.amount())
 }
 
 func (p PerkHealOnSell) Check(e Event) bool {
@@ -274,7 +280,7 @@ func (p PerkHealOnSell) Check(e Event) bool {
 
 func GetRandomPerk(quality PerkQuality) IPerk {
 	// Randomly select a perk
-	perk := Perk{
+	perk := &Perk{
 		quality: quality,
 	}
 

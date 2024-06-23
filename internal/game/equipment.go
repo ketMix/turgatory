@@ -121,7 +121,7 @@ func NewEquipment(name string, level int, quality EquipmentQuality, perk IPerk) 
 	if perk == nil {
 		switch baseEquipment.Perk {
 		case "Heal On Room Enter":
-			perk = PerkHealOnRoomEnter{Perk{quality: PerkQualityCommon}}
+			perk = PerkHealOnRoomEnter{&Perk{quality: PerkQualityCommon}}
 		}
 	}
 
@@ -164,7 +164,11 @@ func (e *Equipment) Update() {
 
 // Name returns the name of the equipment.
 func (e *Equipment) Name() string {
-	return fmt.Sprintf("%s (%s)", e.name, e.quality)
+	perkName := ""
+	if e.perk != nil {
+		perkName = " of " + e.perk.Name()
+	}
+	return fmt.Sprintf("%s (%s)%s", e.name, e.quality, perkName)
 }
 
 // Level returns the level of the equipment.

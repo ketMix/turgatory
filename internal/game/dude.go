@@ -393,11 +393,16 @@ func (d *Dude) Perkify(maxQuality PerkQuality) {
 	if eq := d.equipped[randomEquipType]; eq != nil {
 		// Assign random perk
 		if eq.perk == nil {
+			prevName := eq.Name()
 			eq.perk = GetRandomPerk(PerkQualityTrash)
+			fmt.Println(d.name, "upgraded his equipment", prevName, "with", eq.perk.Name(), "and now has", eq.Name())
 		} else {
 			// Level up perk
+			previousQuality := eq.perk.Quality()
 			eq.perk.LevelUp(maxQuality)
+			if eq.perk.Quality() != previousQuality {
+				fmt.Println(d.name, "upgraded his equipment", eq.Name(), "to", eq.perk.Name())
+			}
 		}
 	}
-	fmt.Println(d.name, "perkified equipment")
 }
