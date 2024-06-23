@@ -81,6 +81,10 @@ func (g *Game) Update() error {
 	for _, r := range g.renderables {
 		r.Update()
 	}
+
+	// Update UI
+	g.ui.Update(&g.uiOptions)
+
 	return nil
 }
 
