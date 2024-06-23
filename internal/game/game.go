@@ -107,6 +107,9 @@ func (g *Game) Init() {
 	tower.AddStory(firstStory)
 
 	tower.AddStory(NewStoryWithSize(8))
+	tower.AddStory(NewStory())
+	tower.AddStory(NewStory())
+	tower.AddStory(NewStory())
 	lvl.AddTower(tower)
 
 	g.level = lvl
