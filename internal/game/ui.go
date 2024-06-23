@@ -165,13 +165,13 @@ func (rp *RoomPanel) Draw(o *render.Options) {
 	rp.left.Draw(o)
 	o.DrawImageOptions.GeoM.Translate(32, -32)
 	// mid
-	x += 16
-	for ; x < rp.width-16; x += 16 {
+	x += 32
+	for ; x < rp.width-32; x += 32 {
 		rp.topmid.Draw(o)
 		o.DrawImageOptions.GeoM.Translate(0, 32)
 		rp.mid.Draw(o)
 		o.DrawImageOptions.GeoM.Translate(0, -32)
-		o.DrawImageOptions.GeoM.Translate(16, 0)
+		o.DrawImageOptions.GeoM.Translate(32, 0)
 	}
 	// topright
 	rp.topright.Draw(o)
