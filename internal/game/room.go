@@ -61,6 +61,8 @@ func (r *RoomKind) String() string {
 		return "template"
 	case Well:
 		return "well"
+	case Library:
+		return "library"
 	default:
 		return "Unknown"
 	}
@@ -88,8 +90,10 @@ const (
 	Combat
 	// Well restores magic items?
 	Well
-	// Treasure room
+	// Treasure room - $$$
 	Treasure
+	// Library - enchant
+	Library
 )
 
 // Room is a room within a story of za toweru.
@@ -190,7 +194,7 @@ func (r *Room) RollLoot(luck int) *Equipment {
 	// Determine if perk exists based on luck
 	// Determine perk quality based on luck and room level
 	hasPerk := rand.Intn(100) < luck
-	var perk Perk = nil
+	var perk IPerk = nil
 	if hasPerk {
 		fromLuck = float64(luck) / 5.0
 		fromRoomLevel = float64(r.story.level) / 2.0
@@ -259,6 +263,13 @@ func (r *Room) GetRoomEffect(e Event) {
 			// Add gold
 			goldAmount := (r.story.level + 1) * rand.Intn(10*int(r.size))
 			e.dude.UpdateGold(float32(goldAmount))
+		case Library:
+			// Level up a random equipment perk or add one
+			maxQuality := PerkQuality(r.story.level + 1)
+			if maxQuality > PerkQualityGodly {
+				maxQuality = PerkQualityGodly
+			}
+			e.dude.Perkify(maxQuality)
 		}
 	}
 }
