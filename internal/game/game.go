@@ -11,6 +11,7 @@ import (
 
 type Game struct {
 	ui                    *UI
+	dudes                 []*Dude
 	renderables           []render.Renderable
 	camera                render.Camera
 	mouseX, mouseY        int
@@ -116,6 +117,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Init() {
+	g.dudes = []*Dude{}
 	lvl := NewLevel()
 	tower := NewTower()
 
@@ -137,10 +139,11 @@ func (g *Game) Init() {
 	for i := 0; i < dudeLimit; i++ {
 		pk := professions[i%len(professions)]
 		dude := NewDude(pk, 1)
+		g.dudes = append(g.dudes, dude)
 		tower.AddDude(dude)
 	}
 
-	g.ui = NewUI()
+	g.ui = NewUI(g.dudes)
 	g.uiOptions = UIOptions{Scale: 3.0}
 	g.camera = *render.NewCamera(0, 0)
 }

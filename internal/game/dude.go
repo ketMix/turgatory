@@ -148,7 +148,7 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 	// Update equipment
 	for _, eq := range d.equipped {
 		if eq != nil {
-			// Set equipment position to dude
+			// Set equipment position to dude position
 			if eq.stack != nil {
 				eq.stack.SetPosition(d.stack.Position())
 			}
@@ -165,6 +165,24 @@ func (d *Dude) Draw(o *render.Options) {
 		if eq != nil {
 			eq.Draw(o)
 		}
+	}
+}
+
+func (d *Dude) DrawProfile(o *render.Options) {
+	stack := render.CopyStack(d.stack)
+	stack.SetPosition(0, 0)
+	stack.SetOrigin(0, 0)
+	stack.SetRotation(-math.Pi / 2)
+	stack.Draw(o)
+
+	// Draw armor (like helmet or soemthing) ?
+	armor := d.equipped[EquipmentTypeArmor]
+	if armor != nil && armor.stack != nil {
+		stack = render.CopyStack(armor.stack)
+		stack.SetPosition(0, 0)
+		stack.SetOrigin(0, 0)
+		stack.SetRotation(-math.Pi / 2)
+		stack.Draw(o)
 	}
 }
 

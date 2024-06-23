@@ -59,6 +59,23 @@ func NewStack(name string, stackName string, animationName string) (*Stack, erro
 	return &Stack{data: staxie, currentStack: &stack, currentAnimation: &animation, currentFrame: frame}, nil
 }
 
+func CopyStack(stack *Stack) *Stack {
+	return &Stack{
+		Positionable:     stack.Positionable,
+		Rotateable:       stack.Rotateable,
+		Originable:       stack.Originable,
+		data:             stack.data,
+		currentStack:     stack.currentStack,
+		currentAnimation: stack.currentAnimation,
+		currentFrame:     stack.currentFrame,
+		frameCounter:     stack.frameCounter,
+		MaxSliceIndex:    stack.MaxSliceIndex,
+		VgroupOffset:     stack.VgroupOffset,
+		SliceOffset:      stack.SliceOffset,
+		HeightOffset:     stack.HeightOffset,
+	}
+}
+
 func (s *Stack) Draw(o *Options) {
 	if s.currentFrame == nil {
 		return

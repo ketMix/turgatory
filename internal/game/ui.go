@@ -1,6 +1,8 @@
 package game
 
 import (
+	"fmt"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/ebijam24/internal/render"
 )
@@ -17,18 +19,19 @@ type UI struct {
 	options   *UIOptions
 }
 
-func NewUI() *UI {
+func NewUI(dudeList []*Dude) *UI {
 	ui := &UI{}
 
 	{
 		panelSprite := Must(render.NewSprite("ui/panels"))
 		ui.dudePanel = DudePanel{
-			top:      Must(render.NewSubSprite(panelSprite, 0, 0, 16, 16)),
-			topright: Must(render.NewSubSprite(panelSprite, 16, 0, 16, 16)),
-			mid:      Must(render.NewSubSprite(panelSprite, 0, 16, 16, 16)),
-			midright: Must(render.NewSubSprite(panelSprite, 16, 16, 16, 16)),
-			bot:      Must(render.NewSubSprite(panelSprite, 0, 32, 16, 16)),
-			botright: Must(render.NewSubSprite(panelSprite, 16, 32, 16, 16)),
+			top:          Must(render.NewSubSprite(panelSprite, 0, 0, 16, 16)),
+			topright:     Must(render.NewSubSprite(panelSprite, 16, 0, 16, 16)),
+			mid:          Must(render.NewSubSprite(panelSprite, 0, 16, 16, 16)),
+			midright:     Must(render.NewSubSprite(panelSprite, 16, 16, 16, 16)),
+			bot:          Must(render.NewSubSprite(panelSprite, 0, 32, 16, 16)),
+			botright:     Must(render.NewSubSprite(panelSprite, 16, 32, 16, 16)),
+			dudeProfiles: profilesFromDudes(dudeList),
 		}
 	}
 	{
@@ -76,12 +79,49 @@ type DudePanel struct {
 	bot          *render.Sprite
 	botright     *render.Sprite
 	drawerInterp InterpNumber
+	dudeProfiles []*DudeProfile
+}
+
+type DudeProfile struct {
+	render.Positionable
+	dude    *Dude
+	hovered bool
+}
+
+func profilesFromDudes(dudes []*Dude) []*DudeProfile {
+	profiles := []*DudeProfile{}
+	for _, dude := range dudes {
+		profiles = append(profiles, &DudeProfile{dude: dude})
+	}
+	return profiles
+}
+
+// ...
+func (dp *DudeProfile) InBounds(x, y, dpy float64) bool {
+	px, py := dp.Position()
+	px += 11
+	py += dpy + 40
+	profileWidth := 32
+
+	fmt.Println(x, y, dpy, px, py, px+float64(profileWidth), py+float64(profileWidth))
+	if x > px && x < px+float64(profileWidth) && y > py && y < py+float64(profileWidth) {
+		return true
+	}
+	return false
 }
 
 func (dp *DudePanel) Layout(o *UIOptions) {
 	dp.height = o.Height - o.Height/3
+
 	// Position at vertical center.
 	dp.SetPosition(0, float64(o.Height/2)-float64(dp.height)/2-32)
+
+	// Position dude faces
+	yOffset := 24
+	dpx, dpy := dp.Position()
+	for i, p := range dp.dudeProfiles {
+		p.SetPosition(dpx, float64(i*yOffset)-(float64(dpy/2)-24))
+	}
 }
 
 func (dp *DudePanel) Update(o *UIOptions) {
@@ -107,6 +147,14 @@ func (dp *DudePanel) Update(o *UIOptions) {
 
 	if !dp.drawered {
 		// TODO: Convert mouse pos to dude clicking?
+		// Testing with single dude
+		p := dp.dudeProfiles[0]
+		if p.InBounds(mx, my, dpy) {
+			fmt.Println("hovered over my guy: ", p.dude.name)
+			p.hovered = true
+		} else {
+			p.hovered = false
+		}
 	}
 }
 
@@ -121,6 +169,13 @@ func (dp *DudePanel) Draw(o *render.Options) {
 	o.DrawImageOptions.GeoM.Translate(0, 16)
 	y += 16
 	o.DrawImageOptions.GeoM.Translate(-16, 0)
+
+	// Save these top options for drawing dude profiles
+	topOptions := render.Options{
+		Screen:           o.Screen,
+		DrawImageOptions: o.DrawImageOptions,
+	}
+
 	// mid
 	for ; y < dp.height-16; y += 16 {
 		dp.mid.Draw(o)
@@ -133,6 +188,18 @@ func (dp *DudePanel) Draw(o *render.Options) {
 	dp.bot.Draw(o)
 	o.DrawImageOptions.GeoM.Translate(16, 0)
 	dp.botright.Draw(o)
+
+	// Draw dudes below top
+	for _, p := range dp.dudeProfiles {
+		// Save these top options for drawing dude profiles
+		profileOptions := render.Options{
+			Screen:           o.Screen,
+			DrawImageOptions: topOptions.DrawImageOptions,
+		}
+		profileOptions.DrawImageOptions.GeoM.Translate(p.Position())
+		profileOptions.DrawImageOptions.GeoM.Scale(2, 2)
+		p.dude.DrawProfile(&profileOptions)
+	}
 }
 
 type RoomPanel struct {
