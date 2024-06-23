@@ -343,3 +343,10 @@ func (e *Equipment) Type() EquipmentType {
 func (e *Equipment) GoldValue() float32 {
 	return float32(e.level * (1 + int(e.quality)))
 }
+
+func (e *Equipment) RestoreUses(i int) {
+	e.uses += i
+	if e.uses > e.totalUses {
+		e.uses = e.totalUses
+	}
+}

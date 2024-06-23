@@ -42,15 +42,17 @@ func (s *Stats) LevelUp() {
 	// what did you think was going to happen
 	s.level += 1
 
-	// a blesing from jesus himself
-	s.currentHp = s.totalHp
-
 	// variance is a random number between 1 and (wisdom/5) + 1
 	// need 5 wisdom to get a variance of 2
 	// lowest variance is 1
 	// multiplier can get pretty high with his wisdom and level
-	variance := float64(s.level) + rand.Float64()*float64(s.wisdom)/WISDOM_PER_VARIANCE
+	level := s.level
+	if level <= 0 {
+		level = 1
+	}
+	variance := float64(level) + rand.Float64()*float64(s.wisdom)/WISDOM_PER_VARIANCE
 
+	fmt.Println("Variance", variance)
 	// apply the variance to the stats
 	s.totalHp += int(math.Round(float64(s.levelUpChange.totalHp) * variance))
 	s.strength += int(math.Round(float64(s.levelUpChange.strength) * variance))
@@ -58,6 +60,9 @@ func (s *Stats) LevelUp() {
 	s.defense += int(math.Round(float64(s.levelUpChange.defense) * variance))
 	s.agility += int(math.Round(float64(s.levelUpChange.agility) * variance))
 	s.cowardice += int(math.Round(float64(s.levelUpChange.cowardice) * variance))
+
+	// a blesing from jesus himself
+	s.currentHp = s.totalHp
 }
 
 // ApplyLevelDown applies the level down changes to the stats
@@ -70,7 +75,11 @@ func (s *Stats) LevelDown() {
 	// we use it to determine if the stat is skipped from being reduced
 	// variance is a number between 1 and (wisdom/5) + 1
 	// lowest variance is 0.1
-	threshold := 0.1 * (float64(s.wisdom)/WISDOM_PER_VARIANCE + float64(s.level))
+	level := s.level
+	if level <= 0 {
+		level = 1
+	}
+	threshold := 0.1 * (float64(s.wisdom)/WISDOM_PER_VARIANCE + float64(level))
 
 	// conditionally apply the variance to the stats
 	if rand.Float64() > threshold {
@@ -126,27 +135,26 @@ func NewStats(levelUpChange *Stats) *Stats {
 	// start the stats at a negative level
 	// then level up a few times in order to set the starting stats
 	startingLevels := 3
-	if levelUpChange == nil {
-		levelUpChange = &Stats{
-			totalHp:   0,
-			strength:  0,
-			wisdom:    0,
-			defense:   0,
-			agility:   0,
-			cowardice: 0,
-			luck:      0,
-		}
-	}
-	stats := Stats{
+	stats := &Stats{
 		level:         levelUpChange.level - startingLevels,
 		levelUpChange: levelUpChange,
+		totalHp:       0,
+		strength:      0,
+		wisdom:        0,
+		defense:       0,
+		agility:       0,
+		cowardice:     0,
+		luck:          0,
+	}
+	if levelUpChange == nil {
+		return stats
 	}
 
 	// Level up the stats a few times
 	for i := 0; i < startingLevels; i++ {
 		stats.LevelUp()
 	}
-	return &stats
+	return stats
 }
 
 func (s *Stats) Add(a *Stats) *Stats {
