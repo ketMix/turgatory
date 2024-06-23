@@ -50,16 +50,17 @@ func (s *Stats) LevelUp() {
 	if level <= 0 {
 		level = 1
 	}
-	variance := float64(level) + rand.Float64()*float64(s.wisdom)/WISDOM_PER_VARIANCE
+	variance := func() float64 {
+		return 1 + rand.Float64()*(float64(s.wisdom)/WISDOM_PER_VARIANCE)
+	}
 
-	fmt.Println("Variance", variance)
 	// apply the variance to the stats
-	s.totalHp += int(math.Round(float64(s.levelUpChange.totalHp) * variance))
-	s.strength += int(math.Round(float64(s.levelUpChange.strength) * variance))
-	s.wisdom += int(math.Round(float64(s.levelUpChange.wisdom) * variance))
-	s.defense += int(math.Round(float64(s.levelUpChange.defense) * variance))
-	s.agility += int(math.Round(float64(s.levelUpChange.agility) * variance))
-	s.cowardice += int(math.Round(float64(s.levelUpChange.cowardice) * variance))
+	s.totalHp += int(math.Round(float64(s.levelUpChange.totalHp) * variance()))
+	s.strength += int(math.Round(float64(s.levelUpChange.strength) * variance()))
+	s.wisdom += int(math.Round(float64(s.levelUpChange.wisdom) * variance()))
+	s.defense += int(math.Round(float64(s.levelUpChange.defense) * variance()))
+	s.agility += int(math.Round(float64(s.levelUpChange.agility) * variance()))
+	s.cowardice += int(math.Round(float64(s.levelUpChange.cowardice) * variance()))
 
 	// a blesing from jesus himself
 	s.currentHp = s.totalHp
