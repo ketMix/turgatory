@@ -10,16 +10,24 @@ import (
 )
 
 type Game struct {
-	renderables      []render.Renderable
-	camera           render.Camera
-	mouseX, mouseY   int
-	cursorX, cursorY float64
-	level            *Level
+	ui                    *UI
+	renderables           []render.Renderable
+	camera                render.Camera
+	mouseX, mouseY        int
+	cursorX, cursorY      float64
+	level                 *Level
+	lastWidth, lastHeight int
+	uiOptions             UIOptions
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	// Always set the camera's origin to be half the size of the screen.
-	g.camera.SetOrigin(float64(outsideWidth/2), float64(outsideHeight/2))
+	if outsideWidth != g.lastWidth || outsideHeight == g.lastHeight {
+		// Always set the camera's origin to be half the size of the screen.
+		g.camera.SetOrigin(float64(outsideWidth/2), float64(outsideHeight/2))
+		g.lastWidth, g.lastHeight = outsideWidth, outsideHeight
+		g.uiOptions.Width, g.uiOptions.Height = outsideWidth, outsideHeight
+		g.ui.Layout(&g.uiOptions)
+	}
 
 	return outsideWidth, outsideHeight
 }
@@ -90,6 +98,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		r.Draw(&options)
 	}
 
+	// Draw UI
+	options.DrawImageOptions.GeoM.Reset()
+	options.DrawImageOptions.ColorScale.Reset()
+	g.ui.Draw(&options)
+
 	// Debug render
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%0.1fx%0.1f", g.cursorX, g.cursorY), g.mouseX, g.mouseY-16)
 	// Print fps
@@ -123,6 +136,8 @@ func (g *Game) Init() {
 		tower.AddDude(dude)
 	}
 
+	g.ui = NewUI()
+	g.uiOptions = UIOptions{Scale: 3.0}
 	g.camera = *render.NewCamera(0, 0)
 }
 
