@@ -384,3 +384,20 @@ func (d *Dude) LevelUpEquipment(amount int) {
 	}
 	fmt.Println(d.name, "leveled up equipment by", amount)
 }
+
+func (d *Dude) Perkify(maxQuality PerkQuality) {
+	// Random equipped item
+	equipmentTypes := []EquipmentType{EquipmentTypeWeapon, EquipmentTypeArmor, EquipmentTypeAccessory}
+	randomEquipType := equipmentTypes[rand.Intn(len(equipmentTypes))]
+
+	if eq := d.equipped[randomEquipType]; eq != nil {
+		// Assign random perk
+		if eq.perk == nil {
+			eq.perk = GetRandomPerk(PerkQualityTrash)
+		} else {
+			// Level up perk
+			eq.perk.LevelUp(maxQuality)
+		}
+	}
+	fmt.Println(d.name, "perkified equipment")
+}

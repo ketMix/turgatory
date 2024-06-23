@@ -93,33 +93,62 @@ func constructName(ability string, quality PerkQuality, modifier *string) string
 	return name
 }
 
-// Perk is our interface for perks that can be applied to equipment, dudes, etc.
-type Perk interface {
+// IPerk is our interface for perks that can be applied to equipment, dudes, etc.
+type IPerk interface {
 	Check(Event) bool
 	Name() string   // Name of the perk
 	String() string // Full name of the perk
 	Description() string
+	Quality() PerkQuality
+	LevelUp(PerkQuality)
+	LevelDown()
+}
+
+type Perk struct {
+	IPerk
+	quality PerkQuality
+}
+
+func (p Perk) String() string {
+	return "What is zis, zis is nothing!"
+}
+func (p Perk) Description() string {
+	return ""
+}
+func (p Perk) Quality() PerkQuality {
+	return p.quality
+}
+
+func (p Perk) Check(e Event) bool {
+	return false
+}
+func (p Perk) LevelUp(maxQuality PerkQuality) {
+	if p.quality >= maxQuality {
+		return
+	}
+	p.quality++
+}
+
+func (p Perk) LevelDown() {
+	if p.quality <= PerkQualityTrash {
+		return
+	}
+	p.quality--
 }
 
 // PerkNone represents an empty perk. Not sure if this will be used.
-type PerkNone struct{}
-
-func (p PerkNone) String() string {
-	return "What is zis, zis is nothing!"
+type PerkNone struct {
+	Perk
 }
 
-func (p PerkNone) Description() string {
-	return ""
-}
-
-func (p PerkNone) Check(e Event) bool {
-	return false
+func (p PerkNone) Quality() PerkQuality {
+	return PerkQualityTrash
 }
 
 // PerkFindGold finds gold based upon the quality of the perk.
 // +0.25 per quality level per room.
 type PerkFindGold struct {
-	quality PerkQuality
+	Perk
 }
 
 func (p PerkFindGold) chance() float64 {
@@ -152,8 +181,8 @@ func (p PerkFindGold) Check(e Event) bool {
 // PerkStatBoost is a perk that modifies a stat based on teh quality of the perk.
 // +1 target stat per quality level.
 type PerkStatBoost struct {
-	quality PerkQuality
-	stat    Stat
+	Perk
+	stat Stat
 }
 
 func (p PerkStatBoost) Name() string {
@@ -186,7 +215,7 @@ func (p PerkStatBoost) Check(e Event) bool {
 
 // PerkHeal heals dude based on wisdom when entering a room.
 type PerkHealOnRoomEnter struct {
-	quality PerkQuality
+	Perk
 }
 
 func (p PerkHealOnRoomEnter) amount(wisdom int) int {
@@ -215,7 +244,7 @@ func (p PerkHealOnRoomEnter) Check(e Event) bool {
 
 // PerkHeal heals all dudes based on quality when equip is sold
 type PerkHealOnSell struct {
-	quality PerkQuality
+	Perk
 }
 
 func (p PerkHealOnSell) amount() int {
@@ -243,19 +272,24 @@ func (p PerkHealOnSell) Check(e Event) bool {
 	return false
 }
 
-func GetRandomPerk(quality PerkQuality) Perk {
+func GetRandomPerk(quality PerkQuality) IPerk {
 	// Randomly select a perk
-	perkList := []Perk{
-		PerkFindGold{quality},
-		PerkStatBoost{quality, StatStrength},
-		PerkStatBoost{quality, StatWisdom},
-		PerkStatBoost{quality, StatDefense},
-		PerkStatBoost{quality, StatAgility},
-		PerkStatBoost{quality, StatCowardice},
-		PerkStatBoost{quality, StatLuck},
-		PerkStatBoost{quality, StatHP},
-		PerkHealOnRoomEnter{quality},
-		PerkHealOnSell{quality},
+	perk := Perk{
+		quality: quality,
+	}
+
+	// Set of all perks
+	perkList := []IPerk{
+		PerkFindGold{perk},
+		PerkStatBoost{perk, StatStrength},
+		PerkStatBoost{perk, StatWisdom},
+		PerkStatBoost{perk, StatDefense},
+		PerkStatBoost{perk, StatAgility},
+		PerkStatBoost{perk, StatCowardice},
+		PerkStatBoost{perk, StatLuck},
+		PerkStatBoost{perk, StatHP},
+		PerkHealOnRoomEnter{perk},
+		PerkHealOnSell{perk},
 	}
 
 	// Randomly select a perk

@@ -85,7 +85,7 @@ type Equipment struct {
 	description   string           // Description of the equipment
 	equipmentType EquipmentType    // Type of equipment (weapon, armor, etc.)
 
-	perk        Perk              // Perk of the equipment (if any)
+	perk        IPerk             // Perk of the equipment (if any)
 	stats       *Stats            // Stats of the equipment (if any)
 	stack       *render.Stack     // How to draw the equipment
 	professions []*ProfessionKind // If restricted to a profession
@@ -95,7 +95,7 @@ type Equipment struct {
 // Fetches the equipment by name
 // Used for creating equipment in the game.
 // Should find the equipment by name from loaded equipment
-func NewEquipment(name string, level int, quality EquipmentQuality, perk Perk) *Equipment {
+func NewEquipment(name string, level int, quality EquipmentQuality, perk IPerk) *Equipment {
 	baseEquipment, err := assets.LoadEquipment(name)
 	if err != nil {
 		fmt.Println("Error loading equipment: ", err)
@@ -121,7 +121,7 @@ func NewEquipment(name string, level int, quality EquipmentQuality, perk Perk) *
 	if perk == nil {
 		switch baseEquipment.Perk {
 		case "Heal On Room Enter":
-			perk = PerkHealOnRoomEnter{PerkQualityCommon}
+			perk = PerkHealOnRoomEnter{Perk{quality: PerkQualityCommon}}
 		}
 	}
 
