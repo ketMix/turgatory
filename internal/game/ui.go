@@ -49,14 +49,15 @@ func (ui *UI) Draw(o *render.Options) {
 type DudePanel struct {
 	render.Originable
 	render.Positionable
-	drawered bool
-	height   int
-	top      *render.Sprite
-	topright *render.Sprite
-	mid      *render.Sprite
-	midright *render.Sprite
-	bot      *render.Sprite
-	botright *render.Sprite
+	drawered     bool
+	height       int
+	top          *render.Sprite
+	topright     *render.Sprite
+	mid          *render.Sprite
+	midright     *render.Sprite
+	bot          *render.Sprite
+	botright     *render.Sprite
+	drawerInterp InterpNumber
 }
 
 func (dp *DudePanel) Layout(o *UIOptions) {
@@ -66,6 +67,8 @@ func (dp *DudePanel) Layout(o *UIOptions) {
 }
 
 func (dp *DudePanel) Update(o *UIOptions) {
+	dp.drawerInterp.Update()
+
 	dpx, dpy := dp.Position()
 	mx, my := IntToFloat2(ebiten.CursorPosition())
 
@@ -73,20 +76,24 @@ func (dp *DudePanel) Update(o *UIOptions) {
 	maxY := (dpy + float64(dp.height)) * o.Scale
 
 	if mx > dpx && mx < maxX && my > dpy && my < maxY {
-		dp.drawered = false
+		if dp.drawered {
+			dp.drawered = false
+			dp.drawerInterp.Set(0, 3)
+		}
 	} else {
-		dp.drawered = true
+		if !dp.drawered {
+			dp.drawered = true
+			dp.drawerInterp.Set(-48, 3)
+		}
 	}
 
 	if !dp.drawered {
-		// TODO: CRAZY DUDE LIST!!!!
+		// TODO: Convert mouse pos to dude clicking?
 	}
 }
 
 func (dp *DudePanel) Draw(o *render.Options) {
-	if dp.drawered {
-		o.DrawImageOptions.GeoM.Translate(-48, 0)
-	}
+	o.DrawImageOptions.GeoM.Translate(dp.drawerInterp.Current, 0)
 	y := 0
 	o.DrawImageOptions.GeoM.Translate(dp.Position())
 	// top
