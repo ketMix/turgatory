@@ -1,7 +1,5 @@
 package game
 
-import "fmt"
-
 func Must[T any](v T, err error) T {
 	if err != nil {
 		panic(err)
@@ -35,14 +33,12 @@ func (i *InterpNumber) Update() bool {
 			i.Current = i.Target
 			return true
 		}
-		fmt.Println(i.Current, i.Target, i.Speed)
 	} else if i.Current > i.Target {
 		i.Current -= i.Speed
 		if i.Current < i.Target {
 			i.Current = i.Target
 			return true
 		}
-		fmt.Println(i.Current, i.Target, i.Speed)
 	}
 	return false
 }
