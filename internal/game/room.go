@@ -2,6 +2,8 @@ package game
 
 import (
 	"fmt"
+	"math"
+	"math/rand"
 
 	"github.com/kettek/ebijam24/internal/render"
 )
@@ -60,6 +62,21 @@ func (r *RoomKind) String() string {
 	default:
 		return "Unknown"
 	}
+}
+
+// Equipment you can find in room
+// hmm, kinda defeats the current structure of equipment in yaml if we have to add new equipment here
+func (r *RoomKind) Equipment() []string {
+	switch *r {
+	case Armory:
+		return []string{"Sword", "Shield", "Bow", "Book", "Robe", "Plate", "Leather"}
+	case HealingShrine:
+		return []string{"Ring", "Necklace"} // temporary
+	case Combat:
+	case Well:
+	default:
+	}
+	return []string{}
 }
 
 const (
@@ -145,4 +162,57 @@ func (r *Room) IsActorInCenter(a Actor) bool {
 		}
 	}
 	return false
+}
+
+// Roll for new equipment from list
+// Modifies the equipment by luck stat and room height
+// Luck and room level determines chance of finding equipment, harder to find at higher levels
+// Luck determines the quality
+func (r *Room) RollLoot(luck int) *Equipment {
+	if len(r.kind.Equipment()) == 0 {
+		return nil
+	}
+
+	// Determine if we get equipment at all
+	if rand.Intn(100) > ((luck+1)*10 - r.story.level) {
+		return nil
+	}
+
+	// Determine the initial quality of the equipment based on luck
+	fromLuck := float64(luck) / 5.0
+	fromRoomLevel := float64(r.story.level) / 2.0
+	initialQuality := EquipmentQuality((math.Floor(fromLuck + fromRoomLevel)))
+	if initialQuality > EquipmentQualityLegendary {
+		initialQuality = EquipmentQualityLegendary
+	}
+
+	// Determine if perk exists based on luck
+	// Determine perk quality based on luck and room level
+	hasPerk := rand.Intn(100) < luck
+	var perk Perk = nil
+	if hasPerk {
+		fromLuck = float64(luck) / 5.0
+		fromRoomLevel = float64(r.story.level) / 2.0
+		perkQuality := PerkQuality((math.Floor(fromLuck + fromRoomLevel)))
+		if perkQuality > PerkQualityGodly {
+			perkQuality = PerkQualityGodly
+		}
+
+		perk = GetRandomPerk(perkQuality)
+	}
+
+	// Create equipment
+	list := r.kind.Equipment()
+	equipmentName := list[rand.Intn(len(list))]
+	equipment := NewEquipment(equipmentName, 1, initialQuality, perk)
+	if equipment == nil {
+		return nil
+	}
+
+	// Level up the equipment based on floor level
+	for i := 0; i < r.story.level; i++ {
+		equipment.LevelUp()
+	}
+
+	return equipment
 }

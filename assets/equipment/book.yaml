@@ -1,0 +1,9 @@
+name: Book
+source: Library
+professions: 
+ - cleric
+description: A book of spells
+stats: 
+  wisdom: 2
+  cowardice: 10
+perk: Heal On Room Enter

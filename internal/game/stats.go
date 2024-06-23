@@ -11,11 +11,13 @@ import (
 type Stat string
 
 const (
-	StatStrength  Stat = "str"
-	StatWisdom    Stat = "wis"
-	StatDefense   Stat = "def"
-	StatAgility   Stat = "agi"
-	StatCowardice Stat = "cow"
+	StatStrength  Stat = "Str"
+	StatWisdom    Stat = "Wis"
+	StatDefense   Stat = "Def"
+	StatAgility   Stat = "Agi"
+	StatCowardice Stat = "Cow"
+	StatLuck      Stat = "Luc"
+	StatHP        Stat = "HP"
 )
 
 type Stats struct {
@@ -27,6 +29,7 @@ type Stats struct {
 	defense   int // reduces enemy attack
 	agility   int // how fast they zip
 	cowardice int // combat priority (who gets hit first)
+	luck      int // how lucky they are
 
 	levelUpChange *Stats
 }
@@ -88,6 +91,9 @@ func (s *Stats) LevelDown() {
 	if rand.Float64() > threshold {
 		s.cowardice -= s.levelUpChange.cowardice
 	}
+	if rand.Float64() > threshold {
+		s.luck -= s.levelUpChange.luck
+	}
 
 	// cant forget this part
 	s.level -= 1
@@ -105,6 +111,12 @@ func (s *Stats) ModifyStat(stat Stat, amount int) {
 		s.agility += amount
 	case StatCowardice:
 		s.cowardice += amount
+	case StatLuck:
+		s.luck += amount
+		// HP is a special case
+	case StatHP:
+		s.totalHp += amount
+		s.currentHp += amount
 	default:
 		fmt.Printf("Unknown stat %s\n", stat)
 	}
@@ -122,6 +134,7 @@ func NewStats(levelUpChange *Stats) *Stats {
 			defense:   0,
 			agility:   0,
 			cowardice: 0,
+			luck:      0,
 		}
 	}
 	stats := Stats{
@@ -136,34 +149,15 @@ func NewStats(levelUpChange *Stats) *Stats {
 	return &stats
 }
 
-func (s *Stats) TotalHp() int {
-	return s.totalHp
-}
-
-func (s *Stats) CurrentHp() int {
-	return s.currentHp
-}
-
-func (s *Stats) Strength() int {
-	return s.strength
-}
-
-func (s *Stats) Wisdom() int {
-	return s.wisdom
-}
-
-func (s *Stats) Defense() int {
-	return s.defense
-}
-
-func (s *Stats) Agility() int {
-	return s.agility
-}
-
-func (s *Stats) Cowardice() int {
-	return s.cowardice
-}
-
-func (s *Stats) Level() int {
-	return s.level
+func (s *Stats) Add(a *Stats) *Stats {
+	return &Stats{
+		currentHp: s.currentHp + a.currentHp,
+		totalHp:   s.totalHp + a.totalHp,
+		strength:  s.strength + a.strength,
+		wisdom:    s.wisdom + a.wisdom,
+		defense:   s.defense + a.defense,
+		agility:   s.agility + a.agility,
+		cowardice: s.cowardice + a.cowardice,
+		luck:      s.luck + a.luck,
+	}
 }

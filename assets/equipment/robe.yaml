@@ -1,0 +1,7 @@
+name: Robe
+source: Armory
+description: Metal plates and chainmail forged together
+stats: 
+  agility: 1
+  wisdom: 2
+  defence: 1

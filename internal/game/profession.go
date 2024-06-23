@@ -1,7 +1,7 @@
 package game
 
 // ProfessionKind is an enumeration of the different kinds of Professions a dude can have
-type ProfessionKind int
+type ProfessionKind string
 
 func (p *ProfessionKind) String() string {
 	switch *p {
@@ -20,16 +20,16 @@ func (p *ProfessionKind) String() string {
 
 const (
 	// Medium defense, medium attack, medium hp
-	Vagabond ProfessionKind = iota
+	Vagabond ProfessionKind = "vagabond"
 
 	// High defense, low attack, high hp
-	Knight
+	Knight ProfessionKind = "knight"
 
 	// Low defense, low attack, *can heal*
-	Cleric
+	Cleric ProfessionKind = "cleric"
 
 	// Medium defense, high attack, low hp *ranged*
-	Ranger
+	Ranger ProfessionKind = "ranger"
 )
 
 // A profession defines a dude's abilities.
@@ -48,24 +48,40 @@ func NewProfession(kind ProfessionKind, level int) *Profession {
 			kind:          Knight,
 			description:   "A knight in shining armor",
 			startingStats: *getStartingStats(Knight, 1),
+			startingEquipment: []*Equipment{
+				NewEquipment("Sword", 1, EquipmentQualityCommon, nil),
+				NewEquipment("Shield", 1, EquipmentQualityCommon, nil),
+			},
 		}
 	case Cleric:
 		return &Profession{
 			kind:          Cleric,
 			description:   "A cleric who can heal",
 			startingStats: *getStartingStats(Cleric, 1),
+			startingEquipment: []*Equipment{
+				NewEquipment("Book", 1, EquipmentQualityCommon, nil),
+				NewEquipment("Robe", 1, EquipmentQualityCommon, nil),
+			},
 		}
 	case Vagabond:
 		return &Profession{
 			kind:          Vagabond,
 			description:   "A vagabond with no home",
 			startingStats: *getStartingStats(Vagabond, 1),
+			startingEquipment: []*Equipment{
+				NewEquipment("Sword", 1, EquipmentQualityCommon, nil),
+				NewEquipment("Leather", 1, EquipmentQualityCommon, nil),
+			},
 		}
 	case Ranger:
 		return &Profession{
 			kind:          Ranger,
 			description:   "A ranger who can shoot from afar",
 			startingStats: *getStartingStats(Ranger, 1),
+			startingEquipment: []*Equipment{
+				NewEquipment("Bow", 1, EquipmentQualityCommon, nil),
+				NewEquipment("Leather", 1, EquipmentQualityCommon, nil),
+			},
 		}
 	}
 	return nil
@@ -97,6 +113,7 @@ func getStartingStats(kind ProfessionKind, level int) *Stats {
 			defense:   3,
 			agility:   1,
 			cowardice: -10, // balls get bigger
+			luck:      0,
 		})
 	case Cleric:
 		return NewStats(&Stats{
@@ -107,6 +124,7 @@ func getStartingStats(kind ProfessionKind, level int) *Stats {
 			defense:   2,
 			agility:   2,
 			cowardice: 10, // balls get smaller
+			luck:      0,
 		})
 	case Vagabond:
 		return NewStats(&Stats{
@@ -116,7 +134,8 @@ func getStartingStats(kind ProfessionKind, level int) *Stats {
 			wisdom:    3,
 			defense:   2,
 			agility:   2,
-			cowardice: -5, // no change
+			cowardice: -5,
+			luck:      0,
 		})
 
 	case Ranger:
@@ -127,7 +146,8 @@ func getStartingStats(kind ProfessionKind, level int) *Stats {
 			wisdom:    3,
 			defense:   2,
 			agility:   2,
-			cowardice: -5, // no change
+			cowardice: 5,
+			luck:      0,
 		})
 	default:
 		// you useless jobless bum

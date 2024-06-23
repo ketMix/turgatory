@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 
@@ -21,19 +22,20 @@ const (
 )
 
 type Dude struct {
-	name           string
-	xp             int
-	gold           float32
-	professionKind ProfessionKind
-	stats          Stats
-	equipment      []*Equipment
-	story          *Story // current story da dude be in
-	room           *Room  // current room the dude is in
-	stack          *render.Stack
-	timer          int
-	activity       DudeActivity
-	activityDone   bool
-	variation      float64
+	name         string
+	xp           int
+	gold         float32
+	profession   ProfessionKind
+	stats        Stats
+	equipped     map[EquipmentType]*Equipment
+	inventory    []*Equipment
+	story        *Story // current story da dude be in
+	room         *Room  // current room the dude is in
+	stack        *render.Stack
+	timer        int
+	activity     DudeActivity
+	activityDone bool
+	variation    float64
 }
 
 func NewDude(pk ProfessionKind, level int) *Dude {
@@ -48,10 +50,14 @@ func NewDude(pk ProfessionKind, level int) *Dude {
 	dude.name = assets.GetRandomName()
 	dude.xp = 0
 	dude.gold = 0
-	dude.professionKind = pk
+	dude.profession = pk
+
+	// Initialize stats and equipment
 	profession := NewProfession(pk, level)
 	dude.stats = profession.StartingStats()
-	dude.equipment = profession.StartingEquipment()
+	dude.inventory = profession.StartingEquipment()
+	dude.AutoEquip() // equip starting equipment
+
 	dude.variation = -6 + rand.Float64()*12
 
 	dude.stack = stack
@@ -146,9 +152,21 @@ func (d *Dude) Trigger(e Event) {
 	case EventEnterRoom:
 		d.room = e.room
 	case EventLeaveRoom:
+		// Roll for loot on exit
+		if eq := e.room.RollLoot(d.stats.luck); eq != nil {
+			fmt.Println(d.name, "found", eq.Name())
+			d.inventory = append(d.inventory, eq)
+			d.AutoEquip() // Equip if possible
+		}
 		d.room = nil
+	case EventEquip:
+		fmt.Println(d.name, "equipped", e.equipment.Name())
+	case EventUnequip:
+		fmt.Println(d.name, "unequipped", e.equipment.Name())
 	}
-	for _, eq := range d.equipment {
+
+	// Trigger equipped equipment
+	for _, eq := range d.equipped {
 		eq.Activate(e)
 	}
 }
@@ -182,7 +200,7 @@ func (d *Dude) Name() string {
 }
 
 func (d *Dude) Level() int {
-	return d.stats.Level()
+	return d.stats.level
 }
 
 // Scale speed with agility
@@ -191,7 +209,7 @@ func (d *Dude) Speed() float64 {
 	// This values probably belong somewhere else
 	speedScale := 0.1
 	baseSpeed := 0.005
-	return baseSpeed * (1 + float64(d.stats.Agility())*speedScale)
+	return baseSpeed * (1 + float64(d.stats.agility)*speedScale)
 }
 
 func (d *Dude) Stats() *Stats {
@@ -199,9 +217,94 @@ func (d *Dude) Stats() *Stats {
 }
 
 func (d *Dude) Profession() ProfessionKind {
-	return d.professionKind
+	return d.profession
+}
+
+func (d *Dude) Gold() float32 {
+	return d.gold
 }
 
 func (d *Dude) UpdateGold(gold float32) {
 	d.gold += gold
+}
+
+// Auto equips from inventory to empty slots
+// If equipment can't be equipped by the class, it will not be equipped
+// If slot is taken by another item, it will not be equipped and remain in inventory
+func (d *Dude) AutoEquip() {
+	for _, eq := range d.inventory {
+		if eq.CanEquip(d.profession) {
+			if _, ok := d.equipped[eq.Type()]; !ok {
+				d.equip(eq)
+			}
+		}
+	}
+}
+
+// Equips item to dude
+func (d *Dude) equip(eq *Equipment) {
+	if _, ok := d.equipped[eq.Type()]; ok {
+		d.unequip(eq.Type())
+		d.Trigger(EventUnequip{dude: d, equipment: eq}) // Event isolated to dude?
+
+		d.equipped[eq.Type()] = eq
+		d.Trigger(EventEquip{dude: d, equipment: eq}) // Event isolated to dude?
+
+		// If equipment is in inventory, remove it
+		for i, e := range d.inventory {
+			if e == eq {
+				d.inventory = append(d.inventory[:i], d.inventory[i+1:]...)
+				break
+			}
+		}
+	}
+}
+
+func (d *Dude) unequip(t EquipmentType) {
+	if _, ok := d.equipped[t]; ok {
+		// Add to inventory
+		d.inventory = append(d.inventory, d.equipped[t])
+		d.equipped[t] = nil
+		d.Trigger(EventUnequip{dude: d, equipment: d.equipped[t]}) // Event isolated to dude?
+	}
+}
+
+func (d *Dude) Inventory() []*Equipment {
+	return d.inventory
+}
+
+func (d *Dude) Equipped() map[EquipmentType]*Equipment {
+	return d.equipped
+}
+
+// Returns the stats of the dude with the equipment stats added
+func (d *Dude) GetCalculatedStats() *Stats {
+	stats := NewStats(nil)
+	stats = stats.Add(&d.stats)
+	for _, eq := range d.equipped {
+		stats = stats.Add(eq.Stats())
+	}
+	return stats
+}
+
+func (d *Dude) AddXP(xp int) {
+	d.xp += xp
+	// If level reached
+	nextLevelXP := 100 * d.Level()
+	if d.xp >= nextLevelXP {
+		d.xp -= nextLevelXP
+		d.stats.LevelUp()
+	}
+}
+
+func (d *Dude) XP() int {
+	return d.xp
+}
+
+func (d *Dude) Heal(amount int) {
+	if d.stats.currentHp+amount > d.stats.totalHp {
+		d.stats.currentHp = d.stats.totalHp
+	} else {
+		d.stats.currentHp += amount
+	}
 }

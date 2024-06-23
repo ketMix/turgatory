@@ -1,6 +1,9 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+)
 
 // Stubbing to maybe batch call perks based on trigger
 //
@@ -40,10 +43,61 @@ func (pq *PerkQuality) String() string {
 	}
 }
 
+func (pq PerkQuality) Color() string {
+	switch pq {
+	case PerkQualityTrash:
+		return "gray"
+	case PerkQualityPathetic:
+		return "white"
+	case PerkQualityLesser:
+		return "green"
+	case PerkQualityCommon:
+		return "blue"
+	case PerkQualityGreater:
+		return "purple"
+	case PerkQualityGodly:
+		return "orange"
+	default:
+		return "white"
+	}
+}
+
+// etc.
+func constructName(ability string, quality PerkQuality, modifier *string) string {
+
+	// Construct the name
+	// Lesser Stat Boost of Strength On Attack
+
+	name := quality.String()
+	name += " "
+	name += ability
+	name += " "
+	if modifier != nil {
+		name += "of " + *modifier
+	}
+
+	// Probably don't need this if we're assigning events directly to perks
+	// triggerText := ""
+
+	// // Join them with or
+	// triggersText := ""
+	// for i, trigger := range triggers {
+	// 	if i == 0 {
+	// 		triggersText += " when " + trigger
+	// 	} else {
+	// 		triggersText += " or " + trigger
+	// 	}
+	// }
+	// name += triggerText
+
+	return name
+}
+
 // Perk is our interface for perks that can be applied to equipment, dudes, etc.
 type Perk interface {
 	Check(Event) bool
-	String() string
+	Name() string   // Name of the perk
+	String() string // Full name of the perk
 	Description() string
 }
 
@@ -65,17 +119,24 @@ func (p PerkNone) Check(e Event) bool {
 // PerkFindGold finds gold based upon the quality of the perk.
 // +0.25 per quality level per room.
 type PerkFindGold struct {
-	quality  PerkQuality
-	modifier *string // What be this?
+	quality PerkQuality
+}
+
+func (p PerkFindGold) chance() float64 {
+	return 0.25 * float64(p.quality)
+}
+
+func (p PerkFindGold) Name() string {
+	return "Find Gold"
 }
 
 func (p PerkFindGold) String() string {
-	return "Find Gold"
+	return constructName(p.Name(), p.quality, nil)
 }
 
 func (p PerkFindGold) Description() string {
 	amount := float32(p.quality) * 0.25
-	return fmt.Sprintf("Finds %f gold", amount)
+	return fmt.Sprintf("Has a Chance to find finds %f gold", amount)
 }
 
 func (p PerkFindGold) Check(e Event) bool {
@@ -95,13 +156,13 @@ type PerkStatBoost struct {
 	stat    Stat
 }
 
-func (p PerkStatBoost) String() string {
+func (p PerkStatBoost) Name() string {
 	return "Stat Boost"
 }
 
-func (p PerkStatBoost) Name() string {
-	triggers := []string{EventEquip{}.String(), EventUnequip{}.String()}
-	return constructName(p.String(), p.quality, triggers, string(p.stat))
+func (p PerkStatBoost) String() string {
+	statStr := string(p.stat)
+	return constructName(p.Name(), p.quality, &statStr)
 }
 
 func (p PerkStatBoost) Description() string {
@@ -123,32 +184,81 @@ func (p PerkStatBoost) Check(e Event) bool {
 	return false
 }
 
-// etc.
-func constructName(ability string, quality PerkQuality, triggers []string, modifier string) string {
-	triggerText := ""
+// PerkHeal heals dude based on wisdom when entering a room.
+type PerkHealOnRoomEnter struct {
+	quality PerkQuality
+}
 
-	// Join them with and
-	triggersText := ""
-	for i, trigger := range triggers {
-		if i == 0 {
-			triggersText += " when " + trigger
-		} else {
-			triggersText += " or " + trigger
-		}
+func (p PerkHealOnRoomEnter) amount(wisdom int) int {
+	return int(p.quality) * wisdom
+}
+
+func (p PerkHealOnRoomEnter) Name() string {
+	return "Heal On Room Enter"
+}
+
+func (p PerkHealOnRoomEnter) String() string {
+	return constructName(p.Name(), p.quality, nil)
+}
+
+func (p PerkHealOnRoomEnter) Description() string {
+	return fmt.Sprintf("Heals %d * wisdom on room enter", int(p.quality))
+}
+
+func (p PerkHealOnRoomEnter) Check(e Event) bool {
+	switch e := e.(type) {
+	case EventEnterRoom:
+		e.dude.Heal(int(p.amount(e.dude.stats.wisdom)))
+	}
+	return false
+}
+
+// PerkHeal heals all dudes based on quality when equip is sold
+type PerkHealOnSell struct {
+	quality PerkQuality
+}
+
+func (p PerkHealOnSell) amount() int {
+	return int(p.quality) * 10
+}
+func (p PerkHealOnSell) Name() string {
+	return "Heal On Sell"
+}
+
+func (p PerkHealOnSell) String() string {
+	return constructName(p.Name(), p.quality, nil)
+}
+
+func (p PerkHealOnSell) Description() string {
+	return fmt.Sprintf("Heals %d when sold", p.amount())
+}
+
+func (p PerkHealOnSell) Check(e Event) bool {
+	switch e := e.(type) {
+	case EventSell:
+		// Heal all dudes
+		fmt.Println("Unimplemented", e.String())
+		return true
+	}
+	return false
+}
+
+func GetRandomPerk(quality PerkQuality) Perk {
+	// Randomly select a perk
+	perkList := []Perk{
+		PerkFindGold{quality},
+		PerkStatBoost{quality, StatStrength},
+		PerkStatBoost{quality, StatWisdom},
+		PerkStatBoost{quality, StatDefense},
+		PerkStatBoost{quality, StatAgility},
+		PerkStatBoost{quality, StatCowardice},
+		PerkStatBoost{quality, StatLuck},
+		PerkStatBoost{quality, StatHP},
+		PerkHealOnRoomEnter{quality},
+		PerkHealOnSell{quality},
 	}
 
-	// Construct the name
-	// Lesser Stat Boost of Strength On Attack
-
-	name := string(quality)
-	name += " "
-	name += ability
-	name += " "
-	if modifier != "" {
-		name += "of " + modifier
-	}
-
-	name += triggerText
-
-	return name
+	// Randomly select a perk
+	index := rand.Intn(len(perkList))
+	return perkList[index]
 }

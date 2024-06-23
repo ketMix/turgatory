@@ -64,3 +64,13 @@ type EventUnequip struct {
 func (e EventUnequip) String() string {
 	return "Unequip"
 }
+
+// EventSell occurs when an equipment is sold
+type EventSell struct {
+	tower     *Tower
+	equipment *Equipment
+}
+
+func (e EventSell) String() string {
+	return "Sell"
+}

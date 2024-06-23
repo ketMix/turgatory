@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
 )
 
@@ -17,25 +18,6 @@ const (
 	EquipmentQualityEpic      EquipmentQuality = 3
 	EquipmentQualityLegendary EquipmentQuality = 4
 )
-
-// An equipment is the stuff you get
-type Equipment struct {
-	//material   string // Material of the equipment, maybe
-
-	name        string           // Standard name of the equipment ("Bow", "Sword", "Book", "Boots")
-	level       int              // Level of the equipment affects stats, maybe this could be material too?
-	quality     EquipmentQuality // Quality of the equipment, dictates total uses
-	uses        int              // Current uses of the equipment (number of times the perk can be triggered)
-	totalUses   int              // Total uses of the equipment
-	description string           // Description of the equipment
-	breakable   bool             // Whether the equipment can break
-
-	source *RoomKind     // The room the equipment can be found in
-	perk   Perk          // Perk of the equipment (if any)
-	stats  *Stats        // Stats of the equipment (if any)
-	stack  *render.Stack // How to draw the equipment
-	Draw   func(*render.Options)
-}
 
 func (eq EquipmentQuality) String() string {
 	switch eq {
@@ -54,29 +36,120 @@ func (eq EquipmentQuality) String() string {
 	}
 }
 
-// NewEquipment creates a new equipment.
-func NewEquipment(name string, level int, quality EquipmentQuality, description string, breakable bool, perk Perk, stack *render.Stack, source *RoomKind) *Equipment {
-	// Total uses is the quality + 1
-	totalUses := int(quality) + 1
+func (eq EquipmentQuality) Color() string {
+	switch eq {
+	case EquipmentQualityUncommon:
+		return "green"
+	case EquipmentQualityRare:
+		return "blue"
+	case EquipmentQualityEpic:
+		return "purple"
+	case EquipmentQualityLegendary:
+		return "orange"
+	default:
+		return "white"
+	}
+}
 
-	e := &Equipment{
-		name:        name,
-		level:       level,
-		breakable:   breakable,
-		quality:     quality,
-		uses:        totalUses,
-		totalUses:   totalUses,
-		description: description,
-		perk:        perk,
-		stack:       stack,
-		source:      source,
+type EquipmentType string
+
+// Type of equipment
+const (
+	EquipmentTypeWeapon    EquipmentType = "weapon"
+	EquipmentTypeArmor     EquipmentType = "armor"
+	EquipmentTypeAccessory EquipmentType = "accessory"
+)
+
+func (et EquipmentType) String() string {
+	switch et {
+	case EquipmentTypeWeapon:
+		return "Weapon"
+	case EquipmentTypeArmor:
+		return "Armor"
+	case EquipmentTypeAccessory:
+		return "Accessory"
+	default:
+		return "Unknown"
+	}
+}
+
+// An equipment is the stuff you get
+type Equipment struct {
+	//material   string // Material of the equipment, maybe
+
+	name          string           // Standard name of the equipment ("Bow", "Sword", "Book", "Boots")
+	level         int              // Level of the equipment affects stats, maybe this could be material too?
+	quality       EquipmentQuality // Quality of the equipment, dictates total uses
+	uses          int              // Current uses of the equipment (number of times the perk can be triggered)
+	totalUses     int              // Total uses of the equipment
+	description   string           // Description of the equipment
+	equipmentType EquipmentType    // Type of equipment (weapon, armor, etc.)
+
+	perk        Perk              // Perk of the equipment (if any)
+	stats       *Stats            // Stats of the equipment (if any)
+	stack       *render.Stack     // How to draw the equipment
+	professions []*ProfessionKind // If restricted to a profession
+	Draw        func(*render.Options)
+}
+
+// Fetches the equipment by name
+// Used for creating equipment in the game.
+// Should find the equipment by name from loaded equipment
+func NewEquipment(name string, level int, quality EquipmentQuality, perk Perk) *Equipment {
+	baseEquipment, err := assets.LoadEquipment(name)
+	if err != nil {
+		fmt.Println("Error loading equipment: ", err)
+		return nil
 	}
 
-	e.Draw = func(o *render.Options) {
-		e.stack.Draw(o)
+	// Parse equipment asset to equipment
+	stack, err := render.NewStack(baseEquipment.StackPath, "", "")
+	if err != nil {
+		fmt.Println("Error loading equipment stack: ", err)
+		stack = nil
+	}
+	professions := make([]*ProfessionKind, len(baseEquipment.Professions))
+
+	// Convert the professions to ProfessionKind
+	for i, p := range baseEquipment.Professions {
+		professions[i] = new(ProfessionKind)
+		*professions[i] = ProfessionKind(p)
 	}
 
-	return e
+	// If base equipment has perk, load it
+	// hmmm...
+	if perk == nil {
+		switch baseEquipment.Perk {
+		case "Heal On Room Enter":
+			perk = PerkHealOnRoomEnter{PerkQualityCommon}
+		}
+	}
+
+	equipment := &Equipment{
+		name:          baseEquipment.Name,
+		level:         level,
+		quality:       quality,
+		uses:          int(quality) + 1,
+		totalUses:     int(quality) + 1,
+		description:   baseEquipment.Description,
+		equipmentType: EquipmentType(baseEquipment.Type),
+		professions:   professions,
+		perk:          perk,
+		stack:         stack,
+		stats: &Stats{
+			totalHp:   baseEquipment.Stats["totalHp"],
+			strength:  baseEquipment.Stats["strength"],
+			wisdom:    baseEquipment.Stats["wisdom"],
+			defense:   baseEquipment.Stats["defense"],
+			agility:   baseEquipment.Stats["agility"],
+			cowardice: baseEquipment.Stats["cowardice"],
+			luck:      baseEquipment.Stats["luck"],
+		},
+	}
+	equipment.Draw = func(o *render.Options) {
+		equipment.stack.Draw(o)
+	}
+	return equipment
 }
 
 // Name returns the name of the equipment.
@@ -195,14 +268,15 @@ func (e *Equipment) Activate(event Event) {
 	}
 
 	activated := e.perk.Check(event)
-	if !activated || e.breakable {
+	if !activated {
 		return
 	}
 
 	// Successfully activated the perk, decrement the uses
 	e.uses--
-	if e.uses == 0 {
+	if e.uses < 0 {
 		// Get ye gone!
+		e.uses = 0
 	}
 }
 
@@ -233,4 +307,29 @@ func (e *Equipment) Stats() *Stats {
 		cowardice: applyMultiplier(e.stats.cowardice),
 	}
 	return scaledStats
+}
+
+func (e *Equipment) CanEquip(p ProfessionKind) bool {
+	fmt.Println("Checking if we can equip", e.name, "for profession", p, "from professions", e.professions)
+	if e.professions == nil {
+		return true
+	}
+
+	// If the profession is in the list of professions that can equip this item
+	// then we can equip it
+	for _, prof := range e.professions {
+		if *prof == p {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (e *Equipment) Type() EquipmentType {
+	return e.equipmentType
+}
+
+func (e *Equipment) GoldValue() float32 {
+	return float32(e.level * (1 + int(e.quality)))
 }
