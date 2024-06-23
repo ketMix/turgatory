@@ -254,14 +254,20 @@ func (s *Story) PlaceRoom(r *Room, index int) error {
 	if r.size == Large {
 		r.stacks.SetPositions(x, y-LargeOriginY)
 		r.stacks.SetOrigins(0, LargeOriginY)
+		r.walls.SetPositions(x, y-LargeOriginY)
+		r.walls.SetOrigins(0, LargeOriginY)
 	} else if r.size == Huge {
 		r.stacks.SetPositions(x, y-HugeOriginY)
 		r.stacks.SetOrigins(0, HugeOriginY)
+		r.walls.SetPositions(x, y-HugeOriginY)
+		r.walls.SetOrigins(0, HugeOriginY)
 	} else {
 		r.stacks.SetPositions(x, y)
+		r.walls.SetPositions(x, y)
 	}
 
 	r.stacks.SetRotations(float64(index) * -(math.Pi / 4)) // We go counter-clockwise...
+	r.walls.SetRotations(float64(index) * -(math.Pi / 4))  // We go counter-clockwise...
 	for i := 0; i < int(r.size); i++ {
 		s.rooms[index+i] = r
 	}

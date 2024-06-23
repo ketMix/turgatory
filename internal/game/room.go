@@ -39,7 +39,7 @@ const (
 
 // RoomStairsEntrance is the distance from the center that a room's stairs is expected to be at.
 const RoomStairsEntrance = 12
-const RoomPath = 55
+const RoomPath = 53
 const TowerStairs = 60
 const TowerEntrance = 80
 
@@ -79,6 +79,7 @@ type Room struct {
 	power int // ???
 
 	stacks         render.Stacks
+	walls          render.Stacks
 	actorsInCenter []Actor
 }
 
@@ -94,6 +95,18 @@ func NewRoom(size RoomSize, kind RoomKind) *Room {
 	}
 	r.stacks.Add(stack)
 
+	// Add our walls.
+	for j := 0; j < 3; j++ {
+		for i := 0; i < 8; i++ {
+			stack, err := render.NewStack(fmt.Sprintf("walls/%s", size.String()), "template", "base")
+			if err != nil {
+				continue
+			}
+			stack.VgroupOffset = j * StoryWallHeight
+			r.walls.Add(stack)
+		}
+	}
+
 	return r
 }
 
@@ -105,6 +118,7 @@ func (r *Room) Update() {
 // Draw our room bits and bobs.
 func (r *Room) Draw(o *render.Options) {
 	r.stacks.Draw(o)
+	r.walls.Draw(o)
 }
 
 func (r *Room) AddActorToCenter(a Actor) {
