@@ -18,6 +18,7 @@ type Stack struct {
 	currentFrame     *assets.StaxieFrame
 	frameCounter     int
 	MaxSliceIndex    int
+	VgroupOffset     int
 	SliceOffset      int
 	HeightOffset     float64
 }
@@ -93,12 +94,19 @@ func (s *Stack) Draw(o *Options) {
 		c := float64(index) / float64(len(s.currentFrame.Slices))
 		c = math.Min(1.0, math.Max(0.5, c))
 		color := float32(c)
+		// Temporarily disable color
+		// TODO: Add color offsets...
+		color = 1.0
 
 		opts.ColorScale.Reset()
 		opts.ColorScale.Scale(color, color, color, 1.0)
+		opts.ColorScale.ScaleWithColorScale(o.DrawImageOptions.ColorScale)
 
 		if o.VGroup != nil {
-			o.VGroup.Images[i].DrawImage(slice.Image, &opts)
+			i += s.VgroupOffset
+			if i < len(o.VGroup.Images) {
+				o.VGroup.Images[i].DrawImage(slice.Image, &opts)
+			}
 		} else if o.Screen != nil {
 			o.Screen.DrawImage(slice.Image, &opts)
 			opts.GeoM.Translate(0, -o.Pitch)
