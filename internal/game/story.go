@@ -11,6 +11,7 @@ type Story struct {
 	rooms  []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
 	dudes  []*Dude
 	stacks render.Stacks
+	walls  render.Stacks
 	vgroup *render.VGroup
 	level  int
 	open   bool
@@ -19,6 +20,7 @@ type Story struct {
 // StoryHeight is the height of a story in da tower.
 const StoryHeight = 28                       // StoryHeight is used to space stories apart from each other vertically.
 const StorySlices = 28                       // The amount of slices used for the frame buffers, should be equal to maximum staxie slice count used in a story.
+const StoryWallHeight = 10                   // The height of the wall stack -- this is repeated 3 times to get the full height (roughly)
 const StoryVGroupWidth = 256                 // Framebuffer's maximum width for rendering.
 const StoryVGroupHeight = 256                // Framebuffer's maximum height for rendering.
 const TowerCenterX = StoryVGroupWidth/2 - 5  // Center of the tower. Have to offset lightly for some dumb reason...
@@ -42,6 +44,19 @@ func NewStoryWithSize(size int) *Story {
 		stack.SetPosition(x, y)
 
 		story.stacks.Add(stack)
+	}
+
+	// Add our walls.
+	for j := 0; j < 3; j++ {
+		for i := 0; i < 8; i++ {
+			stack := Must(render.NewStack("walls/exterior", "", ""))
+			x := float64(StoryVGroupWidth) / 2
+			y := float64(StoryVGroupHeight) / 2
+			stack.VgroupOffset = j * StoryWallHeight
+			stack.SetPosition(x, y)
+			stack.SetRotation(float64(i) * (math.Pi / 4))
+			story.walls.Add(stack)
+		}
 	}
 
 	room := NewRoom(Small, Combat)
@@ -142,20 +157,47 @@ func (s *Story) Draw(o *render.Options) {
 
 	// If the story is not yet open, just draw the tower exterior stacks.
 	if !s.open {
-		// TODO: Maybe just use the s.stacks pie pieces, but set to a particular stack or animation?
-		return
-	}
+		s.walls.Draw(opts)
+	} else {
+		// Conditionally render the walls based upon rotation.
+		for _, stack := range s.walls {
+			r := stack.Rotation() + o.TowerRotation
+			r += math.Pi / 2
 
-	s.stacks.Draw(opts)
+			// Ensure r is constrained from 0 to 2*math.Pi
+			for r < 0 {
+				r += math.Pi * 2
+			}
+			for r >= math.Pi*2 {
+				r -= math.Pi * 2
+			}
 
-	for _, room := range s.rooms {
-		if room != nil {
-			room.Draw(opts)
+			min := math.Pi / 4
+			max := math.Pi * 4 / 4
+
+			opts.DrawImageOptions.ColorScale.Reset()
+
+			if r >= min && r < max {
+				continue
+			} else if r >= min-math.Pi/4 && r < max+math.Pi/4 {
+				opts.DrawImageOptions.ColorScale.ScaleAlpha(0.25)
+			}
+
+			stack.Draw(opts)
 		}
-	}
+		opts.DrawImageOptions.ColorScale.Reset()
 
-	for _, dude := range s.dudes {
-		dude.Draw(opts)
+		s.stacks.Draw(opts)
+
+		for _, room := range s.rooms {
+			if room != nil {
+				room.Draw(opts)
+			}
+		}
+
+		for _, dude := range s.dudes {
+			dude.Draw(opts)
+		}
 	}
 
 	s.vgroup.Draw(o)
