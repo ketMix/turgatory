@@ -65,6 +65,7 @@ func NewDude(pk ProfessionKind, level int) *Dude {
 
 	dude.stack = stack
 
+	fmt.Println(dude.name, "the", pk.String(), "has been created with stats", dude.stats)
 	return dude
 }
 
@@ -190,17 +191,11 @@ func (d *Dude) Trigger(e Event) {
 	switch e := e.(type) {
 	case EventEnterRoom:
 		d.room = e.room
+		d.room.GetRoomEffect(e)
+	case EventCenterRoom:
+		d.room.GetRoomEffect(e)
 	case EventLeaveRoom:
-		// Roll for loot on exit
-		if eq := e.room.RollLoot(d.stats.luck); eq != nil {
-			fmt.Println(d.name, "found", eq.Name())
-
-			// Add to inventory and equip if slot is empty
-			d.inventory = append(d.inventory, eq)
-			if d.equipped[eq.Type()] == nil {
-				d.Equip(eq)
-			}
-		}
+		d.room.GetRoomEffect(e)
 		d.room = nil
 	case EventEquip:
 		fmt.Println(d.name, "equipped", e.equipment.Name())
@@ -271,6 +266,7 @@ func (d *Dude) Gold() float32 {
 
 func (d *Dude) UpdateGold(gold float32) {
 	d.gold += gold
+	fmt.Println(d.name, "found", gold)
 }
 
 // Equips item to dude
@@ -299,6 +295,15 @@ func (d *Dude) Unequip(t EquipmentType) {
 		d.Trigger(EventUnequip{dude: d, equipment: d.equipped[t]}) // Event isolated to dude?
 		d.equipped[t] = nil
 	}
+}
+
+func (d *Dude) AddToInventory(eq *Equipment) {
+	d.inventory = append(d.inventory, eq)
+	if d.equipped[eq.Type()] == nil {
+		d.Equip(eq)
+	}
+
+	fmt.Println(d.name, "added", eq.Name(), "to inventory")
 }
 
 func (d *Dude) Inventory() []*Equipment {
@@ -334,9 +339,45 @@ func (d *Dude) XP() int {
 }
 
 func (d *Dude) Heal(amount int) {
+	initialHP := d.stats.currentHp
 	if d.stats.currentHp+amount > d.stats.totalHp {
 		d.stats.currentHp = d.stats.totalHp
 	} else {
 		d.stats.currentHp += amount
 	}
+	fmt.Println(d.name, "healed", amount, "HP", " and went from ", initialHP, " to ", d.stats.currentHp)
+}
+
+func (d *Dude) RestoreUses(amount int) {
+	for _, eq := range d.equipped {
+		if eq != nil {
+			eq.RestoreUses(amount)
+		}
+	}
+	fmt.Println(d.name, "restored equipment uses by", amount)
+}
+
+func (d *Dude) Damage(amount int) {
+	// Apply defense stat
+	amount -= d.stats.defense
+	if amount < 0 {
+		amount = 0
+	}
+
+	d.stats.currentHp -= amount
+	if d.stats.currentHp < 0 {
+		d.stats.currentHp = 0
+	}
+	fmt.Println(d.name, "took", amount, "damage and has", d.stats.currentHp, "HP left")
+}
+
+func (d *Dude) LevelUpEquipment(amount int) {
+	for _, eq := range d.equipped {
+		if eq != nil {
+			for i := 0; i < amount; i++ {
+				eq.LevelUp()
+			}
+		}
+	}
+	fmt.Println(d.name, "leveled up equipment by", amount)
 }

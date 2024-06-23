@@ -216,3 +216,44 @@ func (r *Room) RollLoot(luck int) *Equipment {
 
 	return equipment
 }
+
+func (r *Room) GetRoomEffect(e Event) {
+	switch e := e.(type) {
+	case EventLeaveRoom:
+		// Add XP
+		e.dude.AddXP(1 * r.story.level)
+
+		// Roll for any loot if the room has any
+		if r.kind.Equipment() != nil {
+			// Roll for loot on exit
+			if eq := r.RollLoot(e.dude.stats.luck); eq != nil {
+				fmt.Println(e.dude.name, "found", eq.Name())
+
+				// Add to inventory and equip if slot is empty
+				e.dude.AddToInventory(eq)
+			}
+		}
+		// Add other leave events here
+	case EventCenterRoom:
+		fmt.Println("Center room", r.kind.String())
+		// Add center room events here
+		switch r.kind {
+		case Armory:
+			// Level up equipment
+			if r.size == Large {
+				e.dude.LevelUpEquipment(5)
+			} else {
+				e.dude.LevelUpEquipment(1)
+			}
+		case HealingShrine:
+			// Heal
+			e.dude.Heal((r.story.level + 1) * 5)
+		case Well:
+			// Restore equipment uses
+			e.dude.RestoreUses(r.story.level + 1)
+		case Combat:
+			// Damage the dude
+			e.dude.Damage(10 * (r.story.level + 1))
+		}
+	}
+}
