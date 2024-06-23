@@ -266,7 +266,10 @@ func (d *Dude) Gold() float32 {
 
 func (d *Dude) UpdateGold(gold float32) {
 	d.gold += gold
-	fmt.Println(d.name, "found", gold)
+	if d.gold < 0 {
+		d.gold = 0
+	}
+	fmt.Println(d.name, "found", gold, "gold")
 }
 
 // Equips item to dude

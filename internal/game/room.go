@@ -54,6 +54,8 @@ func (r *RoomKind) String() string {
 		return "armory"
 	case HealingShrine:
 		return "healing"
+	case Treasure:
+		return "treasure"
 	case Combat:
 		//return "combat"
 		return "template"
@@ -72,9 +74,6 @@ func (r *RoomKind) Equipment() []string {
 		return []string{"Sword", "Shield", "Bow", "Book", "Robe", "Plate", "Leather"}
 	case HealingShrine:
 		return []string{"Ring", "Necklace"} // temporary
-	case Combat:
-	case Well:
-	default:
 	}
 	return []string{}
 }
@@ -89,6 +88,8 @@ const (
 	Combat
 	// Well restores magic items?
 	Well
+	// Treasure room
+	Treasure
 )
 
 // Room is a room within a story of za toweru.
@@ -254,6 +255,10 @@ func (r *Room) GetRoomEffect(e Event) {
 		case Combat:
 			// Damage the dude
 			e.dude.Damage(10 * (r.story.level + 1))
+		case Treasure:
+			// Add gold
+			goldAmount := (r.story.level + 1) * rand.Intn(10*int(r.size))
+			e.dude.UpdateGold(float32(goldAmount))
 		}
 	}
 }
