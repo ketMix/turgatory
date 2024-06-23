@@ -69,7 +69,10 @@ func NewStoryWithSize(size int) *Story {
 	PanicIfErr(story.PlaceRoom(room3, 2))
 
 	room4 := NewRoom(Small, Treasure)
-	PanicIfErr(story.PlaceRoom(room4, 6))
+	PanicIfErr(story.PlaceRoom(room4, 3))
+
+	room5 := NewRoom(Medium, Library)
+	PanicIfErr(story.PlaceRoom(room5, 5))
 
 	{
 		center := Must(render.NewStack("rooms/center", "", ""))
