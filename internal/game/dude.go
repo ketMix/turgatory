@@ -56,7 +56,10 @@ func NewDude(pk ProfessionKind, level int) *Dude {
 	profession := NewProfession(pk, level)
 	dude.stats = profession.StartingStats()
 	dude.inventory = profession.StartingEquipment()
-	dude.AutoEquip() // equip starting equipment
+	dude.equipped = make(map[EquipmentType]*Equipment)
+	for _, eq := range dude.inventory {
+		dude.Equip(eq)
+	}
 
 	dude.variation = -6 + rand.Float64()*12
 
@@ -155,8 +158,12 @@ func (d *Dude) Trigger(e Event) {
 		// Roll for loot on exit
 		if eq := e.room.RollLoot(d.stats.luck); eq != nil {
 			fmt.Println(d.name, "found", eq.Name())
+
+			// Add to inventory and equip if slot is empty
 			d.inventory = append(d.inventory, eq)
-			d.AutoEquip() // Equip if possible
+			if d.equipped[eq.Type()] == nil {
+				d.Equip(eq)
+			}
 		}
 		d.room = nil
 	case EventEquip:
@@ -167,7 +174,9 @@ func (d *Dude) Trigger(e Event) {
 
 	// Trigger equipped equipment
 	for _, eq := range d.equipped {
-		eq.Activate(e)
+		if eq != nil {
+			eq.Activate(e)
+		}
 	}
 }
 
@@ -228,44 +237,31 @@ func (d *Dude) UpdateGold(gold float32) {
 	d.gold += gold
 }
 
-// Auto equips from inventory to empty slots
-// If equipment can't be equipped by the class, it will not be equipped
-// If slot is taken by another item, it will not be equipped and remain in inventory
-func (d *Dude) AutoEquip() {
-	for _, eq := range d.inventory {
-		if eq.CanEquip(d.profession) {
-			if _, ok := d.equipped[eq.Type()]; !ok {
-				d.equip(eq)
-			}
-		}
-	}
-}
-
 // Equips item to dude
-func (d *Dude) equip(eq *Equipment) {
+func (d *Dude) Equip(eq *Equipment) {
 	if _, ok := d.equipped[eq.Type()]; ok {
-		d.unequip(eq.Type())
+		d.Unequip(eq.Type())
 		d.Trigger(EventUnequip{dude: d, equipment: eq}) // Event isolated to dude?
+	}
 
-		d.equipped[eq.Type()] = eq
-		d.Trigger(EventEquip{dude: d, equipment: eq}) // Event isolated to dude?
+	d.equipped[eq.Type()] = eq
+	d.Trigger(EventEquip{dude: d, equipment: eq}) // Event isolated to dude?
 
-		// If equipment is in inventory, remove it
-		for i, e := range d.inventory {
-			if e == eq {
-				d.inventory = append(d.inventory[:i], d.inventory[i+1:]...)
-				break
-			}
+	// If equipment is in inventory, remove it
+	for i, e := range d.inventory {
+		if e == eq {
+			d.inventory = append(d.inventory[:i], d.inventory[i+1:]...)
+			break
 		}
 	}
 }
 
-func (d *Dude) unequip(t EquipmentType) {
+func (d *Dude) Unequip(t EquipmentType) {
 	if _, ok := d.equipped[t]; ok {
 		// Add to inventory
 		d.inventory = append(d.inventory, d.equipped[t])
-		d.equipped[t] = nil
 		d.Trigger(EventUnequip{dude: d, equipment: d.equipped[t]}) // Event isolated to dude?
+		d.equipped[t] = nil
 	}
 }
 
