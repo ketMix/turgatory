@@ -96,7 +96,7 @@ func (s *Stack) Draw(o *Options) {
 		color := float32(c)
 		// Temporarily disable color
 		// TODO: Add color offsets...
-		color = 1.0
+		//color = 1.0
 
 		opts.ColorScale.Reset()
 		opts.ColorScale.Scale(color, color, color, 1.0)

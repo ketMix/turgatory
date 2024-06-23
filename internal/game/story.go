@@ -59,7 +59,7 @@ func NewStoryWithSize(size int) *Story {
 		}
 	}
 
-	room := NewRoom(Small, Combat)
+	room := NewRoom(Small, HealingShrine)
 	PanicIfErr(story.PlaceRoom(room, 4))
 
 	room2 := NewRoom(Medium, Armory)
