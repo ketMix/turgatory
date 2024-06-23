@@ -247,7 +247,7 @@ func (p PerkHealOnRoomEnter) Check(e Event) bool {
 	return false
 }
 
-// PerkHeal heals all dudes based on quality when equip is sold
+// PerkHealOnSell heals all dudes based on quality when equip is sold
 type PerkHealOnSell struct {
 	*Perk
 }
@@ -278,6 +278,126 @@ func (p PerkHealOnSell) Check(e Event) bool {
 	return false
 }
 
+// PerkHealOnGoldGain heals dude when they get gold
+type PerkHealOnGoldGain struct {
+	*Perk
+}
+
+func (p PerkHealOnGoldGain) amount() int {
+	return int(p.quality) * 1
+}
+
+func (p PerkHealOnGoldGain) Name() string {
+	return "Heal On Gold Gain"
+}
+
+func (p PerkHealOnGoldGain) String() string {
+	return constructName("Heal on Gold Gain", p.quality, nil)
+}
+
+func (p PerkHealOnGoldGain) Description() string {
+	return fmt.Sprintf("Heals dude for %d when they gain gold", p.amount())
+}
+
+func (p PerkHealOnGoldGain) Check(e Event) bool {
+	switch e := e.(type) {
+	case EventGoldGain:
+		e.dude.Heal(p.amount())
+		return true
+	}
+	return false
+}
+
+// PerkHealOnGoldGain heals dude when they get gold
+type PerkHealOnGoldLoss struct {
+	*Perk
+}
+
+func (p PerkHealOnGoldLoss) amount() int {
+	return int(p.quality) * 1
+}
+
+func (p PerkHealOnGoldLoss) Name() string {
+	return "Heal On Gold Gain"
+}
+
+func (p PerkHealOnGoldLoss) String() string {
+	return constructName("Heal on Gold Gain", p.quality, nil)
+}
+
+func (p PerkHealOnGoldLoss) Description() string {
+	return fmt.Sprintf("Heals dude for %d when they lose gold", p.amount())
+}
+
+func (p PerkHealOnGoldLoss) Check(e Event) bool {
+	switch e := e.(type) {
+	case EventGoldGain:
+		e.dude.Heal(p.amount())
+		return true
+	}
+	return false
+}
+
+// PerkStickyFingers reduces gold loss
+type PerkStickyFingers struct {
+	*Perk
+}
+
+func (p PerkStickyFingers) amount() float32 {
+	return float32(p.quality) * 0.1
+}
+
+func (p PerkStickyFingers) Name() string {
+	return "Sticky Fingers"
+}
+
+func (p PerkStickyFingers) String() string {
+	return constructName("Sticky Fingers", p.quality, nil)
+}
+
+func (p PerkStickyFingers) Description() string {
+	return fmt.Sprintf("Reduces gold loss by %f percent", p.amount()*100)
+}
+
+func (p PerkStickyFingers) Check(e Event) bool {
+	switch e := e.(type) {
+	case EventGoldGain:
+		e.amount = e.amount * p.amount()
+		return true
+	}
+	return false
+}
+
+// PerkGoldBoost increases gold gain
+type PerkGoldBoost struct {
+	*Perk
+}
+
+func (p PerkGoldBoost) amount() float32 {
+	return float32(p.quality) * 0.1
+}
+
+func (p PerkGoldBoost) Name() string {
+	return "Gold Boost"
+}
+
+func (p PerkGoldBoost) String() string {
+	return constructName("Gold Boost", p.quality, nil)
+}
+
+func (p PerkGoldBoost) Description() string {
+	return fmt.Sprintf("Increases gold gain by %f percent", p.amount()*100)
+}
+
+func (p PerkGoldBoost) Check(e Event) bool {
+	switch e := e.(type) {
+	case EventGoldGain:
+		e.amount = e.amount * p.amount()
+		return true
+	}
+	return false
+}
+
 func GetRandomPerk(quality PerkQuality) IPerk {
 	// Randomly select a perk
 	perk := &Perk{
@@ -296,6 +416,8 @@ func GetRandomPerk(quality PerkQuality) IPerk {
 		PerkStatBoost{perk, StatHP},
 		PerkHealOnRoomEnter{perk},
 		PerkHealOnSell{perk},
+		PerkHealOnGoldGain{perk},
+		PerkHealOnGoldLoss{perk},
 	}
 
 	// Randomly select a perk

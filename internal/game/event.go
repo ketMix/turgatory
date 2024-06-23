@@ -74,3 +74,23 @@ type EventSell struct {
 func (e EventSell) String() string {
 	return "Sell"
 }
+
+// EventGoldGain occurs when a dude gains gold
+type EventGoldGain struct {
+	dude   *Dude
+	amount float32
+}
+
+func (e EventGoldGain) String() string {
+	return "Gold Gain"
+}
+
+// EventGoldGain occurs when a dude gains gold
+type EventGoldLoss struct {
+	dude   *Dude
+	amount float32
+}
+
+func (e EventGoldLoss) String() string {
+	return "Gold Loss"
+}

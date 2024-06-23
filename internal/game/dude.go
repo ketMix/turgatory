@@ -188,6 +188,13 @@ func (d *Dude) DrawProfile(o *render.Options) {
 }
 
 func (d *Dude) Trigger(e Event) {
+	// Trigger equipped equipment
+	// It may modify event amounts
+	for _, eq := range d.equipped {
+		if eq != nil {
+			eq.Activate(e)
+		}
+	}
 	switch e := e.(type) {
 	case EventEnterRoom:
 		d.room = e.room
@@ -201,13 +208,10 @@ func (d *Dude) Trigger(e Event) {
 		fmt.Println(d.name, "equipped", e.equipment.Name())
 	case EventUnequip:
 		fmt.Println(d.name, "unequipped", e.equipment.Name())
-	}
-
-	// Trigger equipped equipment
-	for _, eq := range d.equipped {
-		if eq != nil {
-			eq.Activate(e)
-		}
+	case EventGoldGain:
+		fmt.Println(d.name, "gained", e.amount, "gold")
+	case EventGoldLoss:
+		fmt.Println(d.name, "lost", e.amount, "gold")
 	}
 }
 
@@ -264,12 +268,17 @@ func (d *Dude) Gold() float32 {
 	return d.gold
 }
 
-func (d *Dude) UpdateGold(gold float32) {
-	d.gold += gold
+func (d *Dude) UpdateGold(amount float32) {
+	d.gold += amount
 	if d.gold < 0 {
 		d.gold = 0
 	}
-	fmt.Println(d.name, "found", gold, "gold")
+
+	if amount > 0 {
+		d.Trigger(EventGoldGain{dude: d, amount: amount})
+	} else {
+		d.Trigger(EventGoldLoss{dude: d, amount: amount})
+	}
 }
 
 // Equips item to dude
