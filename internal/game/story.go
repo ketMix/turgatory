@@ -65,6 +65,9 @@ func NewStoryWithSize(size int) *Story {
 	room2 := NewRoom(Medium, Armory)
 	PanicIfErr(story.PlaceRoom(room2, 0))
 
+	room3 := NewRoom(Small, Well)
+	PanicIfErr(story.PlaceRoom(room3, 2))
+
 	{
 		center := Must(render.NewStack("rooms/center", "", ""))
 		center.SetPosition(float64(StoryVGroupWidth)/2-16, float64(StoryVGroupHeight)/2-16)

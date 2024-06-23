@@ -55,6 +55,8 @@ func (r *RoomKind) String() string {
 	case Combat:
 		//return "combat"
 		return "template"
+	case Well:
+		return "well"
 	default:
 		return "Unknown"
 	}
@@ -68,6 +70,8 @@ const (
 	HealingShrine
 	// Combat is where it goes down. $$$ is acquired.
 	Combat
+	// Well restores magic items?
+	Well
 )
 
 // Room is a room within a story of za toweru.
