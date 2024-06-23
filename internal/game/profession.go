@@ -49,7 +49,7 @@ func NewProfession(kind ProfessionKind, level int) *Profession {
 			description:   "A knight in shining armor",
 			startingStats: *getStartingStats(Knight, 1),
 			startingEquipment: []*Equipment{
-				NewEquipment("Sword", 1, EquipmentQualityCommon, nil),
+				NewEquipment("Sword", 1, EquipmentQualityLegendary, nil), // Move back to common
 				NewEquipment("Shield", 1, EquipmentQualityCommon, nil),
 			},
 		}
@@ -69,7 +69,7 @@ func NewProfession(kind ProfessionKind, level int) *Profession {
 			description:   "A vagabond with no home",
 			startingStats: *getStartingStats(Vagabond, 1),
 			startingEquipment: []*Equipment{
-				NewEquipment("Dagger", 1, EquipmentQualityCommon, nil),
+				NewEquipment("Dagger", 1, EquipmentQualityRare, nil), // Move back to common
 				NewEquipment("Leather", 1, EquipmentQualityCommon, nil),
 			},
 		}
@@ -79,7 +79,7 @@ func NewProfession(kind ProfessionKind, level int) *Profession {
 			description:   "A ranger who can shoot from afar",
 			startingStats: *getStartingStats(Ranger, 1),
 			startingEquipment: []*Equipment{
-				NewEquipment("Bow", 1, EquipmentQualityCommon, nil),
+				NewEquipment("Bow", 1, EquipmentQualityUncommon, nil), // Move back to common
 				NewEquipment("Leather", 1, EquipmentQualityCommon, nil),
 			},
 		}

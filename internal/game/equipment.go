@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
 )
@@ -36,19 +37,25 @@ func (eq EquipmentQuality) String() string {
 	}
 }
 
-func (eq EquipmentQuality) Color() string {
+func (eq EquipmentQuality) Color() ebiten.ColorScale {
+	cs := ebiten.ColorScale{}
 	switch eq {
 	case EquipmentQualityUncommon:
-		return "green"
+		// Greener
+		cs.Scale(0.5, 1, 0.5, 1)
 	case EquipmentQualityRare:
-		return "blue"
+		// Bluer
+		cs.Scale(0.5, 0.5, 1, 1)
 	case EquipmentQualityEpic:
-		return "purple"
+		// Purpler
+		cs.Scale(1, 0.5, 1, 1)
 	case EquipmentQualityLegendary:
-		return "orange"
+		// Oranger
+		cs.Scale(1, 0.5, 0.5, 1)
 	default:
-		return "white"
+		// No change
 	}
+	return cs
 }
 
 type EquipmentType string
@@ -89,7 +96,7 @@ type Equipment struct {
 	stats       *Stats            // Stats of the equipment (if any)
 	stack       *render.Stack     // How to draw the equipment
 	professions []*ProfessionKind // If restricted to a profession
-	Draw        func(*render.Options)
+	Draw        func(render.Options)
 }
 
 // Fetches the equipment by name
@@ -148,9 +155,13 @@ func NewEquipment(name string, level int, quality EquipmentQuality, perk IPerk) 
 		},
 	}
 
-	equipment.Draw = func(o *render.Options) {
+	equipment.Draw = func(o render.Options) {
 		if equipment.stack != nil {
-			equipment.stack.Draw(o)
+			// Based on quality, modify color slightly
+			cs := quality.Color()
+
+			o.DrawImageOptions.ColorScale.Scale(cs.R(), cs.G(), cs.B(), 1)
+			equipment.stack.Draw(&o)
 		}
 	}
 	return equipment

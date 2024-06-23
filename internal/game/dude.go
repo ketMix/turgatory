@@ -164,7 +164,7 @@ func (d *Dude) Draw(o *render.Options) {
 	// Draw equipment
 	for _, eq := range d.equipped {
 		if eq != nil {
-			eq.Draw(o)
+			eq.Draw(*o)
 		}
 	}
 }
