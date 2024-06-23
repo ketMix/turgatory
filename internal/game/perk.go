@@ -112,9 +112,11 @@ type Perk struct {
 func (p *Perk) String() string {
 	return "What is zis, zis is nothing!"
 }
+
 func (p *Perk) Description() string {
 	return ""
 }
+
 func (p *Perk) Quality() PerkQuality {
 	return p.quality
 }
@@ -126,7 +128,7 @@ func (p *Perk) LevelUp(maxQuality PerkQuality) {
 	if p.quality >= maxQuality {
 		return
 	}
-	p.quality += 1
+	p.quality++
 }
 
 func (p *Perk) LevelDown() {
@@ -137,7 +139,7 @@ func (p *Perk) LevelDown() {
 }
 
 func (p *Perk) Name() string {
-	return "Perk"
+	return constructName(p.String(), p.quality, nil)
 }
 
 // PerkNone represents an empty perk. Not sure if this will be used.
@@ -159,17 +161,13 @@ func (p PerkFindGold) chance() float64 {
 	return 0.25 * float64(p.quality)
 }
 
-func (p PerkFindGold) Name() string {
-	return "Find Gold"
-}
-
 func (p PerkFindGold) String() string {
-	return constructName(p.Name(), p.quality, nil)
+	return "Find Gold"
 }
 
 func (p PerkFindGold) Description() string {
 	amount := float32(p.quality) * 0.25
-	return fmt.Sprintf("Has a Chance to find finds %f gold", amount)
+	return fmt.Sprintf("Has a %f Chance to find finds %f gold", p.chance()*100, amount)
 }
 
 func (p PerkFindGold) Check(e Event) bool {
@@ -191,12 +189,11 @@ type PerkStatBoost struct {
 
 func (p PerkStatBoost) Name() string {
 	statStr := string(p.stat)
-	return constructName("Stat Boost", p.quality, &statStr)
+	return constructName(p.String(), p.quality, &statStr)
 }
 
 func (p PerkStatBoost) String() string {
-	statStr := string(p.stat)
-	return constructName(p.Name(), p.quality, &statStr)
+	return "Stat Boost"
 }
 
 func (p PerkStatBoost) Description() string {
@@ -227,12 +224,8 @@ func (p PerkHealOnRoomEnter) amount(wisdom int) int {
 	return int(p.quality) * wisdom
 }
 
-func (p PerkHealOnRoomEnter) Name() string {
-	return constructName("Heal On Room Enter", p.quality, nil)
-}
-
 func (p PerkHealOnRoomEnter) String() string {
-	return constructName(p.Name(), p.quality, nil)
+	return "Heal On Room Enter"
 }
 
 func (p PerkHealOnRoomEnter) Description() string {
@@ -256,12 +249,8 @@ func (p PerkHealOnSell) amount() int {
 	return int(p.quality) * 10
 }
 
-func (p PerkHealOnSell) Name() string {
-	return "Heal On Sell"
-}
-
 func (p PerkHealOnSell) String() string {
-	return constructName("Heal on Sell", p.quality, nil)
+	return "Heal On Sell"
 }
 
 func (p PerkHealOnSell) Description() string {
@@ -287,12 +276,8 @@ func (p PerkHealOnGoldGain) amount() int {
 	return int(p.quality) * 1
 }
 
-func (p PerkHealOnGoldGain) Name() string {
-	return "Heal On Gold Gain"
-}
-
 func (p PerkHealOnGoldGain) String() string {
-	return constructName("Heal on Gold Gain", p.quality, nil)
+	return "Heal On Gold Gain"
 }
 
 func (p PerkHealOnGoldGain) Description() string {
@@ -317,12 +302,8 @@ func (p PerkHealOnGoldLoss) amount() int {
 	return int(p.quality) * 1
 }
 
-func (p PerkHealOnGoldLoss) Name() string {
-	return "Heal On Gold Gain"
-}
-
 func (p PerkHealOnGoldLoss) String() string {
-	return constructName("Heal on Gold Gain", p.quality, nil)
+	return "Heal On Gold Gain"
 }
 
 func (p PerkHealOnGoldLoss) Description() string {
@@ -347,12 +328,8 @@ func (p PerkStickyFingers) amount() float32 {
 	return float32(p.quality) * 0.1
 }
 
-func (p PerkStickyFingers) Name() string {
-	return "Sticky Fingers"
-}
-
 func (p PerkStickyFingers) String() string {
-	return constructName("Sticky Fingers", p.quality, nil)
+	return "Sticky Fingers"
 }
 
 func (p PerkStickyFingers) Description() string {
@@ -377,12 +354,9 @@ func (p PerkGoldBoost) amount() float32 {
 	return float32(p.quality) * 0.1
 }
 
-func (p PerkGoldBoost) Name() string {
-	return "Gold Boost"
-}
-
 func (p PerkGoldBoost) String() string {
-	return constructName("Gold Boost", p.quality, nil)
+	return "Gold Boost"
+
 }
 
 func (p PerkGoldBoost) Description() string {

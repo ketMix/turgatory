@@ -404,13 +404,15 @@ func (d *Dude) Perkify(maxQuality PerkQuality) {
 		if eq.perk == nil {
 			prevName := eq.Name()
 			eq.perk = GetRandomPerk(PerkQualityTrash)
-			fmt.Println(d.name, "upgraded his equipment", prevName, "with", eq.perk.Name(), "and now has", eq.Name())
+			fmt.Println(d.name, "upgraded his equipment", prevName, "with", eq.perk.Name())
 		} else {
 			// Level up perk
 			previousQuality := eq.perk.Quality()
+			previousName := eq.Name()
 			eq.perk.LevelUp(maxQuality)
 			if eq.perk.Quality() != previousQuality {
-				fmt.Println(d.name, "upgraded his equipment", eq.Name(), "to", eq.perk.Name())
+				fmt.Println(eq.perk.Quality(), previousQuality)
+				fmt.Println(d.name, "upgraded his equipment", previousName, "to", eq.Name())
 			}
 		}
 	}
