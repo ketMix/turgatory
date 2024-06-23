@@ -138,13 +138,15 @@ func (dp *DudePanel) Draw(o *render.Options) {
 type RoomPanel struct {
 	render.Originable
 	render.Positionable
-	width    int
-	left     *render.Sprite
-	topleft  *render.Sprite
-	mid      *render.Sprite
-	topmid   *render.Sprite
-	right    *render.Sprite
-	topright *render.Sprite
+	drawered     bool
+	drawerInterp InterpNumber
+	width        int
+	left         *render.Sprite
+	topleft      *render.Sprite
+	mid          *render.Sprite
+	topmid       *render.Sprite
+	right        *render.Sprite
+	topright     *render.Sprite
 }
 
 func (rp *RoomPanel) Layout(o *UIOptions) {
@@ -153,9 +155,29 @@ func (rp *RoomPanel) Layout(o *UIOptions) {
 }
 
 func (rp *RoomPanel) Update(o *UIOptions) {
+	rp.drawerInterp.Update()
+
+	rpx, rpy := rp.Position()
+	mx, my := IntToFloat2(ebiten.CursorPosition())
+
+	maxX := (rpx + float64(rp.width)) * o.Scale
+	maxY := (rpy) * o.Scale
+
+	if mx > rpx && mx < maxX && my > rpy && my < maxY {
+		if rp.drawered {
+			rp.drawered = false
+			rp.drawerInterp.Set(0, 3.5)
+		}
+	} else {
+		if !rp.drawered {
+			rp.drawered = true
+			rp.drawerInterp.Set(64, 3.5)
+		}
+	}
 }
 
 func (rp *RoomPanel) Draw(o *render.Options) {
+	o.DrawImageOptions.GeoM.Translate(0, rp.drawerInterp.Current)
 	x := 0
 	o.DrawImageOptions.GeoM.Translate(rp.Position())
 	// topleft
