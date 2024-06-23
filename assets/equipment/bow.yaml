@@ -1,8 +1,8 @@
 name: Bow
-source: Armory
+description: A stick and string and infinite arrows
 professions: 
  - ranger
-description: A stick and string and infinite arrows
+type: weapon
 stats: 
   agility: 2
   cowardice: 15

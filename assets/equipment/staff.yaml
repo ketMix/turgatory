@@ -1,9 +1,10 @@
-name: Book
-source: Library
+name: Staff
+description: A stick to swing
+type: weapon
 professions: 
  - cleric
-description: A book of spells
 stats: 
+  strength: 1
   wisdom: 2
   cowardice: 10
 perk: Heal On Room Enter

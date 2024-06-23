@@ -1,0 +1,7 @@
+name: Dagger
+description: You can dag him if you want too
+type: weapon
+stats: 
+  strength: 1
+  agility: 1
+  cowardice: -10

@@ -59,7 +59,7 @@ func NewProfession(kind ProfessionKind, level int) *Profession {
 			description:   "A cleric who can heal",
 			startingStats: *getStartingStats(Cleric, 1),
 			startingEquipment: []*Equipment{
-				NewEquipment("Book", 1, EquipmentQualityCommon, nil),
+				NewEquipment("Staff", 1, EquipmentQualityCommon, nil),
 				NewEquipment("Robe", 1, EquipmentQualityCommon, nil),
 			},
 		}
@@ -69,7 +69,7 @@ func NewProfession(kind ProfessionKind, level int) *Profession {
 			description:   "A vagabond with no home",
 			startingStats: *getStartingStats(Vagabond, 1),
 			startingEquipment: []*Equipment{
-				NewEquipment("Sword", 1, EquipmentQualityCommon, nil),
+				NewEquipment("Dagger", 1, EquipmentQualityCommon, nil),
 				NewEquipment("Leather", 1, EquipmentQualityCommon, nil),
 			},
 		}

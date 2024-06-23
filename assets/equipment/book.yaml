@@ -1,0 +1,9 @@
+name: Book
+description: Pages filled with ancient wisdom
+type: weapon
+professions: 
+ - cleric
+stats: 
+  wisdom: 3
+  cowardice: 15
+perk: Heal On Room Enter

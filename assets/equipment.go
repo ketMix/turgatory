@@ -12,6 +12,7 @@ var equipment = make(map[string]*EquipmentAsset)
 // EquipmentAsset is an asset that represents an equipment.
 // Info is stored as yaml data that represents the equipment.
 type EquipmentAsset struct {
+	BaseName    string
 	Name        string         `yaml:"name"`
 	Description string         `yaml:"description"`
 	Type        string         `yaml:"type"`
@@ -39,7 +40,7 @@ func LoadEquipment() {
 
 		// Check if the equipment is already loaded
 		if _, ok := equipment[name]; ok {
-			panic("Dupliate equipment listed: " + name)
+			panic("Duplicate equipment listed: " + name)
 		}
 
 		// Load the equipment data from the filesystem
@@ -56,6 +57,7 @@ func LoadEquipment() {
 			panic("Error unmarshalling equipment yaml: " + name)
 		}
 
+		e.BaseName = name
 		equipment[name] = e
 		fmt.Println("Loaded equipment: ", e)
 	}

@@ -1,8 +1,8 @@
 name: Plate Armor
-source: Armory
+description: Metal plates and chainmail forged together
+type: armor
 professions: 
  - knight
-description: Metal plates and chainmail forged together
 stats: 
   agility: -1
   strength: 2

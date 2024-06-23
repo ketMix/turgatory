@@ -1,4 +1,5 @@
 staff
+book
 bow
 leather
 necklace
@@ -7,3 +8,4 @@ ring
 robe
 shield
 sword
+dagger

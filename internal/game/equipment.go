@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"math"
-	"strings"
 
 	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
@@ -105,9 +104,9 @@ func NewEquipment(name string, level int, quality EquipmentQuality, perk IPerk) 
 
 	// Parse equipment asset to equipment
 	baseStackName := fmt.Sprintf("equipment/%s", baseEquipment.Type)
-	stack, err := render.NewStack(baseStackName, strings.ToLower(baseEquipment.Name), "")
+	stack, err := render.NewStack(baseStackName, baseEquipment.BaseName, "")
 	if err != nil {
-		fmt.Println("Error loading equipment stack: ", err)
+		fmt.Println("Error loading equipment stack for: ", baseEquipment.BaseName, err)
 		stack = nil
 	}
 	professions := make([]*ProfessionKind, len(baseEquipment.Professions))

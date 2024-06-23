@@ -1,10 +1,10 @@
 name: Leather Armor
-source: Armory
+description: Some animal fur and hide stitched together
+type: armor
 professions: 
   - ranger
   - vagabond
   - knight
-description: Some animal fur and hide stitched together
 stats: 
   agility: 2
   defence: 3

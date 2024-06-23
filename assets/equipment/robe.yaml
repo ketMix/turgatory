@@ -1,6 +1,6 @@
 name: Robe
-source: Armory
 description: Cloth pieces sewn hastily together
+type: armor
 stats: 
   agility: 1
   wisdom: 2
