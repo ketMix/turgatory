@@ -146,10 +146,20 @@ func NewEquipment(name string, level int, quality EquipmentQuality, perk Perk) *
 			luck:      baseEquipment.Stats["luck"],
 		},
 	}
+
 	equipment.Draw = func(o *render.Options) {
-		equipment.stack.Draw(o)
+		if equipment.stack != nil {
+			equipment.stack.Draw(o)
+		}
 	}
 	return equipment
+}
+
+func (e *Equipment) Update() {
+	if e.stack == nil {
+		return
+	}
+	e.stack.Update()
 }
 
 // Name returns the name of the equipment.

@@ -144,10 +144,28 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 	}
 
 	d.stack.Update()
+
+	// Update equipment
+	for _, eq := range d.equipped {
+		if eq != nil {
+			// Set equipment position to dude
+			if eq.stack != nil {
+				eq.stack.SetPosition(d.stack.Position())
+			}
+			eq.Update()
+		}
+	}
 }
 
 func (d *Dude) Draw(o *render.Options) {
 	d.stack.Draw(o)
+
+	// Draw equipment
+	for _, eq := range d.equipped {
+		if eq != nil {
+			eq.Draw(o)
+		}
+	}
 }
 
 func (d *Dude) Trigger(e Event) {
