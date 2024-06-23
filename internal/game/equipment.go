@@ -189,30 +189,10 @@ func (e *Equipment) Level() int {
 }
 
 func (e *Equipment) ChangeQuality(delta int) {
+	// Break into multiple calls of 1  so we can ceil and floor changes and hit those thresholds
 	if delta == 0 {
 		return
-	}
-
-	// If we're trying to decrease the quality of a common item, don't
-	if e.quality == EquipmentQualityCommon && delta < 0 {
-		// We can subtract a use though
-		if e.uses > 0 {
-			e.uses--
-		}
-		return
-	}
-
-	// If we're trying to increase the quality of a legendary item, don't
-	if e.quality == EquipmentQualityLegendary && delta > 0 {
-		// We can add a use though
-		if e.uses < e.totalUses {
-			e.uses++
-		}
-		return
-	}
-
-	// Do this so we can ceil and floor changes and hit those thresholds
-	if delta > 1 {
+	} else if delta > 1 {
 		for i := 0; i < delta; i++ {
 			e.ChangeQuality(1)
 		}
@@ -220,18 +200,37 @@ func (e *Equipment) ChangeQuality(delta int) {
 		for i := 0; i > delta; i-- {
 			e.ChangeQuality(-1)
 		}
-	} else {
-		// Here we are always 1 or -1 delta
-		e.quality += EquipmentQuality(1 * delta)
-		e.totalUses += delta
-		e.uses += delta
-		if e.uses > e.totalUses {
-			e.uses = e.totalUses
-		}
-		if e.uses < 0 {
-			e.uses = 0
-		}
 	}
+
+	e.uses += delta
+	if e.uses > e.totalUses {
+		e.uses = e.totalUses
+	}
+	if e.uses < 0 {
+		e.uses = 0
+	}
+
+	// If we're trying to decrease the quality of a common item, don't
+	if e.quality == EquipmentQualityCommon && delta < 0 {
+		return
+	}
+
+	// If we're trying to increase the quality of a legendary item, don't
+	if e.quality == EquipmentQualityLegendary && delta > 0 {
+		return
+	}
+
+	// Here we are always 1 or -1 delta
+	e.quality = EquipmentQuality(int(e.quality) + delta)
+	e.totalUses += delta
+	if e.totalUses < 1 {
+		e.totalUses = 1
+	}
+	// If we increased total use, increase uses
+	if delta > 0 {
+		e.uses++
+	}
+
 }
 
 // Levels up the weapon.
