@@ -5,6 +5,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/kettek/ebijam24/assets"
 	_ "github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
 )
@@ -117,6 +118,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Init() {
+	// Init the equipment
+	assets.LoadEquipment()
 	g.dudes = []*Dude{}
 	lvl := NewLevel()
 	tower := NewTower()
