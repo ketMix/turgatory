@@ -12,3 +12,7 @@ func PanicIfErr(err error) {
 		panic(err)
 	}
 }
+
+func IntToFloat2(a, b int) (float64, float64) {
+	return float64(a), float64(b)
+}
