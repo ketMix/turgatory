@@ -304,7 +304,7 @@ func (r *Room) GetRoomEffect(e Event) {
 			e.dude.enemy = nil
 		}
 		// Add XP
-		e.dude.AddXP(1 * r.story.level)
+		e.dude.AddXP(1 * (r.story.level + 1))
 
 		// Roll for any loot if the room has any
 		if r.kind.Equipment() != nil {
