@@ -38,7 +38,6 @@ func LoadStaxie(name string) (*Staxie, error) {
 
 	staxie.image = eimg
 
-	staxie.calculatePositions()
 	staxie.acquireSliceImages()
 
 	stax[name] = staxie
@@ -122,6 +121,7 @@ func (s *Staxie) FromBytes(data []byte) error {
 			s.FrameWidth = int(frameWidth)
 			s.FrameHeight = int(frameHeight)
 
+			y := 0
 			for i := 0; i < int(stackCount); i++ {
 				stack := StaxieStack{
 					Animations: make(map[string]StaxieAnimation),
@@ -145,13 +145,19 @@ func (s *Staxie) FromBytes(data []byte) error {
 					for k := 0; k < int(frameCount); k++ {
 						frame := StaxieFrame{}
 						for l := 0; l < int(sliceCount); l++ {
-							slice := StaxieSlice{}
+							slice := StaxieSlice{
+								X: l * int(frameWidth),
+								Y: y,
+							}
 							if offset+1 > len(data) {
 								panic("Out of bounds")
 							}
 							slice.Shading = data[offset]
 							offset++
 							frame.Slices = append(frame.Slices, slice)
+						}
+						if sliceCount > 0 {
+							y += int(frameHeight)
 						}
 						frame.Index = k
 						animation.Frames = append(animation.Frames, frame)
@@ -185,22 +191,6 @@ func (s *Staxie) acquireSliceImages() {
 
 					frame.Slices[i].Image = img
 				}
-			}
-		}
-	}
-}
-
-func (s *Staxie) calculatePositions() {
-	y := 0
-	for _, stack := range s.Stacks {
-		for _, animation := range stack.Animations {
-			for _, frame := range animation.Frames {
-				for i, slice := range frame.Slices {
-					slice.X = i * s.FrameWidth
-					slice.Y = y
-					frame.Slices[i] = slice
-				}
-				y += s.FrameHeight
 			}
 		}
 	}
