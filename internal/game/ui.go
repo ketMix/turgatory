@@ -328,4 +328,24 @@ func (rp *RoomPanel) Draw(o *render.Options) {
 	o.DrawImageOptions.GeoM.Translate(0, ph)
 	// right
 	rp.right.Draw(o)
+
+	o.DrawImageOptions.GeoM.Reset()
+	o.DrawImageOptions.GeoM.Translate(0, rp.drawerInterp.Current)
+	o.DrawImageOptions.GeoM.Translate(rp.Position())
+	o.DrawImageOptions.GeoM.Translate(pw/2, 8)
+	// Quick hacky test.
+	rd := GetRoomDef(HealingShrine, Small)
+	o.Screen.DrawImage(rd.image, &o.DrawImageOptions)
+	o.DrawImageOptions.GeoM.Translate(float64(rd.image.Bounds().Dx())+8, 0)
+	rd = GetRoomDef(Library, Medium)
+	o.Screen.DrawImage(rd.image, &o.DrawImageOptions)
+	o.DrawImageOptions.GeoM.Translate(float64(rd.image.Bounds().Dx())+8, 0)
+	rd = GetRoomDef(Armory, Medium)
+	o.Screen.DrawImage(rd.image, &o.DrawImageOptions)
+	o.DrawImageOptions.GeoM.Translate(float64(rd.image.Bounds().Dx())+8, 0)
+	rd = GetRoomDef(Treasure, Small)
+	o.Screen.DrawImage(rd.image, &o.DrawImageOptions)
+	o.DrawImageOptions.GeoM.Translate(float64(rd.image.Bounds().Dx())+8, 0)
+	rd = GetRoomDef(Combat, Small)
+	o.Screen.DrawImage(rd.image, &o.DrawImageOptions)
 }
