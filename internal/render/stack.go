@@ -56,7 +56,7 @@ func NewStack(name string, stackName string, animationName string) (*Stack, erro
 		return nil, fmt.Errorf("frame 0 does not exist in %s", animationName)
 	}
 
-	return &Stack{data: staxie, currentStack: &stack, currentAnimation: &animation, currentFrame: frame}, nil
+	return &Stack{data: staxie, currentStack: stack, currentAnimation: &animation, currentFrame: frame}, nil
 }
 
 func CopyStack(stack *Stack) *Stack {
@@ -161,7 +161,7 @@ func (s *Stack) SetStack(name string) error {
 	if !ok {
 		return fmt.Errorf("stack %s", name)
 	}
-	s.currentStack = &stack
+	s.currentStack = stack
 
 	return s.SetAnimation(s.currentAnimation.Name)
 }

@@ -48,7 +48,7 @@ func LoadStaxie(name string) (*Staxie, error) {
 
 // Staxie is the structure extracted from a Staxie PNG file.
 type Staxie struct {
-	Stacks      map[string]StaxieStack
+	Stacks      map[string]*StaxieStack
 	FrameWidth  int
 	FrameHeight int
 	image       *ebiten.Image
@@ -56,7 +56,7 @@ type Staxie struct {
 
 // FromBytes reads the given PNG bytes into a staxie structure, providing it has a stAx section.
 func (s *Staxie) FromBytes(data []byte) error {
-	s.Stacks = make(map[string]StaxieStack)
+	s.Stacks = make(map[string]*StaxieStack)
 	s.FrameWidth = 0
 	s.FrameHeight = 0
 
@@ -158,7 +158,7 @@ func (s *Staxie) FromBytes(data []byte) error {
 					}
 					stack.Animations[animationName] = animation
 				}
-				s.Stacks[name] = stack
+				s.Stacks[name] = &stack
 			}
 		default: // Skip non-stAx sections
 			offset += int(chunkSize)
