@@ -46,6 +46,7 @@ func (s *GameStatePreBuild) Draw(g *Game, screen *ebiten.Image) {
 }
 
 type GameStateBuild struct {
+	availableRooms []RoomDef
 }
 
 func (s *GameStateBuild) Begin(g *Game) {
