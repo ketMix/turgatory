@@ -94,6 +94,7 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 				if d.stack.HeightOffset <= 0 {
 					d.stack.HeightOffset = 0
 				}
+				d.SyncEquipment()
 			}})
 		}
 	case GoingUp:
@@ -108,7 +109,9 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 
 			face := math.Atan2(ny-cy, nx-cx)
 
-			req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny})
+			req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny, cb: func(success bool) {
+				d.SyncEquipment()
+			}})
 		}
 		if d.timer >= 15 {
 			d.stack.SliceOffset--
@@ -131,7 +134,11 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 
 			face := math.Atan2(ny-cy, nx-cx)
 
-			req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny})
+			req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny, cb: func(success bool) {
+				if success {
+					d.SyncEquipment()
+				}
+			}})
 		}
 	case Moving:
 		cx, cy := d.Position()
@@ -140,7 +147,11 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 
 		face := math.Atan2(ny-cy, nx-cx)
 
-		req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny})
+		req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny, cb: func(success bool) {
+			if success {
+				d.SyncEquipment()
+			}
+		}})
 	case Leaving:
 		// TODO
 	case GoingDown:
@@ -152,11 +163,21 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 	// Update equipment
 	for _, eq := range d.equipped {
 		if eq != nil {
-			// Set equipment position to dude position
-			if eq.stack != nil {
-				eq.stack.SetPosition(d.stack.Position())
-			}
 			eq.Update()
+		}
+	}
+}
+
+func (d *Dude) SyncEquipment() {
+	for _, eq := range d.equipped {
+		if eq != nil && eq.stack != nil {
+			// Set equipment position to dude position
+			eq.stack.SliceOffset = d.stack.SliceOffset
+			eq.stack.MaxSliceIndex = d.stack.MaxSliceIndex
+			eq.stack.HeightOffset = d.stack.HeightOffset
+			eq.stack.SetOrigin(d.stack.Origin())
+			eq.stack.SetPosition(d.stack.Position())
+			eq.stack.SetRotation(d.stack.Rotation())
 		}
 	}
 }
@@ -182,7 +203,7 @@ func (d *Dude) Draw(o *render.Options) {
 	// Draw equipment
 	for _, eq := range d.equipped {
 		if eq != nil {
-			eq.Draw(*o)
+			eq.Draw(o)
 		}
 	}
 

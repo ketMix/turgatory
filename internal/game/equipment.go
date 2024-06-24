@@ -101,7 +101,7 @@ type Equipment struct {
 	stats       *Stats            // Stats of the equipment (if any)
 	stack       *render.Stack     // How to draw the equipment
 	professions []*ProfessionKind // If restricted to a profession
-	Draw        func(render.Options)
+	Draw        func(*render.Options)
 }
 
 // Fetches the equipment by name
@@ -160,13 +160,13 @@ func NewEquipment(name string, level int, quality EquipmentQuality, perk IPerk) 
 		},
 	}
 
-	equipment.Draw = func(o render.Options) {
+	equipment.Draw = func(o *render.Options) {
 		if equipment.stack != nil {
 			// Based on quality, modify color slightly
 			cs := quality.Color()
 
-			o.DrawImageOptions.ColorScale.Scale(cs.R(), cs.G(), cs.B(), 1)
-			equipment.stack.Draw(&o)
+			o.DrawImageOptions.ColorScale.Scale(cs.R(), cs.G(), cs.B(), 0)
+			equipment.stack.Draw(o)
 		}
 	}
 	return equipment
