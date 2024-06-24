@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/ebijam24/internal/render"
@@ -11,6 +12,14 @@ type UIOptions struct {
 	Scale  float64
 	Width  int
 	Height int
+}
+
+func (o UIOptions) CoordsToScreen(x, y float64) (float64, float64) {
+	return x * o.Scale, y * o.Scale
+}
+
+func (o UIOptions) ScreenToCoords(x, y float64) (float64, float64) {
+	return x / o.Scale, y / o.Scale
 }
 
 type UI struct {
@@ -60,10 +69,8 @@ func (ui *UI) Update(o *UIOptions) {
 }
 
 func (ui *UI) Draw(o *render.Options) {
-	o.DrawImageOptions.GeoM.Scale(ui.options.Scale, ui.options.Scale)
 	ui.dudePanel.Draw(o)
 	o.DrawImageOptions.GeoM.Reset()
-	o.DrawImageOptions.GeoM.Scale(ui.options.Scale, ui.options.Scale)
 	ui.roomPanel.Draw(o)
 }
 
@@ -71,7 +78,8 @@ type DudePanel struct {
 	render.Originable
 	render.Positionable
 	drawered     bool
-	height       int
+	width        float64
+	height       float64
 	top          *render.Sprite
 	topright     *render.Sprite
 	mid          *render.Sprite
@@ -84,43 +92,96 @@ type DudePanel struct {
 
 type DudeProfile struct {
 	render.Positionable
-	dude    *Dude
-	hovered bool
+	stack      *render.Stack
+	dude       *Dude
+	hovered    bool
+	height     float64
+	width      float64
+	stackScale float64
 }
 
 func profilesFromDudes(dudes []*Dude) []*DudeProfile {
 	profiles := []*DudeProfile{}
 	for _, dude := range dudes {
-		profiles = append(profiles, &DudeProfile{dude: dude})
+		profiles = append(profiles, NewDudeProfile(dude))
 	}
 	return profiles
 }
 
-// ...
-func (dp *DudeProfile) InBounds(x, y, dpy float64) bool {
-	px, py := dp.Position()
-	px += 11
-	py += dpy + 40
-	profileWidth := 32
+func NewDudeProfile(dude *Dude) *DudeProfile {
+	stack := render.CopyStack(dude.stack)
+	stack.SetPosition(0, 0)
+	stack.SetOriginToCenter()
+	stack.SetRotation(math.Pi/2 - math.Pi/4)
 
-	fmt.Println(x, y, dpy, px, py, px+float64(profileWidth), py+float64(profileWidth))
-	if x > px && x < px+float64(profileWidth) && y > py && y < py+float64(profileWidth) {
+	return &DudeProfile{
+		dude:   dude,
+		stack:  stack,
+		width:  float64(stack.Width()),
+		height: float64(stack.Height()) * 2, // x2 for slice pitch of 1
+	}
+}
+
+func (dp *DudeProfile) Draw(o *render.Options) {
+	// Save these top options for drawing dude profiles
+	profileOptions := render.Options{
+		Screen: o.Screen,
+		Pitch:  2,
+	}
+	profileOptions.DrawImageOptions.GeoM.Concat(o.DrawImageOptions.GeoM)
+	profileOptions.DrawImageOptions.GeoM.Scale(dp.stackScale, dp.stackScale)
+	profileOptions.DrawImageOptions.GeoM.Translate(dp.Position())
+	// Also shove 'em to the right a little.
+	profileOptions.DrawImageOptions.GeoM.Translate(dp.width/2, 0)
+	dp.stack.Draw(&profileOptions)
+}
+
+// ...
+func (dp *DudeProfile) InBounds(o *UIOptions, x, y float64) bool {
+	px, py := dp.Position()
+	profileWidth := dp.width
+	profileHeight := dp.height
+
+	if x > px && x < px+profileWidth && y > py && y < py+profileHeight {
+		return true
+	}
+	return false
+}
+
+func InBounds(x, y, width, height, mx, my float64) bool {
+	if mx > x && mx < x+width && my > y && my < y+height {
 		return true
 	}
 	return false
 }
 
 func (dp *DudePanel) Layout(o *UIOptions) {
-	dp.height = o.Height - o.Height/3
+	// eww
+	dp.bot.Scale = o.Scale
+	dp.botright.Scale = o.Scale
+	dp.mid.Scale = o.Scale
+	dp.midright.Scale = o.Scale
+	dp.top.Scale = o.Scale
+	dp.topright.Scale = o.Scale
+
+	partWidth, partHeight := dp.top.Size()
+	dp.width = partWidth * 2
+	dp.height = float64(o.Height - o.Height/3)
 
 	// Position at vertical center.
-	dp.SetPosition(0, float64(o.Height/2)-float64(dp.height)/2-32)
+	dp.SetPosition(0, float64(o.Height/2)-dp.height/2)
 
 	// Position dude faces
-	yOffset := 24
 	dpx, dpy := dp.Position()
-	for i, p := range dp.dudeProfiles {
-		p.SetPosition(dpx, float64(i*yOffset)-(float64(dpy/2)-24))
+	dpy += partHeight / 2 // Pad the top a bit
+	y := 0.0
+	for _, p := range dp.dudeProfiles {
+		p.SetPosition(dpx, dpy+y)
+		p.stackScale = o.Scale + 1
+		p.width = float64(p.stack.Width()) * p.stackScale
+		p.height = float64(p.stack.Height()) * p.stackScale * 1.5
+
+		y += p.height + 4
 	}
 }
 
@@ -130,8 +191,8 @@ func (dp *DudePanel) Update(o *UIOptions) {
 	dpx, dpy := dp.Position()
 	mx, my := IntToFloat2(ebiten.CursorPosition())
 
-	maxX := (dpx + 32) * o.Scale
-	maxY := (dpy + float64(dp.height)) * o.Scale
+	maxX := dpx + dp.width
+	maxY := dpy + dp.height
 
 	if mx > dpx && mx < maxX && my > dpy && my < maxY {
 		if dp.drawered {
@@ -141,64 +202,53 @@ func (dp *DudePanel) Update(o *UIOptions) {
 	} else {
 		if !dp.drawered {
 			dp.drawered = true
-			dp.drawerInterp.Set(-48, 3)
+			dp.drawerInterp.Set(-(dp.width - dp.width/4), 3)
 		}
 	}
 
 	if !dp.drawered {
-		// TODO: Convert mouse pos to dude clicking?
-		// Testing with single dude
-		p := dp.dudeProfiles[0]
-		if p.InBounds(mx, my, dpy) {
-			fmt.Println("hovered over my guy: ", p.dude.name)
-			p.hovered = true
-		} else {
-			p.hovered = false
+		for _, p := range dp.dudeProfiles {
+			px, py := p.Position()
+			if InBounds(px, py, dp.width, p.height, mx, my) {
+				fmt.Println("!!! hovered over my guy: ", p.dude.name)
+				p.hovered = true
+			} else {
+				p.hovered = false
+			}
 		}
 	}
 }
 
 func (dp *DudePanel) Draw(o *render.Options) {
+	pw, ph := dp.top.Size()
 	o.DrawImageOptions.GeoM.Translate(dp.drawerInterp.Current, 0)
-	y := 0
 	o.DrawImageOptions.GeoM.Translate(dp.Position())
 	// top
 	dp.top.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(16, 0)
+	o.DrawImageOptions.GeoM.Translate(pw, 0)
 	dp.topright.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(0, 16)
-	y += 16
-	o.DrawImageOptions.GeoM.Translate(-16, 0)
-
-	// Save these top options for drawing dude profiles
-	topOptions := render.Options{
-		Screen:           o.Screen,
-		DrawImageOptions: o.DrawImageOptions,
-	}
+	o.DrawImageOptions.GeoM.Translate(0, ph)
+	o.DrawImageOptions.GeoM.Translate(-pw, 0)
 
 	// mid
-	for ; y < dp.height-16; y += 16 {
+	parts := int(math.Floor(dp.height/ph)) - 2
+	for y := 0; y < parts; y++ {
 		dp.mid.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(16, 0)
+		o.DrawImageOptions.GeoM.Translate(pw, 0)
 		dp.midright.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(-16, 0)
-		o.DrawImageOptions.GeoM.Translate(0, 16)
+		o.DrawImageOptions.GeoM.Translate(-pw, 0)
+		o.DrawImageOptions.GeoM.Translate(0, ph)
 	}
 	// bottom
 	dp.bot.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(16, 0)
+	o.DrawImageOptions.GeoM.Translate(pw, 0)
 	dp.botright.Draw(o)
 
-	// Draw dudes below top
+	// Draw dudes, but offset also by the drawerInterp
+	o.DrawImageOptions.GeoM.Reset()
+	o.DrawImageOptions.GeoM.Translate(dp.drawerInterp.Current, 0)
 	for _, p := range dp.dudeProfiles {
-		// Save these top options for drawing dude profiles
-		profileOptions := render.Options{
-			Screen:           o.Screen,
-			DrawImageOptions: topOptions.DrawImageOptions,
-		}
-		profileOptions.DrawImageOptions.GeoM.Translate(p.Position())
-		profileOptions.DrawImageOptions.GeoM.Scale(2, 2)
-		p.dude.DrawProfile(&profileOptions)
+		p.Draw(o)
 	}
 }
 
@@ -207,7 +257,8 @@ type RoomPanel struct {
 	render.Positionable
 	drawered     bool
 	drawerInterp InterpNumber
-	width        int
+	width        float64
+	height       float64
 	left         *render.Sprite
 	topleft      *render.Sprite
 	mid          *render.Sprite
@@ -217,7 +268,17 @@ type RoomPanel struct {
 }
 
 func (rp *RoomPanel) Layout(o *UIOptions) {
-	rp.width = o.Width - o.Width/3
+	rp.left.Scale = o.Scale
+	rp.topleft.Scale = o.Scale
+	rp.mid.Scale = o.Scale
+	rp.topmid.Scale = o.Scale
+	rp.right.Scale = o.Scale
+	rp.topright.Scale = o.Scale
+
+	_, ph := rp.topleft.Size()
+
+	rp.width = float64(o.Width - o.Width/3)
+	rp.height = ph * 2
 	rp.SetPosition(float64(o.Width/2)-float64(rp.width)/2, float64(o.Height)-96)
 }
 
@@ -227,8 +288,10 @@ func (rp *RoomPanel) Update(o *UIOptions) {
 	rpx, rpy := rp.Position()
 	mx, my := IntToFloat2(ebiten.CursorPosition())
 
-	maxX := (rpx + float64(rp.width)) * o.Scale
-	maxY := (rpy) * o.Scale
+	maxX := rpx + float64(rp.width)
+	maxY := rpy + rp.height
+
+	_, ph := rp.topleft.Size()
 
 	if mx > rpx && mx < maxX && my > rpy && my < maxY {
 		if rp.drawered {
@@ -238,33 +301,33 @@ func (rp *RoomPanel) Update(o *UIOptions) {
 	} else {
 		if !rp.drawered {
 			rp.drawered = true
-			rp.drawerInterp.Set(64, 3.5)
+			rp.drawerInterp.Set(ph, 3.5)
 		}
 	}
 }
 
 func (rp *RoomPanel) Draw(o *render.Options) {
+	pw, ph := rp.topleft.Size()
 	o.DrawImageOptions.GeoM.Translate(0, rp.drawerInterp.Current)
-	x := 0
 	o.DrawImageOptions.GeoM.Translate(rp.Position())
 	// topleft
 	rp.topleft.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(0, 32)
+	o.DrawImageOptions.GeoM.Translate(0, ph)
 	// left
 	rp.left.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(32, -32)
+	o.DrawImageOptions.GeoM.Translate(pw, -ph)
 	// mid
-	x += 32
-	for ; x < rp.width-32; x += 32 {
+	parts := int(math.Floor(float64(rp.width)/float64(pw))) - 2
+	for i := 0; i < parts; i++ {
 		rp.topmid.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(0, 32)
+		o.DrawImageOptions.GeoM.Translate(0, ph)
 		rp.mid.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(0, -32)
-		o.DrawImageOptions.GeoM.Translate(32, 0)
+		o.DrawImageOptions.GeoM.Translate(0, -ph)
+		o.DrawImageOptions.GeoM.Translate(pw, 0)
 	}
 	// topright
 	rp.topright.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(0, 32)
+	o.DrawImageOptions.GeoM.Translate(0, ph)
 	// right
 	rp.right.Draw(o)
 }

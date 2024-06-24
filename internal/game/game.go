@@ -148,7 +148,7 @@ func (g *Game) Init() {
 	}
 
 	g.ui = NewUI(g.dudes)
-	g.uiOptions = UIOptions{Scale: 3.0}
+	g.uiOptions = UIOptions{Scale: 2.0}
 	g.camera = *render.NewCamera(0, 0)
 }
 
