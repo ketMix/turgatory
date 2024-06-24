@@ -98,6 +98,22 @@ const (
 	Library
 )
 
+// The set of BAD rooms (those that are not good for the dudes)
+// Will be used to determine the REQUIRED rooms you have to place
+var badRooms = []RoomKind{
+	Combat,
+}
+
+// The set of GOOD rooms (those that are good for the dudes)
+// Will be used to determine the OPTIONAL rooms you can place (for $$$)
+var goodRooms = []RoomKind{
+	Armory,
+	HealingShrine,
+	Well,
+	Treasure,
+	Library,
+}
+
 // Room is a room within a story of za toweru.
 type Room struct {
 	story *Story
@@ -274,4 +290,16 @@ func (r *Room) GetRoomEffect(e Event) {
 			e.dude.Perkify(maxQuality)
 		}
 	}
+}
+
+// For populating the optional rooms to place
+func GetRandomGoodRoom() RoomKind {
+	// Roll for room
+	return goodRooms[rand.Intn(len(goodRooms))]
+}
+
+// For populating the required rooms to place
+func GetRandomBadRoom() RoomKind {
+	// Roll for room
+	return badRooms[rand.Intn(len(badRooms))]
 }

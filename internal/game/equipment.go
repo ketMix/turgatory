@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math"
+	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/ebijam24/assets"
@@ -78,6 +79,10 @@ func (et EquipmentType) String() string {
 	default:
 		return "Unknown"
 	}
+}
+func RandomEquipmentType() EquipmentType {
+	types := []EquipmentType{EquipmentTypeWeapon, EquipmentTypeArmor, EquipmentTypeAccessory}
+	return types[rand.Intn(len(types))]
 }
 
 // An equipment is the stuff you get
