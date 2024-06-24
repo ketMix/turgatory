@@ -62,7 +62,6 @@ func (t *Tower) Update() {
 			if dude, ok := u.initiator.(*Dude); ok {
 				dude.Trigger(EventEndRoom{room: u.room, dude: dude})
 			}
-			fmt.Println("end of room", u.room.index)
 			if u.room.index == 7 {
 				// NOTE: triggering a portal should only happen _once_, need to assign some sort of tower state.
 				if !u.room.story.open {
