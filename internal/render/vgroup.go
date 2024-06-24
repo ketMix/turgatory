@@ -54,8 +54,7 @@ func (vg *VGroup) Clear() {
 	for _, img := range vg.Images {
 		img.Clear()
 	}
-	//vg.Overlay.Clear()
-	vg.Overlay.Fill(color.NRGBA{128, 0, 0, 128})
+	vg.Overlay.Clear()
 }
 
 // Draw draws the internal images to the provided screen, applying geom and otherwise.
