@@ -11,10 +11,11 @@ import (
 // VGroup manages a slice of images intended to be rendered at offsets. This is basically an offscreen framebuffer for stack slice rendering.
 type VGroup struct {
 	Positionable
-	Images []*ebiten.Image
-	Width  int
-	Height int
-	Debug  bool
+	Images  []*ebiten.Image
+	Width   int
+	Height  int
+	Debug   bool
+	Overlay *ebiten.Image // Overlay is an extra framebuffer image draw over top all vgroup images.
 }
 
 // NewVGroup creates a new VGroup. Destroy() _MUST_ be called once the VGroup is no longer needed.
@@ -31,6 +32,9 @@ func NewVGroup(w, h, n int) *VGroup {
 		img.Clear() // iirc, this is needed to prevent garbage contents on certain platforms/gpus
 		vg.Images = append(vg.Images, img)
 	}
+	vg.Overlay = ebiten.NewImageWithOptions(image.Rect(0, 0, w, h), &ebiten.NewImageOptions{
+		Unmanaged: true,
+	})
 
 	return vg
 }
@@ -41,6 +45,8 @@ func (vg *VGroup) Destroy() {
 		img.Deallocate()
 	}
 	vg.Images = nil
+	vg.Overlay.Deallocate()
+	vg.Overlay = nil
 }
 
 // Clear clears the internal images.
@@ -48,6 +54,8 @@ func (vg *VGroup) Clear() {
 	for _, img := range vg.Images {
 		img.Clear()
 	}
+	//vg.Overlay.Clear()
+	vg.Overlay.Fill(color.NRGBA{128, 0, 0, 128})
 }
 
 // Draw draws the internal images to the provided screen, applying geom and otherwise.
@@ -84,5 +92,12 @@ func (vg *VGroup) Draw(o *Options) {
 		}
 		//o.Screen.DrawImage(img, &opts)
 		opts.GeoM.Translate(0, -o.Pitch)
+	}
+	{
+		opts2 := ebiten.DrawImageOptions{}
+		opts2.GeoM.Concat(opts.GeoM)
+		opts2.GeoM.Translate(0, float64(vg.Height))
+
+		o.Screen.DrawImage(vg.Overlay, &opts2)
 	}
 }

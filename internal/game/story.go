@@ -154,9 +154,11 @@ func (s *Story) Draw(o *render.Options) {
 	s.vgroup.Clear()
 
 	opts := &render.Options{
-		Screen: o.Screen,
-		Pitch:  o.Pitch,
-		VGroup: s.vgroup,
+		Camera:        o.Camera,
+		Screen:        o.Screen,
+		Pitch:         o.Pitch,
+		VGroup:        s.vgroup,
+		TowerRotation: o.TowerRotation,
 	}
 
 	// We can't use the camera's own functionality, so we do it ourselves here.

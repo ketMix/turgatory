@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"image/color"
 	"math"
 	"math/rand"
 
@@ -162,6 +163,21 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 func (d *Dude) Draw(o *render.Options) {
 	d.stack.Draw(o)
 
+	// THIS IS BORKED
+	if len(o.VGroup.Images) > 0 {
+		ro := render.TextOptions{
+			Font:   assets.BodyFont,
+			Color:  color.NRGBA{255, 0, 255, 255},
+			Screen: o.VGroup.Overlay,
+		}
+
+		x, y := d.stack.Position()
+		y /= o.Camera.Zoom
+
+		ro.GeoM.Translate(x, y)
+
+		render.DrawText(&ro, d.name)
+	}
 	// Draw equipment
 	for _, eq := range d.equipped {
 		if eq != nil {
