@@ -145,7 +145,15 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 		r := story.AngleFromCenter(cx, cy) + d.variation/5000
 		nx, ny := story.PositionFromCenter(r-d.Speed(), RoomPath+d.variation)
 
-		face := math.Atan2(ny-cy, nx-cx)
+		var face float64
+
+		// Face into the room if it is a combat room!
+		if d.room != nil && d.room.kind == Combat {
+			fx, fy := story.PositionFromCenter(r-d.Speed(), d.variation)
+			face = math.Atan2(fy-cy, fx-cx)
+		} else {
+			face = math.Atan2(ny-cy, nx-cx)
+		}
 
 		req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny, cb: func(success bool) {
 			if success {
