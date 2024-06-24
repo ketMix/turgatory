@@ -33,6 +33,7 @@ type Dude struct {
 	story        *Story // current story da dude be in
 	room         *Room  // current room the dude is in
 	stack        *render.Stack
+	shadow       *render.Stack
 	timer        int
 	activity     DudeActivity
 	activityDone bool
@@ -47,6 +48,13 @@ func NewDude(pk ProfessionKind, level int) *Dude {
 	if err != nil {
 		panic(err)
 	}
+
+	// Get shadow.
+	shadowStack, err := render.NewStack("dudes/shadow", "", "")
+	if err != nil {
+		panic(err)
+	}
+	dude.shadow = shadowStack
 
 	// Assign a random dude skin
 	stackNames := stack.Stacks()
@@ -181,6 +189,10 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 }
 
 func (d *Dude) SyncEquipment() {
+	// Piggy-back syncing shadow here
+	d.shadow.SetOrigin(d.stack.Origin())
+	d.shadow.SetPosition(d.stack.Position())
+	d.shadow.SetRotation(d.stack.Rotation())
 	for _, eq := range d.equipped {
 		if eq != nil && eq.stack != nil {
 			// Set equipment position to dude position
@@ -197,6 +209,7 @@ func (d *Dude) SyncEquipment() {
 
 func (d *Dude) Draw(o *render.Options) {
 	d.stack.Draw(o)
+	d.shadow.Draw(o)
 
 	// THIS IS BORKED
 	if len(o.VGroup.Images) > 0 {
