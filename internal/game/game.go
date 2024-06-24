@@ -6,7 +6,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/kettek/ebijam24/assets"
-	_ "github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
 )
 
@@ -17,7 +16,7 @@ type Game struct {
 	camera                render.Camera
 	mouseX, mouseY        int
 	cursorX, cursorY      float64
-	level                 *Level
+	tower                 *Tower
 	lastWidth, lastHeight int
 	uiOptions             UIOptions
 	state                 GameState
@@ -100,7 +99,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 func (g *Game) Init() {
 	// Init the equipment
 	assets.LoadEquipment()
-	lvl := NewLevel()
 	tower := NewTower()
 
 	firstStory := NewStory()
@@ -111,9 +109,8 @@ func (g *Game) Init() {
 	tower.AddStory(NewStory())
 	tower.AddStory(NewStory())
 	tower.AddStory(NewStory())
-	lvl.AddTower(tower)
 
-	g.level = lvl
+	g.tower = tower
 
 	g.ui = NewUI()
 	g.uiOptions = UIOptions{Scale: 2.0}

@@ -37,7 +37,7 @@ func (s *GameStatePreBuild) Begin(g *Game) {
 }
 func (s *GameStatePreBuild) End(g *Game) {
 	g.dudes = append(g.dudes, s.newDudes...)
-	g.level.towers[0].AddDudes(s.newDudes...)
+	g.tower.AddDudes(s.newDudes...)
 }
 func (s *GameStatePreBuild) Update(g *Game) GameState {
 	return &GameStateBuild{}
@@ -70,7 +70,7 @@ func (s *GameStatePlay) End(g *Game) {
 }
 func (s *GameStatePlay) Update(g *Game) GameState {
 	// Update the game!
-	g.level.Update()
+	g.tower.Update()
 	// TODO: Periodically sync dudes with panel??? Or mark dudes as dirty if armor changes then refresh?
 
 	g.ui.Update(&g.uiOptions)
@@ -83,8 +83,8 @@ func (s *GameStatePlay) Draw(g *Game, screen *ebiten.Image) {
 	// Transform our options via the camera.
 	g.camera.Transform(&options)
 
-	// Draw that level -> tower -> story -> room -> ???
-	g.level.Draw(&options)
+	// Draw that tower -> story -> room -> ???
+	g.tower.Draw(&options)
 
 	// Render stuff
 	for _, r := range g.renderables {
