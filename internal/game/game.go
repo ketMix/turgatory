@@ -20,6 +20,7 @@ type Game struct {
 	level                 *Level
 	lastWidth, lastHeight int
 	uiOptions             UIOptions
+	state                 GameState
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -76,38 +77,17 @@ func (g *Game) Update() error {
 		g.camera.Zoom -= g.camera.Zoom * 0.01
 	}
 
-	// Update the level, yo.
-	g.level.Update()
-
-	// Update other stuff
-	for _, r := range g.renderables {
-		r.Update()
+	if nextState := g.state.Update(g); nextState != nil {
+		g.state.End(g)
+		g.state = nextState
+		g.state.Begin(g)
 	}
-
-	// Update UI
-	g.ui.Update(&g.uiOptions)
 
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	options := render.Options{Screen: screen, Camera: &g.camera}
-
-	// Transform our options via the camera.
-	g.camera.Transform(&options)
-
-	// Draw that level -> tower -> story -> room -> ???
-	g.level.Draw(&options)
-
-	// Render stuff
-	for _, r := range g.renderables {
-		r.Draw(&options)
-	}
-
-	// Draw UI
-	options.DrawImageOptions.GeoM.Reset()
-	options.DrawImageOptions.ColorScale.Reset()
-	g.ui.Draw(&options)
+	g.state.Draw(g, screen)
 
 	// Debug render
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%0.1fx%0.1f", g.cursorX, g.cursorY), g.mouseX, g.mouseY-16)
@@ -136,20 +116,12 @@ func (g *Game) Init() {
 
 	g.level = lvl
 
-	// Add dudes of testing.
-	professions := []ProfessionKind{Knight, Vagabond, Ranger, Cleric}
-	dudeLimit := len(professions)
-	for i := 0; i < dudeLimit; i++ {
-		pk := professions[i%len(professions)]
-		dude := NewDude(pk, 1)
-		dude.stats.agility += i * 5
-		g.dudes = append(g.dudes, dude)
-		tower.AddDude(dude)
-	}
-
 	g.ui = NewUI(g.dudes)
 	g.uiOptions = UIOptions{Scale: 2.0}
 	g.camera = *render.NewCamera(0, 0)
+
+	g.state = &GameStatePreBuild{}
+	g.state.Begin(g)
 }
 
 func New() *Game {

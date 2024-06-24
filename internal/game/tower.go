@@ -104,3 +104,9 @@ func (t *Tower) AddDude(d *Dude) {
 	d.stack.HeightOffset = 20
 	d.SetPosition(story.PositionFromCenter(math.Pi/2, TowerEntrance+d.variation))
 }
+
+func (t *Tower) AddDudes(dudes ...*Dude) {
+	for _, d := range dudes {
+		t.AddDude(d)
+	}
+}
