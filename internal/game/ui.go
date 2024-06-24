@@ -136,18 +136,6 @@ func (dp *DudeProfile) Draw(o *render.Options) {
 	dp.stack.Draw(&profileOptions)
 }
 
-// ...
-func (dp *DudeProfile) InBounds(o *UIOptions, x, y float64) bool {
-	px, py := dp.Position()
-	profileWidth := dp.width
-	profileHeight := dp.height
-
-	if x > px && x < px+profileWidth && y > py && y < py+profileHeight {
-		return true
-	}
-	return false
-}
-
 func InBounds(x, y, width, height, mx, my float64) bool {
 	if mx > x && mx < x+width && my > y && my < y+height {
 		return true
