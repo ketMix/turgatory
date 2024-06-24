@@ -207,6 +207,8 @@ func (d *Dude) Draw(o *render.Options) {
 			eq.Draw(o)
 		}
 	}
+	// Reset colors, as equipment may have munged it.
+	o.DrawImageOptions.ColorScale.Reset()
 
 	// Draw enemy if there is one
 	if d.enemy != nil {

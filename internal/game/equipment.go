@@ -165,7 +165,9 @@ func NewEquipment(name string, level int, quality EquipmentQuality, perk IPerk) 
 			// Based on quality, modify color slightly
 			cs := quality.Color()
 
-			o.DrawImageOptions.ColorScale.Scale(cs.R(), cs.G(), cs.B(), 0)
+			// Reset colors.
+			o.DrawImageOptions.ColorScale.Reset()
+			o.DrawImageOptions.ColorScale.ScaleWithColorScale(cs)
 			equipment.stack.Draw(o)
 		}
 	}
