@@ -38,6 +38,10 @@ func LoadStaxie(name string) (*Staxie, error) {
 
 	staxie.image = eimg
 
+	for _, stack := range staxie.Stacks {
+		staxie.StackNames = append(staxie.StackNames, stack.Name)
+	}
+
 	staxie.acquireSliceImages()
 
 	stax[name] = staxie
@@ -48,6 +52,7 @@ func LoadStaxie(name string) (*Staxie, error) {
 // Staxie is the structure extracted from a Staxie PNG file.
 type Staxie struct {
 	Stacks      map[string]*StaxieStack
+	StackNames  []string
 	FrameWidth  int
 	FrameHeight int
 	image       *ebiten.Image

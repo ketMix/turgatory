@@ -47,6 +47,10 @@ func NewDude(pk ProfessionKind, level int) *Dude {
 	if err != nil {
 		panic(err)
 	}
+
+	// Assign a random dude skin
+	stackNames := stack.Stacks()
+	stack.SetStack(stackNames[rand.Intn(len(stackNames))])
 	stack.SetOriginToCenter()
 
 	dude.name = assets.GetRandomName()

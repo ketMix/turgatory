@@ -166,6 +166,10 @@ func (s *Stack) SetStack(name string) error {
 	return s.SetAnimation(s.currentAnimation.Name)
 }
 
+func (s *Stack) Stacks() []string {
+	return s.data.StackNames
+}
+
 func (s *Stack) SetAnimation(name string) error {
 	animation, ok := s.currentStack.GetAnimation(name)
 	if !ok {
