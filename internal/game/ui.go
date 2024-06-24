@@ -30,19 +30,18 @@ type UI struct {
 	options   *UIOptions
 }
 
-func NewUI(dudeList []*Dude) *UI {
+func NewUI() *UI {
 	ui := &UI{}
 
 	{
 		panelSprite := Must(render.NewSprite("ui/panels"))
 		ui.dudePanel = DudePanel{
-			top:          Must(render.NewSubSprite(panelSprite, 0, 0, 16, 16)),
-			topright:     Must(render.NewSubSprite(panelSprite, 16, 0, 16, 16)),
-			mid:          Must(render.NewSubSprite(panelSprite, 0, 16, 16, 16)),
-			midright:     Must(render.NewSubSprite(panelSprite, 16, 16, 16, 16)),
-			bot:          Must(render.NewSubSprite(panelSprite, 0, 32, 16, 16)),
-			botright:     Must(render.NewSubSprite(panelSprite, 16, 32, 16, 16)),
-			dudeProfiles: profilesFromDudes(dudeList),
+			top:      Must(render.NewSubSprite(panelSprite, 0, 0, 16, 16)),
+			topright: Must(render.NewSubSprite(panelSprite, 16, 0, 16, 16)),
+			mid:      Must(render.NewSubSprite(panelSprite, 0, 16, 16, 16)),
+			midright: Must(render.NewSubSprite(panelSprite, 16, 16, 16, 16)),
+			bot:      Must(render.NewSubSprite(panelSprite, 0, 32, 16, 16)),
+			botright: Must(render.NewSubSprite(panelSprite, 16, 32, 16, 16)),
 		}
 	}
 	{
@@ -100,28 +99,6 @@ type DudeProfile struct {
 	height     float64
 	width      float64
 	stackScale float64
-}
-
-func profilesFromDudes(dudes []*Dude) []*DudeProfile {
-	profiles := []*DudeProfile{}
-	for _, dude := range dudes {
-		profiles = append(profiles, NewDudeProfile(dude))
-	}
-	return profiles
-}
-
-func NewDudeProfile(dude *Dude) *DudeProfile {
-	stack := render.CopyStack(dude.stack)
-	stack.SetPosition(0, 0)
-	stack.SetOriginToCenter()
-	stack.SetRotation(math.Pi/2 - math.Pi/4)
-
-	return &DudeProfile{
-		dude:   dude,
-		stack:  stack,
-		width:  float64(stack.Width()),
-		height: float64(stack.Height()) * 2, // x2 for slice pitch of 1
-	}
 }
 
 func (dp *DudeProfile) Draw(o *render.Options) {
@@ -254,6 +231,22 @@ func (dp *DudePanel) Draw(o *render.Options) {
 	o.DrawImageOptions.GeoM.Translate(dp.drawerInterp.Current, 0)
 	for _, p := range dp.dudeProfiles {
 		p.Draw(o)
+	}
+}
+
+func (dp *DudePanel) SyncDudes(dudes []*Dude) {
+	for _, dude := range dudes {
+		stack := render.CopyStack(dude.stack)
+		stack.SetPosition(0, 0)
+		stack.SetOriginToCenter()
+		stack.SetRotation(math.Pi/2 - math.Pi/4)
+
+		dp.dudeProfiles = append(dp.dudeProfiles, &DudeProfile{
+			dude:   dude,
+			stack:  stack,
+			width:  float64(stack.Width()),
+			height: float64(stack.Height()) * 2, // x2 for slice pitch of 1
+		})
 	}
 }
 

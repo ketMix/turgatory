@@ -115,7 +115,7 @@ func (g *Game) Init() {
 
 	g.level = lvl
 
-	g.ui = NewUI(g.dudes)
+	g.ui = NewUI()
 	g.uiOptions = UIOptions{Scale: 2.0}
 	g.camera = *render.NewCamera(0, 0)
 

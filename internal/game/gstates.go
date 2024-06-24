@@ -63,6 +63,7 @@ type GameStatePlay struct {
 
 func (s *GameStatePlay) Begin(g *Game) {
 	// TODO: Set up dude state to spawn outside first story?
+	g.ui.dudePanel.SyncDudes(g.dudes)
 }
 func (s *GameStatePlay) End(g *Game) {
 	// TODO: Create a portal at highest story's last room and issue dudes to walk into it?
@@ -70,6 +71,7 @@ func (s *GameStatePlay) End(g *Game) {
 func (s *GameStatePlay) Update(g *Game) GameState {
 	// Update the game!
 	g.level.Update()
+	// TODO: Periodically sync dudes with panel??? Or mark dudes as dirty if armor changes then refresh?
 
 	g.ui.Update(&g.uiOptions)
 
