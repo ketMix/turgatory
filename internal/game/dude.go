@@ -175,6 +175,7 @@ func (d *Dude) SyncEquipment() {
 			eq.stack.SliceOffset = d.stack.SliceOffset
 			eq.stack.MaxSliceIndex = d.stack.MaxSliceIndex
 			eq.stack.HeightOffset = d.stack.HeightOffset
+			eq.stack.VgroupOffset = d.stack.VgroupOffset
 			eq.stack.SetOrigin(d.stack.Origin())
 			eq.stack.SetPosition(d.stack.Position())
 			eq.stack.SetRotation(d.stack.Rotation())
