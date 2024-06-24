@@ -2,9 +2,11 @@ package game
 
 import (
 	"fmt"
+	"image/color"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
 )
 
@@ -123,6 +125,7 @@ func NewDudeProfile(dude *Dude) *DudeProfile {
 }
 
 func (dp *DudeProfile) Draw(o *render.Options) {
+	x, y := dp.Position()
 	// Save these top options for drawing dude profiles
 	profileOptions := render.Options{
 		Screen: o.Screen,
@@ -130,10 +133,24 @@ func (dp *DudeProfile) Draw(o *render.Options) {
 	}
 	profileOptions.DrawImageOptions.GeoM.Concat(o.DrawImageOptions.GeoM)
 	profileOptions.DrawImageOptions.GeoM.Scale(dp.stackScale, dp.stackScale)
-	profileOptions.DrawImageOptions.GeoM.Translate(dp.Position())
+	profileOptions.DrawImageOptions.GeoM.Translate(x, y)
 	// Also shove 'em to the right a little.
 	profileOptions.DrawImageOptions.GeoM.Translate(dp.width/2, 0)
 	dp.stack.Draw(&profileOptions)
+
+	if dp.hovered {
+		op := &render.TextOptions{
+			Screen: o.Screen,
+			Font:   assets.DisplayFont,
+			Color:  color.White,
+		}
+		op.GeoM.Translate(x+dp.width*2.5, y)
+		render.DrawText(op, dp.dude.Name())
+		op.Font = assets.BodyFont
+		op.GeoM.Reset()
+		op.GeoM.Translate(x+dp.width*2.5, y+assets.DisplayFont.LineHeight-assets.BodyFont.LineHeight/2)
+		render.DrawText(op, fmt.Sprintf("Level %d %s", dp.dude.Level(), dp.dude.Profession()))
+	}
 }
 
 func InBounds(x, y, width, height, mx, my float64) bool {
@@ -194,17 +211,17 @@ func (dp *DudePanel) Update(o *UIOptions) {
 		}
 	}
 
-	if !dp.drawered {
-		for _, p := range dp.dudeProfiles {
-			px, py := p.Position()
-			if InBounds(px, py, dp.width, p.height, mx, my) {
-				fmt.Println("!!! hovered over my guy: ", p.dude.name)
-				p.hovered = true
-			} else {
-				p.hovered = false
-			}
+	//if !dp.drawered {
+	for _, p := range dp.dudeProfiles {
+		px, py := p.Position()
+		if InBounds(px, py, dp.width, p.height, mx, my) {
+			fmt.Println("!!! hovered over my guy: ", p.dude.name)
+			p.hovered = true
+		} else {
+			p.hovered = false
 		}
 	}
+	//}
 }
 
 func (dp *DudePanel) Draw(o *render.Options) {
