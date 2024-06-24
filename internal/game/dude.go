@@ -396,10 +396,9 @@ func (d *Dude) LevelUpEquipment(amount int) {
 
 func (d *Dude) Perkify(maxQuality PerkQuality) {
 	// Random equipped item
-	equipmentTypes := []EquipmentType{EquipmentTypeWeapon, EquipmentTypeArmor, EquipmentTypeAccessory}
-	randomEquipType := equipmentTypes[rand.Intn(len(equipmentTypes))]
+	equipmentType := RandomEquipmentType()
 
-	if eq := d.equipped[randomEquipType]; eq != nil {
+	if eq := d.equipped[equipmentType]; eq != nil {
 		// Assign random perk
 		if eq.perk == nil {
 			prevName := eq.Name()
@@ -415,5 +414,55 @@ func (d *Dude) Perkify(maxQuality PerkQuality) {
 				fmt.Println(d.name, "upgraded his equipment", previousName, "to", eq.Name())
 			}
 		}
+	}
+}
+
+// Cursify the dude
+// Rolls twice, once with wisdom, the other with luck, and takes the highest
+// Has a chance to
+// - Delevel equipment (high chance)
+// - Delevel perk (medium chance)
+// - Delevel dude (low chance)
+func (d *Dude) Cursify(roomLevel int) {
+	wisdomRoll := rand.Intn(d.stats.wisdom)
+	luckRoll := rand.Intn(d.stats.luck)
+	threshold := 1 - 1/math.Max(float64(wisdomRoll), float64(luckRoll))
+
+	curseRoll := rand.Float64()
+	if curseRoll > threshold {
+		// Spared
+		return
+	}
+
+	if curseRoll > threshold/2 {
+		// Roll for equipment type
+		equipmentType := RandomEquipmentType()
+		if eq := d.equipped[equipmentType]; eq != nil {
+			eq.LevelDown()
+		}
+	}
+
+	// Roll for perk
+	if curseRoll > threshold/4 {
+		// Random equipped item (that has a perk)
+		equipmentWithPerks := []EquipmentType{}
+
+		for t, eq := range d.equipped {
+			if eq != nil && eq.perk != nil {
+				equipmentWithPerks = append(equipmentWithPerks, t)
+			}
+		}
+
+		if len(equipmentWithPerks) > 0 {
+			randomEquipType := equipmentWithPerks[rand.Intn(len(equipmentWithPerks))]
+			if eq := d.equipped[randomEquipType]; eq != nil {
+				eq.perk.LevelDown()
+			}
+		}
+	}
+
+	// Roll for dude
+	if curseRoll <= threshold/4 {
+		d.stats.LevelDown()
 	}
 }
