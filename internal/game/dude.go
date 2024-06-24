@@ -244,7 +244,7 @@ func (d *Dude) Trigger(e Event) {
 	}
 
 	switch e := e.(type) {
-	case EventGlobalTick:
+	case EventCombatRoom:
 		// Attack enemy if there is one
 		if d.enemy != nil {
 			damage, isCrit := d.GetDamage()
@@ -325,6 +325,10 @@ func (d *Dude) Speed() float64 {
 	// This values probably belong somewhere else
 	speedScale := 0.1
 	baseSpeed := 0.005
+	// Slow dude down when in combat room -- should we do this? It would ensure damage is constant regardless of speed, unless we want to be able to skip combat rooms by yeeting thru them.
+	if d.room != nil && d.room.kind == Combat {
+		return baseSpeed * (1 + speedScale)
+	}
 	return baseSpeed * (1 + float64(d.stats.agility)*speedScale)
 }
 

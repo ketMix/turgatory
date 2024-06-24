@@ -40,6 +40,8 @@ const (
 	HugeOriginY  = 64
 )
 
+const CombatTickrate = 30 // Tick combat every 30 ticks
+
 // RoomStairsEntrance is the distance from the center that a room's stairs is expected to be at.
 const RoomStairsEntrance = 12
 const RoomPath = 53
@@ -130,15 +132,17 @@ var goodRooms = []RoomKind{
 
 // Room is a room within a story of za toweru.
 type Room struct {
-	story *Story
-	index int // Reference to the index within the story.
-	kind  RoomKind
-	size  RoomSize
-	power int // ???
+	story       *Story
+	index       int // Reference to the index within the story.
+	kind        RoomKind
+	size        RoomSize
+	power       int // ???
+	combatTicks int
 
 	stacks         render.Stacks
 	walls          render.Stacks
 	actorsInCenter []Actor
+	dudes          []*Dude
 }
 
 func NewRoom(size RoomSize, kind RoomKind) *Room {
@@ -169,14 +173,36 @@ func NewRoom(size RoomSize, kind RoomKind) *Room {
 }
 
 // Update updates the stuff in the room.
-func (r *Room) Update() {
+func (r *Room) Update(req *ActivityRequests) {
 	r.stacks.Update()
+	if r.kind == Combat {
+		r.combatTicks++
+		if r.combatTicks >= CombatTickrate {
+			r.combatTicks = 0
+			for _, d := range r.dudes {
+				req.Add(RoomCombatActivity{room: r, dude: d})
+			}
+		}
+	}
 }
 
 // Draw our room bits and bobs.
 func (r *Room) Draw(o *render.Options) {
 	r.stacks.Draw(o)
 	r.walls.Draw(o)
+}
+
+func (r *Room) AddDude(d *Dude) {
+	r.dudes = append(r.dudes, d)
+}
+
+func (r *Room) RemoveDude(d *Dude) {
+	for i, dude := range r.dudes {
+		if dude == d {
+			r.dudes = append(r.dudes[:i], r.dudes[i+1:]...)
+			return
+		}
+	}
 }
 
 func (r *Room) AddActorToCenter(a Actor) {

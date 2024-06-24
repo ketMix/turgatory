@@ -111,7 +111,7 @@ func (s *Story) Update(req *ActivityRequests) {
 					continue
 				}
 			}
-			room.Update()
+			room.Update(req) // Just forward up room updates to tower
 			updatedRooms = append(updatedRooms, room)
 		}
 	}
@@ -128,6 +128,16 @@ func (s *Story) Update(req *ActivityRequests) {
 			roomIndex := s.RoomIndexFromAngle(s.AngleFromCenter(u.x, u.y))
 			room := s.rooms[roomIndex]
 			if room != u.initiator.Room() {
+				// FIXME: Remove the Actor concept and assume Dude for all
+				// Add dude to the given room and remove from existing room.
+				if d, ok := u.initiator.(*Dude); ok {
+					if d.room != nil {
+						d.room.RemoveDude(d)
+					}
+					if room != nil {
+						room.AddDude(d)
+					}
+				}
 				req.Add(RoomEnterActivity{initiator: u.initiator, room: room})
 			}
 			// Check if the initiator is in the center of the room and update as appropriate.

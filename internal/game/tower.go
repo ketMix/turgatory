@@ -36,6 +36,8 @@ func (t *Tower) Update() {
 	}
 	for _, u := range storyUpdates {
 		switch u := u.(type) {
+		case RoomCombatActivity:
+			u.dude.Trigger(EventCombatRoom{room: u.room, dude: u.dude})
 		case RoomEnterActivity:
 			if u.room == nil {
 				fmt.Printf("%s is in an empty room\n", u.initiator.Name())

@@ -136,8 +136,13 @@ func NewStats(levelUpChange *Stats) *Stats {
 	// start the stats at a negative level
 	// then level up a few times in order to set the starting stats
 	startingLevels := 3
+	// Added this because GetCalculatedStats passes nil to this func... --kts
+	level := -3
+	if levelUpChange != nil {
+		level = levelUpChange.level - startingLevels
+	}
 	stats := &Stats{
-		level:         levelUpChange.level - startingLevels,
+		level:         level,
 		levelUpChange: levelUpChange,
 		totalHp:       0,
 		strength:      0,

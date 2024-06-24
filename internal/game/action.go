@@ -97,3 +97,15 @@ func (r RoomEndActivity) Apply() {
 func (r RoomEndActivity) Cb() func(success bool) {
 	return r.cb
 }
+
+type RoomCombatActivity struct {
+	dude *Dude
+	room *Room
+}
+
+func (r RoomCombatActivity) Apply() {
+}
+
+func (r RoomCombatActivity) Cb() func(success bool) {
+	return nil
+}

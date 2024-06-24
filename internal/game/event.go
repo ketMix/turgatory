@@ -12,6 +12,16 @@ func (e EventGlobalTick) String() string {
 	return "Global Tick"
 }
 
+// EventCombatRoom is triggered when combat should occur in a room.
+type EventCombatRoom struct {
+	room *Room
+	dude *Dude
+}
+
+func (e EventCombatRoom) String() string {
+	return "Room Combat"
+}
+
 // EventEnterRoom is triggered when a dude enters a room
 type EventEnterRoom struct {
 	room *Room
