@@ -1,6 +1,7 @@
 package game
 
 import (
+	"math"
 	"math/rand"
 
 	"github.com/kettek/ebijam24/internal/render"
@@ -57,10 +58,21 @@ func NewEnemy(name EnemyKind, level int, stack *render.Stack) *Enemy {
 	}
 }
 
-func (e *Enemy) Update() {
+func (e *Enemy) Update(d *Dude) {
 	if e.stack == nil {
 		return
 	}
+	// Face the enemy towards the dude
+	e.stack.SetRotation(d.stack.Rotation() + math.Pi)
+
+	// Position enemy slightly closer to center than the dude
+	// slightly off
+	cx, cy := d.stack.Position()
+	distance := d.story.DistanceFromCenter(cx, cy)
+	r := d.story.AngleFromCenter(cx, cy)
+	nx, ny := d.story.PositionFromCenter(r, distance-15)
+
+	e.stack.SetPosition(nx, ny)
 	e.stack.Update()
 }
 

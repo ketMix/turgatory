@@ -186,6 +186,11 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 			eq.Update()
 		}
 	}
+
+	// Update enemy if there is one
+	if d.enemy != nil {
+		d.enemy.Update(d)
+	}
 }
 
 func (d *Dude) SyncEquipment() {
@@ -232,6 +237,7 @@ func (d *Dude) Draw(o *render.Options) {
 			eq.Draw(o)
 		}
 	}
+
 	// Reset colors, as equipment may have munged it.
 	o.DrawImageOptions.ColorScale.Reset()
 
