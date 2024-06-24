@@ -64,6 +64,7 @@ func NewDude(pk ProfessionKind, level int) *Dude {
 	dude.variation = -6 + rand.Float64()*12
 
 	dude.stack = stack
+	dude.stack.VgroupOffset = 1
 
 	fmt.Println(dude.name, "the", pk.String(), "has been created with stats", dude.stats)
 	return dude
