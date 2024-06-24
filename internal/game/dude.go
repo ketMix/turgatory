@@ -360,7 +360,8 @@ func (d *Dude) Speed() float64 {
 	if d.room != nil && d.room.kind == Combat {
 		return baseSpeed * (1 + speedScale)
 	}
-	return baseSpeed * (1 + float64(d.stats.agility)*speedScale)
+	stats := d.GetCalculatedStats()
+	return baseSpeed * (1 + float64(stats.agility)*speedScale)
 }
 
 // TODO: Refine this
@@ -391,8 +392,9 @@ func (d *Dude) GetDamage() (int, bool) {
 
 func (d *Dude) ApplyDamage(amount int) (int, bool) {
 	// Luck and agility can cause dodge
-	luckRoll := float64(d.stats.luck+1) * 0.1
-	agilityRoll := float64(d.stats.agility+1) * 0.1
+	stats := d.GetCalculatedStats()
+	luckRoll := float64(stats.luck+1) * 0.1
+	agilityRoll := float64(stats.agility+1) * 0.1
 	if rand.Float64() < luckRoll || rand.Float64() < agilityRoll {
 		fmt.Println(d.name, "dodged!")
 		return 0, true
@@ -512,9 +514,10 @@ func (d *Dude) XP() int {
 }
 
 func (d *Dude) Heal(amount int) {
-	initialHP := d.stats.currentHp
-	if d.stats.currentHp+amount > d.stats.totalHp {
-		d.stats.currentHp = d.stats.totalHp
+	stats := d.GetCalculatedStats()
+	initialHP := stats.currentHp
+	if d.stats.currentHp+amount > stats.totalHp {
+		d.stats.currentHp = stats.totalHp
 	} else {
 		d.stats.currentHp += amount
 	}
@@ -571,9 +574,20 @@ func (d *Dude) Perkify(maxQuality PerkQuality) {
 // - Delevel perk (medium chance)
 // - Delevel dude (low chance)
 func (d *Dude) Cursify(roomLevel int) {
-	wisdomRoll := rand.Intn(d.stats.wisdom)
-	luckRoll := rand.Intn(d.stats.luck)
-	threshold := 1 - 1/math.Max(float64(wisdomRoll), float64(luckRoll))
+	stats := d.GetCalculatedStats()
+	fmt.Println(stats.wisdom)
+	fmt.Println(stats.luck)
+
+	// Ensure stats are not negative
+	wis := max(stats.wisdom, 1)
+	luck := max(stats.luck, 1)
+
+	wisdomRoll := rand.Intn(wis) + 1 // ensure non-zero roll
+	luckRoll := rand.Intn(luck) + 1
+	highestRoll := max(wisdomRoll, luckRoll)
+
+	// Higher the roll, lower the chance of being cursed
+	threshold := 1.0 - math.Log10(float64(highestRoll+1))
 
 	curseRoll := rand.Float64()
 	if curseRoll > threshold {
@@ -581,35 +595,35 @@ func (d *Dude) Cursify(roomLevel int) {
 		return
 	}
 
-	if curseRoll > threshold/2 {
-		// Roll for equipment type
+	// Check for equipment delevel
+	if curseRoll <= threshold*0.5 { // reduced chance for equipment delevel
 		equipmentType := RandomEquipmentType()
 		if eq := d.equipped[equipmentType]; eq != nil {
 			eq.LevelDown()
+			fmt.Println(d.name, "lost a level on", eq.Name())
 		}
 	}
 
-	// Roll for perk
-	if curseRoll > threshold/4 {
-		// Random equipped item (that has a perk)
+	// Check for perk delevel
+	if curseRoll <= threshold*0.25 { // even lower chance for perk delevel
 		equipmentWithPerks := []EquipmentType{}
-
 		for t, eq := range d.equipped {
 			if eq != nil && eq.perk != nil {
 				equipmentWithPerks = append(equipmentWithPerks, t)
 			}
 		}
-
 		if len(equipmentWithPerks) > 0 {
 			randomEquipType := equipmentWithPerks[rand.Intn(len(equipmentWithPerks))]
 			if eq := d.equipped[randomEquipType]; eq != nil {
 				eq.perk.LevelDown()
+				fmt.Println(d.name, "lost a perk level on", eq.Name())
 			}
 		}
 	}
 
-	// Roll for dude
-	if curseRoll <= threshold/4 {
+	// Check for dude delevel
+	if curseRoll <= threshold*0.1 { // lowest chance for dude delevel
 		d.stats.LevelDown()
+		fmt.Println(d.name, "lost a level")
 	}
 }

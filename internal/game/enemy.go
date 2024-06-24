@@ -29,9 +29,9 @@ func (e EnemyKind) String() string {
 func (e EnemyKind) Stats() *Stats {
 	switch e {
 	case EnemyRat:
-		return &Stats{strength: 1, defense: 0, totalHp: 10, luck: 1}
+		return &Stats{strength: 5, defense: 0, totalHp: 10, luck: 1}
 	case EnemySlime:
-		return &Stats{strength: 2, defense: 0, totalHp: 20, luck: 2}
+		return &Stats{strength: 10, defense: 0, totalHp: 20, luck: 2}
 	default:
 		return &Stats{strength: 1, defense: 0, totalHp: 10, luck: 1}
 	}

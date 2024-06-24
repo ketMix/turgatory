@@ -59,6 +59,8 @@ func (r *RoomKind) String() string {
 		return "healing"
 	case Treasure:
 		return "treasure"
+	case Curse:
+		return "curse"
 	case Combat:
 		return "combat"
 	case Well:
@@ -112,12 +114,15 @@ const (
 	Treasure
 	// Library - enchant
 	Library
+	// Curse - % to curse dude
+	Curse
 )
 
 // The set of BAD rooms (those that are not good for the dudes)
 // Will be used to determine the REQUIRED rooms you have to place
 var badRooms = []RoomKind{
 	Combat,
+	Curse,
 }
 
 // The set of GOOD rooms (those that are good for the dudes)
@@ -331,6 +336,9 @@ func (r *Room) GetRoomEffect(e Event) {
 		case HealingShrine:
 			// Heal
 			e.dude.Heal((r.story.level + 1) * 5)
+		case Curse:
+			// Curse
+			e.dude.Cursify(r.story.level + 1)
 		case Well:
 			// Restore equipment uses
 			e.dude.RestoreUses(r.story.level + 1)
