@@ -5,6 +5,13 @@ type Event interface {
 	String() string
 }
 
+// EventGlobalTick is triggered every tick
+type EventGlobalTick struct{}
+
+func (e EventGlobalTick) String() string {
+	return "Global Tick"
+}
+
 // EventEnterRoom is triggered when a dude enters a room
 type EventEnterRoom struct {
 	room *Room
@@ -93,4 +100,44 @@ type EventGoldLoss struct {
 
 func (e EventGoldLoss) String() string {
 	return "Gold Loss"
+}
+
+type EventDudeHit struct {
+	dude   *Dude
+	enemy  *Enemy
+	room   *Room
+	amount int
+}
+
+func (e EventDudeHit) String() string {
+	return "Dude Hit"
+}
+
+type EventEnemyHit struct {
+	dude   *Dude
+	enemy  *Enemy
+	amount int
+}
+
+func (e EventEnemyHit) String() string {
+	return "Enemy Hit"
+}
+
+type EventDudeCrit struct {
+	dude   *Dude
+	enemy  *Enemy
+	amount int
+}
+
+func (e EventDudeCrit) String() string {
+	return "Dude Crit"
+}
+
+type EventDudeMiss struct {
+	dude  *Dude
+	enemy *Enemy
+}
+
+func (e EventDudeMiss) String() string {
+	return "Dude Miss"
 }

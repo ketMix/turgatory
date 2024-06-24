@@ -107,7 +107,7 @@ func getStartingStats(kind ProfessionKind, level int) *Stats {
 	case Knight:
 		return NewStats(&Stats{
 			level:     level,
-			totalHp:   5,
+			totalHp:   7,
 			strength:  2,
 			wisdom:    1,
 			defense:   3,
@@ -118,7 +118,7 @@ func getStartingStats(kind ProfessionKind, level int) *Stats {
 	case Cleric:
 		return NewStats(&Stats{
 			level:     level,
-			totalHp:   3,
+			totalHp:   5,
 			strength:  1,
 			wisdom:    3,
 			defense:   1,
@@ -141,7 +141,7 @@ func getStartingStats(kind ProfessionKind, level int) *Stats {
 	case Ranger:
 		return NewStats(&Stats{
 			level:     1,
-			totalHp:   3,
+			totalHp:   5,
 			strength:  2,
 			wisdom:    1,
 			defense:   1,

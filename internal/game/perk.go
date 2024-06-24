@@ -221,7 +221,7 @@ type PerkHealOnRoomEnter struct {
 }
 
 func (p PerkHealOnRoomEnter) amount(wisdom int) int {
-	return int(p.quality) * wisdom
+	return (wisdom / 4) * int(p.quality)
 }
 
 func (p PerkHealOnRoomEnter) String() string {

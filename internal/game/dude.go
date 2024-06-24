@@ -37,6 +37,7 @@ type Dude struct {
 	activity     DudeActivity
 	activityDone bool
 	variation    float64
+	enemy        *Enemy // currently fighting enemy
 }
 
 func NewDude(pk ProfessionKind, level int) *Dude {
@@ -56,6 +57,7 @@ func NewDude(pk ProfessionKind, level int) *Dude {
 	// Initialize stats and equipment
 	profession := NewProfession(pk, level)
 	dude.stats = profession.StartingStats()
+	fmt.Println(dude.name, "the", pk.String(), "has been created with stats", dude.stats)
 	dude.inventory = profession.StartingEquipment()
 	dude.equipped = make(map[EquipmentType]*Equipment)
 	for _, eq := range dude.inventory {
@@ -67,7 +69,6 @@ func NewDude(pk ProfessionKind, level int) *Dude {
 	dude.stack = stack
 	dude.stack.VgroupOffset = 1
 
-	fmt.Println(dude.name, "the", pk.String(), "has been created with stats", dude.stats)
 	return dude
 }
 
@@ -184,6 +185,11 @@ func (d *Dude) Draw(o *render.Options) {
 			eq.Draw(*o)
 		}
 	}
+
+	// Draw enemy if there is one
+	if d.enemy != nil {
+		d.enemy.Draw(*o)
+	}
 }
 
 func (d *Dude) DrawProfile(o *render.Options) {
@@ -212,7 +218,32 @@ func (d *Dude) Trigger(e Event) {
 			eq.Activate(e)
 		}
 	}
+
 	switch e := e.(type) {
+	case EventGlobalTick:
+		// Attack enemy if there is one
+		if d.enemy != nil {
+			damage, isCrit := d.GetDamage()
+			if damage == 0 {
+				d.Trigger(EventDudeMiss{dude: d, enemy: d.enemy})
+			} else if isCrit {
+				d.Trigger(EventDudeCrit{dude: d, enemy: d.enemy, amount: damage})
+			}
+			isDead := d.enemy.Damage(d.stats.strength)
+
+			if isDead {
+				xp := d.enemy.XP()
+				gold := d.enemy.Gold()
+				d.UpdateGold(gold)
+				d.AddXP(xp)
+				d.enemy = nil
+			} else {
+				takenDamage, isDodge := d.ApplyDamage(d.enemy.Hit())
+				if !isDodge {
+					d.Trigger(EventDudeHit{dude: d, amount: takenDamage})
+				}
+			}
+		}
 	case EventEnterRoom:
 		d.room = e.room
 		d.room.GetRoomEffect(e)
@@ -271,6 +302,60 @@ func (d *Dude) Speed() float64 {
 	speedScale := 0.1
 	baseSpeed := 0.005
 	return baseSpeed * (1 + float64(d.stats.agility)*speedScale)
+}
+
+// TODO: Refine this
+func (d *Dude) GetDamage() (int, bool) {
+	wasCrit := false
+	stats := d.GetCalculatedStats()
+
+	// Luck can cause crit
+	luckRoll := float64(stats.luck+1) * 0.1
+	randRoll := rand.Float64()
+
+	multiplier := 1.0
+	if randRoll < luckRoll {
+		fmt.Println(d.name, "crit!")
+		multiplier = 2.0
+		wasCrit = true
+	}
+
+	// Cowardice can cause miss
+	missRoll := float64(stats.cowardice+1) * 0.01
+	if rand.Float64() < missRoll {
+		fmt.Println(d.name, "missed!")
+		multiplier = 0.0
+	}
+
+	return int(float64(stats.strength) * multiplier), wasCrit
+}
+
+func (d *Dude) ApplyDamage(amount int) (int, bool) {
+	// Luck and agility can cause dodge
+	luckRoll := float64(d.stats.luck+1) * 0.1
+	agilityRoll := float64(d.stats.agility+1) * 0.1
+	if rand.Float64() < luckRoll || rand.Float64() < agilityRoll {
+		fmt.Println(d.name, "dodged!")
+		return 0, true
+	}
+
+	// Apply defense stat
+	amount -= d.stats.defense
+	if amount < 0 {
+		amount = 0
+	}
+
+	d.stats.currentHp -= amount
+
+	if d.stats.currentHp < 0 {
+		d.stats.currentHp = 0
+	}
+
+	fmt.Println(d.name, "took", amount, "damage and has", d.stats.currentHp, "HP left")
+	return amount, false
+
+	// If dead, uh, do something right? maybe an event or something idk
+	// maybe just doomed to roam the story forever
 }
 
 func (d *Dude) Stats() *Stats {
@@ -384,20 +469,6 @@ func (d *Dude) RestoreUses(amount int) {
 		}
 	}
 	fmt.Println(d.name, "restored equipment uses by", amount)
-}
-
-func (d *Dude) Damage(amount int) {
-	// Apply defense stat
-	amount -= d.stats.defense
-	if amount < 0 {
-		amount = 0
-	}
-
-	d.stats.currentHp -= amount
-	if d.stats.currentHp < 0 {
-		d.stats.currentHp = 0
-	}
-	fmt.Println(d.name, "took", amount, "damage and has", d.stats.currentHp, "HP left")
 }
 
 func (d *Dude) LevelUpEquipment(amount int) {

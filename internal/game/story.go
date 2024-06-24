@@ -59,20 +59,23 @@ func NewStoryWithSize(size int) *Story {
 		}
 	}
 
-	room := NewRoom(Small, HealingShrine)
-	PanicIfErr(story.PlaceRoom(room, 4))
-
 	room2 := NewRoom(Medium, Armory)
 	PanicIfErr(story.PlaceRoom(room2, 0))
 
-	room3 := NewRoom(Small, Well)
+	room3 := NewRoom(Small, Combat)
 	PanicIfErr(story.PlaceRoom(room3, 2))
 
 	room4 := NewRoom(Small, Treasure)
 	PanicIfErr(story.PlaceRoom(room4, 3))
 
-	room5 := NewRoom(Medium, Library)
-	PanicIfErr(story.PlaceRoom(room5, 5))
+	room5 := NewRoom(Small, HealingShrine)
+	PanicIfErr(story.PlaceRoom(room5, 4))
+
+	room6 := NewRoom(Small, Well)
+	PanicIfErr(story.PlaceRoom(room6, 5))
+
+	room7 := NewRoom(Medium, Library)
+	PanicIfErr(story.PlaceRoom(room7, 6))
 
 	{
 		center := Must(render.NewStack("rooms/center", "", ""))

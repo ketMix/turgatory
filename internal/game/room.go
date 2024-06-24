@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"strings"
 
 	"github.com/kettek/ebijam24/internal/render"
 )
@@ -57,8 +58,7 @@ func (r *RoomKind) String() string {
 	case Treasure:
 		return "treasure"
 	case Combat:
-		//return "combat"
-		return "template"
+		return "combat"
 	case Well:
 		return "well"
 	case Library:
@@ -66,6 +66,20 @@ func (r *RoomKind) String() string {
 	default:
 		return "Unknown"
 	}
+}
+
+func (r *RoomKind) GetRoomEnemy(roomSize RoomSize) EnemyKind {
+	// Roll for enemy
+	switch *r {
+	case Combat:
+		switch roomSize {
+		case Small:
+			return EnemyRat
+		case Medium:
+			return EnemySlime
+		}
+	}
+	return EnemyUnknown
 }
 
 // Equipment you can find in room
@@ -241,8 +255,28 @@ func (r *Room) RollLoot(luck int) *Equipment {
 }
 
 func (r *Room) GetRoomEffect(e Event) {
+	if r == nil {
+		return
+	}
 	switch e := e.(type) {
+	case EventEnterRoom:
+		switch r.kind {
+		case Combat:
+			// Add enemy based on room size
+			enemyName := r.kind.GetRoomEnemy(r.size)
+			enemyStack, err := render.NewStack("enemies/"+r.size.String(), strings.ToLower(enemyName.String()), "")
+			if err != nil {
+				fmt.Println("Error creating enemy stack", err)
+			} else {
+				enemy := NewEnemy(EnemyRat, r.story.level, enemyStack)
+				e.dude.enemy = enemy
+			}
+		}
 	case EventLeaveRoom:
+		// If enemy is attached to dude, remove it
+		if e.dude.enemy != nil {
+			e.dude.enemy = nil
+		}
 		// Add XP
 		e.dude.AddXP(1 * r.story.level)
 
@@ -275,8 +309,7 @@ func (r *Room) GetRoomEffect(e Event) {
 			// Restore equipment uses
 			e.dude.RestoreUses(r.story.level + 1)
 		case Combat:
-			// Damage the dude
-			e.dude.Damage(10 * (r.story.level + 1))
+			// He be in combat on entering room
 		case Treasure:
 			// Add gold
 			goldAmount := (r.story.level + 1) * rand.Intn(10*int(r.size))
