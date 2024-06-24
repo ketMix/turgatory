@@ -100,7 +100,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 func (g *Game) Init() {
 	// Init the equipment
 	assets.LoadEquipment()
-	g.dudes = []*Dude{}
 	lvl := NewLevel()
 	tower := NewTower()
 
