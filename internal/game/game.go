@@ -166,6 +166,9 @@ func (g *Game) Init() {
 	g.ui.speedPanel.speedButton.onClick = func() {
 		g.AdjustSpeed()
 	}
+	g.ui.speedPanel.cameraButton.onClick = func() {
+		g.AdjustCamera()
+	}
 
 	g.camera = *render.NewCamera(0, 0)
 	g.audioController = NewAudioController()
@@ -184,17 +187,30 @@ func (g *Game) TogglePause() {
 }
 
 func (g *Game) AdjustSpeed() {
-	g.speed++
-	if g.speed > 2 {
+	g.speed += 2
+	if g.speed > 4 {
 		g.speed = 0
 	}
 	switch g.speed {
 	case 0:
 		g.ui.speedPanel.speedButton.SetImage("fast")
-	case 1:
-		g.ui.speedPanel.speedButton.SetImage("medium")
 	case 2:
+		g.ui.speedPanel.speedButton.SetImage("medium")
+	case 4:
 		g.ui.speedPanel.speedButton.SetImage("slow")
+	}
+}
+
+func (g *Game) AdjustCamera() {
+	if g.camera.Mode == render.CameraModeTower {
+		g.camera.SetMode(render.CameraModeStack)
+		g.ui.speedPanel.cameraButton.SetImage("story")
+	} else if g.camera.Mode == render.CameraModeStack {
+		g.camera.SetMode(render.CameraModeSuperZoom)
+		g.ui.speedPanel.cameraButton.SetImage("room")
+	} else {
+		g.camera.SetMode(render.CameraModeTower)
+		g.ui.speedPanel.cameraButton.SetImage("tower")
 	}
 }
 

@@ -59,8 +59,9 @@ func NewUI() *UI {
 	}
 	{
 		ui.speedPanel = SpeedPanel{
-			pauseButton: NewButton("play"),
-			speedButton: NewButton("fast"),
+			pauseButton:  NewButton("play"),
+			speedButton:  NewButton("fast"),
+			cameraButton: NewButton("story"),
 		}
 	}
 	return ui
@@ -441,19 +442,21 @@ func (b *Button) Draw(o *render.Options) {
 
 type SpeedPanel struct {
 	render.Positionable
-	width       float64
-	height      float64
-	pauseButton *Button
-	speedButton *Button
+	width        float64
+	height       float64
+	cameraButton *Button
+	pauseButton  *Button
+	speedButton  *Button
 }
 
 func (sp *SpeedPanel) Layout(o *UIOptions) {
+	sp.cameraButton.Layout(o)
 	sp.pauseButton.Layout(o)
 	sp.speedButton.Layout(o)
 
 	bw, bh := sp.pauseButton.sprite.Size()
 
-	sp.width = bw*2 + 4
+	sp.width = bw*3 + 4
 	sp.height = bh + bh/4
 
 	x := float64(o.Width) - sp.width - 4
@@ -461,6 +464,8 @@ func (sp *SpeedPanel) Layout(o *UIOptions) {
 
 	sp.SetPosition(x, y)
 
+	sp.cameraButton.SetPosition(x, y)
+	x += bw + 4
 	sp.pauseButton.SetPosition(x, y)
 	x += bw + 4
 	sp.speedButton.SetPosition(x, y)
@@ -470,12 +475,14 @@ func (sp *SpeedPanel) Update(o *UIOptions) {
 	mx, my := IntToFloat2(ebiten.CursorPosition())
 	x, y := sp.Position()
 	if InBounds(x, y, sp.width, sp.height, mx, my) {
+		sp.cameraButton.Check(mx, my)
 		sp.pauseButton.Check(mx, my)
 		sp.speedButton.Check(mx, my)
 	}
 }
 
 func (sp *SpeedPanel) Draw(o *render.Options) {
+	sp.cameraButton.Draw(o)
 	sp.pauseButton.Draw(o)
 	sp.speedButton.Draw(o)
 }
