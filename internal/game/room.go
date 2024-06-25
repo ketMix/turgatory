@@ -199,6 +199,9 @@ func (r *Room) Update(req *ActivityRequests, g *Game) {
 }
 
 // Determins pan and vol of room track based on camera position
+// TODO:
+// - Move this out a bit so we can consolidate duplicate rooms and not set pan/vol twice for same track (take highest)
+// - Determine by not only rotation but camera height, so scrolling up tower changes vol
 func (r *Room) adjustPanVol(g *Game) {
 	cR := g.camera.Rotation()
 	rR := r.stacks[0].Rotation()
