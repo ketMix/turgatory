@@ -361,7 +361,7 @@ func (d *Dude) Speed() float64 {
 		return baseSpeed * (1 + speedScale)
 	}
 	stats := d.GetCalculatedStats()
-	return baseSpeed * (1 + float64(stats.agility)*speedScale)
+	return baseSpeed * (1 + float64(stats.agility/10)*speedScale)
 }
 
 // TODO: Refine this
