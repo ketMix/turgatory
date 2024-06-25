@@ -67,6 +67,8 @@ func (r *RoomKind) String() string {
 		return "well"
 	case Library:
 		return "library"
+	case Empty:
+		return "empty"
 	default:
 		return "Unknown"
 	}
@@ -116,6 +118,9 @@ const (
 	Library
 	// Curse - % to curse dude
 	Curse
+
+	// Marker for the end... allows for iteration
+	RoomKindEnd
 )
 
 // The set of BAD rooms (those that are not good for the dudes)
@@ -178,7 +183,7 @@ func NewRoom(size RoomSize, kind RoomKind) *Room {
 }
 
 // Update updates the stuff in the room.
-func (r *Room) Update(req *ActivityRequests) {
+func (r *Room) Update(req *ActivityRequests, g *Game) {
 	r.stacks.Update()
 	if r.kind == Combat {
 		r.combatTicks++
@@ -189,6 +194,22 @@ func (r *Room) Update(req *ActivityRequests) {
 			}
 		}
 	}
+	// Set sound panning and volume here because we have access to camera
+	r.adjustPanVol(g)
+}
+
+// Determins pan and vol of room track based on camera position
+func (r *Room) adjustPanVol(g *Game) {
+	cR := g.camera.Rotation()
+	rR := r.stacks[0].Rotation()
+
+	// Determine pan and vol based on camera and room rotation
+	pan := math.Cos(cR-rR) * 0.5
+	vol := math.Sin(cR-rR) * 0.5
+
+	// Set pan and vol
+	g.audioController.SetPan(r.kind, pan)
+	g.audioController.SetVol(r.kind, vol)
 }
 
 // Draw our room bits and bobs.

@@ -20,6 +20,7 @@ type Game struct {
 	lastWidth, lastHeight int
 	uiOptions             UIOptions
 	state                 GameState
+	audioController       *AudioController
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -115,7 +116,8 @@ func (g *Game) Init() {
 	g.ui = NewUI()
 	g.uiOptions = UIOptions{Scale: 2.0}
 	g.camera = *render.NewCamera(0, 0)
-
+	g.audioController = NewAudioController()
+	// g.audioController.PlayRoomTracks()
 	g.state = &GameStatePreBuild{}
 	g.state.Begin(g)
 }
