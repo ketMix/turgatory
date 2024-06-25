@@ -1,6 +1,7 @@
 package game
 
 import (
+	"image/color"
 	"math"
 
 	"github.com/kettek/ebijam24/internal/render"
@@ -8,13 +9,15 @@ import (
 
 // Story is a single story in the tower. It contains rooms.
 type Story struct {
-	rooms  []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
-	dudes  []*Dude
-	stacks render.Stacks
-	walls  render.Stacks
-	vgroup *render.VGroup
-	level  int
-	open   bool
+	rooms     []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
+	dudes     []*Dude
+	stacks    render.Stacks
+	walls     render.Stacks
+	vgroup    *render.VGroup
+	level     int
+	open      bool
+	text      []FloatingText
+	textTimer int
 }
 
 // StoryHeight is the height of a story in da tower.
@@ -91,6 +94,24 @@ func NewStoryWithSize(size int) *Story {
 
 // Update updates the rooms.
 func (s *Story) Update(req *ActivityRequests) {
+	if s.textTimer <= 0 {
+		s.textTimer = 30
+		t := NewFloatingText("ok", color.NRGBA{255, 255, 255, 255}, 30)
+		t.SetOrigin(0, 60)
+		t.YOffset = -16
+
+		s.text = append(s.text, *t)
+	} else {
+		s.textTimer--
+	}
+	for i := 0; i < len(s.text); i++ {
+		s.text[i].Update()
+		if !s.text[i].Alive() {
+			s.text = append(s.text[:i], s.text[i+1:]...)
+			i--
+		}
+	}
+
 	// Update the floors in case they have sweet animations.
 	for _, stack := range s.stacks {
 		stack.Update()
@@ -225,6 +246,20 @@ func (s *Story) Draw(o *render.Options) {
 	}
 
 	s.vgroup.Draw(o)
+
+	for _, text := range s.text {
+		opts2 := render.Options{
+			Camera:        o.Camera,
+			Screen:        o.Screen,
+			Pitch:         o.Pitch,
+			VGroup:        s.vgroup,
+			TowerRotation: o.TowerRotation,
+		}
+
+		opts2.DrawImageOptions.GeoM.Concat(o.DrawImageOptions.GeoM)
+
+		text.Draw(&opts2)
+	}
 }
 
 // Complete returns if the story is considered complete based upon full room saturation.
