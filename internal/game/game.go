@@ -87,12 +87,15 @@ func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.Key1) {
 		g.camera.SetMode(render.CameraModeTower)
 		g.ui.speedPanel.cameraButton.SetImage("tower")
+		g.ui.speedPanel.cameraButton.tooltip = "camera: tower"
 	} else if inpututil.IsKeyJustPressed(ebiten.Key2) {
 		g.camera.SetMode(render.CameraModeStack)
 		g.ui.speedPanel.cameraButton.SetImage("story")
+		g.ui.speedPanel.cameraButton.tooltip = "camera: story"
 	} else if inpututil.IsKeyJustPressed(ebiten.Key3) {
 		g.camera.SetMode(render.CameraModeSuperZoom)
 		g.ui.speedPanel.cameraButton.SetImage("room")
+		g.ui.speedPanel.cameraButton.tooltip = "camera: room"
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyZ) {
