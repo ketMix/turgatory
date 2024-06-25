@@ -141,11 +141,11 @@ func (s *GameStatePlay) Draw(g *Game, screen *ebiten.Image) {
 		opts.GeoM.Translate(float64(screen.Bounds().Dx()/2)-w/2, float64(screen.Bounds().Dy()/4)-h/2)
 
 		opts.GeoM.Translate(-10, -10)
-		opts.Color = color.NRGBA{0, 0, 0, 200}
+		opts.Color = color.NRGBA{10, 0, 0, 200}
 		render.DrawText(opts, "PAUSED")
 		opts.GeoM.Translate(20, 20)
 		render.DrawText(opts, "PAUSED")
-		opts.Color = color.NRGBA{200, 200, 200, 200}
+		opts.Color = color.NRGBA{184, 152, 93, 200}
 		opts.GeoM.Translate(-10, -10)
 		render.DrawText(opts, "PAUSED")
 	}
