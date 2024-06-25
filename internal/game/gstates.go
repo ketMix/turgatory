@@ -1,9 +1,14 @@
 package game
 
 import (
+	"image/color"
+	"math"
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
 )
 
@@ -62,6 +67,8 @@ func (s *GameStateBuild) Draw(g *Game, screen *ebiten.Image) {
 }
 
 type GameStatePlay struct {
+	paused       bool
+	pauseWobbler float64
 }
 
 func (s *GameStatePlay) Begin(g *Game) {
@@ -73,8 +80,17 @@ func (s *GameStatePlay) End(g *Game) {
 	// TODO: Create a portal at highest story's last room and issue dudes to walk into it?
 }
 func (s *GameStatePlay) Update(g *Game) GameState {
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		s.paused = !s.paused
+	}
+	if s.paused {
+		s.pauseWobbler += 0.05
+	}
+
 	// Update the game!
-	g.tower.Update()
+	if !s.paused {
+		g.tower.Update()
+	}
 	// TODO: Periodically sync dudes with panel??? Or mark dudes as dirty if armor changes then refresh?
 
 	g.ui.Update(&g.uiOptions)
@@ -99,6 +115,36 @@ func (s *GameStatePlay) Draw(g *Game, screen *ebiten.Image) {
 	options.DrawImageOptions.GeoM.Reset()
 	options.DrawImageOptions.ColorScale.Reset()
 	g.ui.Draw(&options)
+
+	// Draw pause
+	if s.paused {
+		geom := ebiten.GeoM{}
+		geom.Scale(4, 4)
+		opts := &render.TextOptions{
+			Screen: screen,
+			Font:   assets.DisplayFont,
+			Color:  color.Black,
+			GeoM:   geom,
+		}
+
+		w, h := text.Measure("PAUSED", opts.Font.Face, opts.Font.LineHeight)
+		w *= 4
+		h *= 4
+
+		opts.GeoM.Translate(-w/2, -h/2)
+		opts.GeoM.Rotate(math.Sin(s.pauseWobbler) * 0.05)
+		opts.GeoM.Translate(w/2, h/2)
+		opts.GeoM.Translate(float64(screen.Bounds().Dx()/2)-w/2, float64(screen.Bounds().Dy()/4)-h/2)
+
+		opts.GeoM.Translate(-10, -10)
+		opts.Color = color.NRGBA{0, 0, 0, 200}
+		render.DrawText(opts, "PAUSED")
+		opts.GeoM.Translate(20, 20)
+		render.DrawText(opts, "PAUSED")
+		opts.Color = color.NRGBA{200, 200, 200, 200}
+		opts.GeoM.Translate(-10, -10)
+		render.DrawText(opts, "PAUSED")
+	}
 }
 
 type GameStateLose struct {
