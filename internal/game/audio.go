@@ -44,6 +44,8 @@ type AudioController struct {
 	audioContext *audio.Context
 	tracks       map[RoomKind]*Track
 	sfx          map[string]*Track
+	tracksPaused bool
+	sfxPaused    bool
 }
 
 func NewAudioController() *AudioController {
@@ -84,10 +86,13 @@ func NewAudioController() *AudioController {
 	return &AudioController{
 		audioContext: audioContext,
 		tracks:       tracks,
+		tracksPaused: true,
+		sfxPaused:    false,
 	}
 }
 
 func (a *AudioController) PlayRoomTracks() {
+	a.tracksPaused = false
 	for name, track := range a.tracks {
 		fmt.Println("Playing track")
 		track.Play()
@@ -96,6 +101,13 @@ func (a *AudioController) PlayRoomTracks() {
 			track.SetVolume(0.25)
 		}
 	}
+}
+
+func (a *AudioController) PauseRoomTracks() {
+	for _, track := range a.tracks {
+		track.Pause()
+	}
+	a.tracksPaused = true
 }
 
 func (a *AudioController) SetVol(roomKind RoomKind, volume float64) {
@@ -111,6 +123,9 @@ func (a *AudioController) SetPan(roomKind RoomKind, pan float64) {
 }
 
 func (a *AudioController) PlaySfx(name string, vol *float64, pan *float64) {
+	if a.sfxPaused {
+		return
+	}
 	if sfx, ok := a.sfx[name]; ok {
 		if vol == nil {
 			sfx.SetVolume(1)
