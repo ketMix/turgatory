@@ -107,8 +107,16 @@ func (c *Camera) WorldToScreen(x, y float64) (float64, float64) {
 }
 
 func (c *Camera) SetPosition(x, y float64) {
-	c.x.Set(x, c.zoom.Current)
-	c.y.Set(y, c.zoom.Current)
+	dx := math.Abs(c.x.Current - x)
+	dy := math.Abs(c.y.Current - y)
+	targetTicks := 20.0
+
+	// Calculate the number of ticks it will take to get to the target.
+	dxTicks := dx / targetTicks
+	dyTicks := dy / targetTicks
+
+	c.x.Set(x, dxTicks)
+	c.y.Set(y, dyTicks)
 }
 
 func (c *Camera) Position() (float64, float64) {
@@ -116,7 +124,12 @@ func (c *Camera) Position() (float64, float64) {
 }
 
 func (c *Camera) SetZoom(zoom float64) {
-	c.zoom.Set(zoom, 0.1)
+	dz := math.Abs(c.zoom.Current - zoom)
+	targetTicks := 20.0
+
+	dzTicks := dz / targetTicks
+
+	c.zoom.Set(zoom, dzTicks)
 }
 
 func (c *Camera) Zoom() float64 {
@@ -132,7 +145,12 @@ func (c *Camera) ZoomOut() {
 }
 
 func (c *Camera) SetTextOffset(offset float64) {
-	c.textOffset.Set(offset, c.zoom.Target)
+	do := math.Abs(c.textOffset.Current - offset)
+	targetTicks := 20.0
+
+	doTicks := do / targetTicks
+
+	c.textOffset.Set(offset, doTicks)
 }
 
 func (c *Camera) TextOffset() float64 {
