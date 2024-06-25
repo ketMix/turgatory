@@ -5,6 +5,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
 )
@@ -22,6 +23,7 @@ type Game struct {
 	state                 GameState
 	audioController       *AudioController
 	overlay               *ebiten.Image
+	followDude            *Dude
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -59,8 +61,10 @@ func (g *Game) Update() error {
 
 	if ebiten.IsKeyPressed(ebiten.KeyQ) {
 		g.camera.SetRotation(g.camera.Rotation() - 0.01)
+		g.followDude = nil
 	} else if ebiten.IsKeyPressed(ebiten.KeyE) {
 		g.camera.SetRotation(g.camera.Rotation() + 0.01)
+		g.followDude = nil
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyA) {
@@ -92,6 +96,10 @@ func (g *Game) Update() error {
 		g.camera.ZoomOut()
 	}
 
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		g.followDude = nil
+	}
+
 	if nextState := g.state.Update(g); nextState != nil {
 		g.state.End(g)
 		g.state = nextState
@@ -108,6 +116,13 @@ func (g *Game) Update() error {
 					g.audioController.SetVol(room.kind, vol)
 				}
 			}
+		}
+		if g.followDude != nil {
+			r := g.followDude.Rotation()
+
+			// FIXME: This snaps to opposite sometimes...
+
+			g.camera.SetRotation(-r)
 		}
 	}
 
@@ -142,6 +157,10 @@ func (g *Game) Init() {
 
 	g.ui = NewUI()
 	g.uiOptions = UIOptions{Scale: 2.0}
+	g.ui.dudePanel.onDudeClick = func(d *Dude) {
+		// follow dat dude
+		g.followDude = d
+	}
 	g.camera = *render.NewCamera(0, 0)
 	g.audioController = NewAudioController()
 	//g.audioController.PlayRoomTracks()

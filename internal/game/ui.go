@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
 )
@@ -89,6 +90,7 @@ type DudePanel struct {
 	botright     *render.Sprite
 	drawerInterp render.InterpNumber
 	dudeProfiles []*DudeProfile
+	onDudeClick  func(*Dude)
 }
 
 type DudeProfile struct {
@@ -215,6 +217,11 @@ func (dp *DudePanel) Update(o *UIOptions) {
 	for _, p := range dp.dudeProfiles {
 		px, py := p.Position()
 		if InBounds(px, py, dp.width, p.height, mx, my) {
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+				if dp.onDudeClick != nil {
+					dp.onDudeClick(p.dude)
+				}
+			}
 			p.hovered = true
 		} else {
 			p.hovered = false
