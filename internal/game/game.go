@@ -52,36 +52,36 @@ func (g *Game) Update() error {
 	g.camera.Update()
 
 	// Move this stuff elsewhere, probs.
-	if ebiten.IsKeyPressed(ebiten.KeyUp) {
+	/*if ebiten.IsKeyPressed(ebiten.KeyUp) {
 		g.camera.Pitch += 0.01
 	} else if ebiten.IsKeyPressed(ebiten.KeyDown) {
 		g.camera.Pitch -= 0.01
 	}
 	if g.camera.Pitch < 0 {
 		g.camera.Pitch = 0
-	}
+	}*/
 
-	if ebiten.IsKeyPressed(ebiten.KeyQ) {
+	if ebiten.IsKeyPressed(ebiten.KeyQ) || ebiten.IsKeyPressed(ebiten.KeyLeft) {
 		g.camera.SetRotation(g.camera.Rotation() - 0.01)
 		g.followDude = nil
-	} else if ebiten.IsKeyPressed(ebiten.KeyE) {
+	} else if ebiten.IsKeyPressed(ebiten.KeyE) || ebiten.IsKeyPressed(ebiten.KeyRight) {
 		g.camera.SetRotation(g.camera.Rotation() + 0.01)
 		g.followDude = nil
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyA) {
 		x, y := g.camera.Position()
-		g.camera.SetPosition(x-1, y)
+		g.camera.SetPosition(x-10, y)
 	} else if ebiten.IsKeyPressed(ebiten.KeyD) {
 		x, y := g.camera.Position()
-		g.camera.SetPosition(x+1, y)
+		g.camera.SetPosition(x+10, y)
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyW) {
 		x, y := g.camera.Position()
-		g.camera.SetPosition(x, y-1)
+		g.camera.SetPosition(x, y-10)
 	} else if ebiten.IsKeyPressed(ebiten.KeyS) {
 		x, y := g.camera.Position()
-		g.camera.SetPosition(x, y+1)
+		g.camera.SetPosition(x, y+10)
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.Key1) {
