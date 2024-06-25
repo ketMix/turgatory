@@ -83,6 +83,19 @@ func (g *Game) Update() error {
 		g.state.Begin(g)
 	}
 
+	// If we have a tower with rooms, synchronize the music.
+	if g.tower != nil {
+		for _, story := range g.tower.Stories {
+			if story.open {
+				for _, room := range story.rooms {
+					pan, vol := room.getPanVol(g.camera.Rotation(), 1.0) // Replace 1.0 with a calculation based on focused story index vs. current
+					g.audioController.SetPan(room.kind, pan)
+					g.audioController.SetVol(room.kind, vol)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -117,7 +130,7 @@ func (g *Game) Init() {
 	g.uiOptions = UIOptions{Scale: 2.0}
 	g.camera = *render.NewCamera(0, 0)
 	g.audioController = NewAudioController()
-	// g.audioController.PlayRoomTracks()
+	g.audioController.PlayRoomTracks()
 	g.state = &GameStatePreBuild{}
 	g.state.Begin(g)
 }

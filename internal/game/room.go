@@ -183,7 +183,7 @@ func NewRoom(size RoomSize, kind RoomKind) *Room {
 }
 
 // Update updates the stuff in the room.
-func (r *Room) Update(req *ActivityRequests, g *Game) {
+func (r *Room) Update(req *ActivityRequests) {
 	r.stacks.Update()
 	if r.kind == Combat {
 		r.combatTicks++
@@ -194,25 +194,24 @@ func (r *Room) Update(req *ActivityRequests, g *Game) {
 			}
 		}
 	}
-	// Set sound panning and volume here because we have access to camera
-	r.adjustPanVol(g)
 }
 
 // Determins pan and vol of room track based on camera position
 // TODO:
 // - Move this out a bit so we can consolidate duplicate rooms and not set pan/vol twice for same track (take highest)
 // - Determine by not only rotation but camera height, so scrolling up tower changes vol
-func (r *Room) adjustPanVol(g *Game) {
-	cR := g.camera.Rotation()
+func (r *Room) getPanVol(rads float64, multiplier float64) (float64, float64) {
+	cR := rads
 	rR := r.stacks[0].Rotation()
 
 	// Determine pan and vol based on camera and room rotation
 	pan := math.Cos(cR-rR) * 0.5
 	vol := math.Sin(cR-rR) * 0.5
 
-	// Set pan and vol
-	g.audioController.SetPan(r.kind, pan)
-	g.audioController.SetVol(r.kind, vol)
+	vol *= multiplier
+
+	// Return pan and vol
+	return pan, vol
 }
 
 // Draw our room bits and bobs.

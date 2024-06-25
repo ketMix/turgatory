@@ -71,7 +71,7 @@ func (s *GameStatePlay) End(g *Game) {
 }
 func (s *GameStatePlay) Update(g *Game) GameState {
 	// Update the game!
-	g.tower.Update(g)
+	g.tower.Update()
 	// TODO: Periodically sync dudes with panel??? Or mark dudes as dirty if armor changes then refresh?
 
 	g.ui.Update(&g.uiOptions)

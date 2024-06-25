@@ -93,7 +93,7 @@ func NewStoryWithSize(size int) *Story {
 }
 
 // Update updates the rooms.
-func (s *Story) Update(req *ActivityRequests, g *Game) {
+func (s *Story) Update(req *ActivityRequests) {
 	if s.textTimer <= 0 {
 		s.textTimer = 30
 		t := NewFloatingText("ok", color.NRGBA{255, 255, 255, 255}, 30)
@@ -132,7 +132,7 @@ func (s *Story) Update(req *ActivityRequests, g *Game) {
 					continue
 				}
 			}
-			room.Update(req, g) // Just forward up room updates to tower
+			room.Update(req) // Just forward up room updates to tower
 			updatedRooms = append(updatedRooms, room)
 		}
 	}
