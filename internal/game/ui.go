@@ -397,6 +397,7 @@ type Button struct {
 	baseSprite *render.Sprite
 	sprite     *render.Sprite
 	onClick    func()
+	wobbler    float64
 }
 
 func NewButton(name string) *Button {
@@ -409,6 +410,19 @@ func NewButton(name string) *Button {
 func (b *Button) Layout(o *UIOptions) {
 	b.baseSprite.Scale = o.Scale
 	b.sprite.Scale = o.Scale
+}
+
+func (b *Button) Update() {
+	x, y := b.Position()
+	w, h := b.sprite.Size()
+	mx, my := IntToFloat2(ebiten.CursorPosition())
+	if InBounds(x, y, w, h, mx, my) {
+		b.wobbler += 0.1
+	} else {
+		b.wobbler = 0
+	}
+	b.sprite.SetRotation(math.Sin(b.wobbler) * 0.05)
+	b.baseSprite.SetRotation(math.Sin(b.wobbler) * 0.05)
 }
 
 func (b *Button) Check(mx, my float64) {
@@ -440,6 +454,7 @@ func (b *Button) SetImage(name string) {
 func (b *Button) Draw(o *render.Options) {
 	b.baseSprite.Draw(o)
 	b.sprite.Draw(o)
+	o.DrawImageOptions.GeoM.Reset()
 }
 
 type SpeedPanel struct {
@@ -485,6 +500,11 @@ func (sp *SpeedPanel) Update(o *UIOptions) {
 	mx, my := IntToFloat2(ebiten.CursorPosition())
 	x, y := sp.Position()
 	if InBounds(x, y, sp.width, sp.height, mx, my) {
+		sp.musicButton.Update()
+		sp.soundButton.Update()
+		sp.cameraButton.Update()
+		sp.pauseButton.Update()
+		sp.speedButton.Update()
 		sp.musicButton.Check(mx, my)
 		sp.soundButton.Check(mx, my)
 		sp.cameraButton.Check(mx, my)
