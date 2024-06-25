@@ -63,10 +63,17 @@ func NewAudioController() *AudioController {
 
 		if stream != nil {
 			panstream := NewStereoPanStream(audio.NewInfiniteLoop(stream, stream.Length()))
-			panstream.SetPan(1.0)
+			panstream.SetPan(0.0)
 
 			player, err := audioContext.NewPlayer(panstream)
-			player.SetVolume(0)
+
+			// For now...
+			if name == "empty" {
+				player.SetVolume(0.25)
+
+			} else {
+				player.SetVolume(0)
+			}
 			if err != nil {
 				fmt.Println("Error creating player for track ", name, err)
 			}
@@ -74,7 +81,7 @@ func NewAudioController() *AudioController {
 				player:    player,
 				panstream: panstream,
 				volume:    0,
-				pan:       1.0,
+				pan:       0,
 			}
 		}
 

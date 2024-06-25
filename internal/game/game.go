@@ -117,7 +117,7 @@ func (g *Game) Init() {
 	g.uiOptions = UIOptions{Scale: 2.0}
 	g.camera = *render.NewCamera(0, 0)
 	g.audioController = NewAudioController()
-	// g.audioController.PlayRoomTracks()
+	g.audioController.PlayRoomTracks()
 	g.state = &GameStatePreBuild{}
 	g.state.Begin(g)
 }
