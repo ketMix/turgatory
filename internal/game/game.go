@@ -24,6 +24,8 @@ type Game struct {
 	audioController       *AudioController
 	overlay               *ebiten.Image
 	followDude            *Dude
+	paused                bool
+	speed                 int
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -158,11 +160,42 @@ func (g *Game) Init() {
 		// follow dat dude
 		g.followDude = d
 	}
+	g.ui.speedPanel.pauseButton.onClick = func() {
+		g.TogglePause()
+	}
+	g.ui.speedPanel.speedButton.onClick = func() {
+		g.AdjustSpeed()
+	}
+
 	g.camera = *render.NewCamera(0, 0)
 	g.audioController = NewAudioController()
 	//g.audioController.PlayRoomTracks()
 	g.state = &GameStatePreBuild{}
 	g.state.Begin(g)
+}
+
+func (g *Game) TogglePause() {
+	g.paused = !g.paused
+	if g.paused {
+		g.ui.speedPanel.pauseButton.SetImage("pause")
+	} else {
+		g.ui.speedPanel.pauseButton.SetImage("play")
+	}
+}
+
+func (g *Game) AdjustSpeed() {
+	g.speed++
+	if g.speed > 2 {
+		g.speed = 0
+	}
+	switch g.speed {
+	case 0:
+		g.ui.speedPanel.speedButton.SetImage("fast")
+	case 1:
+		g.ui.speedPanel.speedButton.SetImage("medium")
+	case 2:
+		g.ui.speedPanel.speedButton.SetImage("slow")
+	}
 }
 
 func New() *Game {

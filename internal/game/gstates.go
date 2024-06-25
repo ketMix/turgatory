@@ -67,8 +67,8 @@ func (s *GameStateBuild) Draw(g *Game, screen *ebiten.Image) {
 }
 
 type GameStatePlay struct {
-	paused       bool
 	pauseWobbler float64
+	updateTicker int
 }
 
 func (s *GameStatePlay) Begin(g *Game) {
@@ -81,15 +81,19 @@ func (s *GameStatePlay) End(g *Game) {
 }
 func (s *GameStatePlay) Update(g *Game) GameState {
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		s.paused = !s.paused
+		g.TogglePause()
 	}
-	if s.paused {
+	if g.paused {
 		s.pauseWobbler += 0.05
 	}
 
 	// Update the game!
-	if !s.paused {
-		g.tower.Update()
+	if !g.paused {
+		s.updateTicker++
+		if s.updateTicker > g.speed {
+			g.tower.Update()
+			s.updateTicker = 0
+		}
 	}
 	// TODO: Periodically sync dudes with panel??? Or mark dudes as dirty if armor changes then refresh?
 
@@ -117,7 +121,7 @@ func (s *GameStatePlay) Draw(g *Game, screen *ebiten.Image) {
 	g.ui.Draw(&options)
 
 	// Draw pause
-	if s.paused {
+	if g.paused {
 		geom := ebiten.GeoM{}
 		geom.Scale(4, 4)
 		opts := &render.TextOptions{

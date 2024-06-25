@@ -26,9 +26,10 @@ func (o UIOptions) ScreenToCoords(x, y float64) (float64, float64) {
 }
 
 type UI struct {
-	dudePanel DudePanel
-	roomPanel RoomPanel
-	options   *UIOptions
+	dudePanel  DudePanel
+	roomPanel  RoomPanel
+	speedPanel SpeedPanel
+	options    *UIOptions
 }
 
 func NewUI() *UI {
@@ -56,6 +57,12 @@ func NewUI() *UI {
 			right:    Must(render.NewSubSprite(panelSprite, 32, 16, 16, 32)),
 		}
 	}
+	{
+		ui.speedPanel = SpeedPanel{
+			pauseButton: NewButton("play"),
+			speedButton: NewButton("fast"),
+		}
+	}
 	return ui
 }
 
@@ -63,17 +70,21 @@ func (ui *UI) Layout(o *UIOptions) {
 	ui.options = o
 	ui.dudePanel.Layout(o)
 	ui.roomPanel.Layout(o)
+	ui.speedPanel.Layout(o)
 }
 
 func (ui *UI) Update(o *UIOptions) {
 	ui.dudePanel.Update(o)
 	ui.roomPanel.Update(o)
+	ui.speedPanel.Update(o)
 }
 
 func (ui *UI) Draw(o *render.Options) {
 	ui.dudePanel.Draw(o)
 	o.DrawImageOptions.GeoM.Reset()
 	ui.roomPanel.Draw(o)
+	o.DrawImageOptions.GeoM.Reset()
+	ui.speedPanel.Draw(o)
 }
 
 type DudePanel struct {
@@ -376,4 +387,95 @@ func (rp *RoomPanel) Draw(o *render.Options) {
 	o.DrawImageOptions.GeoM.Translate(float64(rd.image.Bounds().Dx())+8, 0)
 	rd = GetRoomDef(Combat, Small)
 	o.Screen.DrawImage(rd.image, &o.DrawImageOptions)
+}
+
+// ===============================================
+type Button struct {
+	baseSprite *render.Sprite
+	sprite     *render.Sprite
+	onClick    func()
+}
+
+func NewButton(name string) *Button {
+	return &Button{
+		baseSprite: Must(render.NewSpriteFromStaxie("ui/button", "base")),
+		sprite:     Must(render.NewSpriteFromStaxie("ui/button", name)),
+	}
+}
+
+func (b *Button) Layout(o *UIOptions) {
+	b.baseSprite.Scale = o.Scale
+	b.sprite.Scale = o.Scale
+}
+
+func (b *Button) Check(mx, my float64) {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		x, y := b.Position()
+		w, h := b.sprite.Size()
+		if mx > x && mx < x+w && my > y && my < y+h {
+			if b.onClick != nil {
+				b.onClick()
+			}
+		}
+	}
+}
+
+func (b *Button) SetPosition(x, y float64) {
+	b.baseSprite.SetPosition(x, y)
+	b.sprite.SetPosition(x, y)
+}
+
+func (b *Button) Position() (float64, float64) {
+	return b.baseSprite.Position()
+}
+
+func (b *Button) SetImage(name string) {
+	// This is terribly lazy :)
+	b.sprite = Must(render.NewSpriteFromStaxie("ui/button", name))
+}
+
+func (b *Button) Draw(o *render.Options) {
+	b.baseSprite.Draw(o)
+	b.sprite.Draw(o)
+}
+
+type SpeedPanel struct {
+	render.Positionable
+	width       float64
+	height      float64
+	pauseButton *Button
+	speedButton *Button
+}
+
+func (sp *SpeedPanel) Layout(o *UIOptions) {
+	sp.pauseButton.Layout(o)
+	sp.speedButton.Layout(o)
+
+	bw, bh := sp.pauseButton.sprite.Size()
+
+	sp.width = bw*2 + 4
+	sp.height = bh + bh/4
+
+	x := float64(o.Width) - sp.width - 4
+	y := 4.0
+
+	sp.SetPosition(x, y)
+
+	sp.pauseButton.SetPosition(x, y)
+	x += bw + 4
+	sp.speedButton.SetPosition(x, y)
+}
+
+func (sp *SpeedPanel) Update(o *UIOptions) {
+	mx, my := IntToFloat2(ebiten.CursorPosition())
+	x, y := sp.Position()
+	if InBounds(x, y, sp.width, sp.height, mx, my) {
+		sp.pauseButton.Check(mx, my)
+		sp.speedButton.Check(mx, my)
+	}
+}
+
+func (sp *SpeedPanel) Draw(o *render.Options) {
+	sp.pauseButton.Draw(o)
+	sp.speedButton.Draw(o)
 }
