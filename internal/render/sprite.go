@@ -19,31 +19,39 @@ func (s *Sprite) Size() (float64, float64) {
 	return float64(s.image.Bounds().Dx()) * s.Scale, float64(s.image.Bounds().Dy()) * s.Scale
 }
 
-func NewSpriteFromStaxie(name string, stackName string) (*Sprite, error) {
+func (s *Sprite) SetStaxie(name, stackName string) error {
 	staxie, err := assets.LoadStaxie(name)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	stack, ok := staxie.GetStack(stackName)
 	if !ok {
-		return nil, assets.ErrStackNotFound
+		return assets.ErrStackNotFound
 	}
 	anim, ok := stack.GetAnimation("base")
 	if !ok {
-		return nil, assets.ErrAnimationNotFound
+		return assets.ErrAnimationNotFound
 	}
 	frame, ok := anim.GetFrame(0)
 	if !ok {
-		return nil, assets.ErrFrameNotFound
+		return assets.ErrFrameNotFound
 	}
 	slice, ok := frame.GetSlice(0)
 	if !ok {
-		return nil, assets.ErrSliceNotFound
+		return assets.ErrSliceNotFound
 	}
+	s.image = slice.Image
+	return nil
+}
 
+func NewSpriteFromStaxie(name string, stackName string) (*Sprite, error) {
 	sprite := &Sprite{
 		Scale: 1,
-		image: slice.Image,
+	}
+
+	err := sprite.SetStaxie(name, stackName)
+	if err != nil {
+		return nil, err
 	}
 
 	return sprite, nil

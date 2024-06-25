@@ -7,6 +7,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
 )
@@ -59,11 +60,11 @@ func NewUI() *UI {
 	}
 	{
 		ui.speedPanel = SpeedPanel{
-			musicButton:  NewButton("music"),
-			soundButton:  NewButton("sound"),
-			pauseButton:  NewButton("play"),
-			speedButton:  NewButton("fast"),
-			cameraButton: NewButton("story"),
+			musicButton:  NewButton("music", "music on"),
+			soundButton:  NewButton("sound", "sound on"),
+			pauseButton:  NewButton("play", "playing"),
+			speedButton:  NewButton("fast", "fast"),
+			cameraButton: NewButton("story", "camera: story"),
 		}
 	}
 	return ui
@@ -394,16 +395,19 @@ func (rp *RoomPanel) Draw(o *render.Options) {
 
 // ===============================================
 type Button struct {
-	baseSprite *render.Sprite
-	sprite     *render.Sprite
-	onClick    func()
-	wobbler    float64
+	baseSprite  *render.Sprite
+	sprite      *render.Sprite
+	onClick     func()
+	wobbler     float64
+	tooltip     string
+	showTooltip bool
 }
 
-func NewButton(name string) *Button {
+func NewButton(name string, tooltip string) *Button {
 	return &Button{
 		baseSprite: Must(render.NewSpriteFromStaxie("ui/button", "base")),
 		sprite:     Must(render.NewSpriteFromStaxie("ui/button", name)),
+		tooltip:    tooltip,
 	}
 }
 
@@ -417,8 +421,10 @@ func (b *Button) Update() {
 	w, h := b.sprite.Size()
 	mx, my := IntToFloat2(ebiten.CursorPosition())
 	if InBounds(x, y, w, h, mx, my) {
+		b.showTooltip = true
 		b.wobbler += 0.1
 	} else {
+		b.showTooltip = false
 		b.wobbler = 0
 	}
 	b.sprite.SetRotation(math.Sin(b.wobbler) * 0.05)
@@ -447,14 +453,26 @@ func (b *Button) Position() (float64, float64) {
 }
 
 func (b *Button) SetImage(name string) {
-	// This is terribly lazy :)
-	b.sprite = Must(render.NewSpriteFromStaxie("ui/button", name))
+	b.sprite.SetStaxie("ui/button", name)
 }
 
 func (b *Button) Draw(o *render.Options) {
 	b.baseSprite.Draw(o)
 	b.sprite.Draw(o)
 	o.DrawImageOptions.GeoM.Reset()
+	if b.tooltip != "" && b.showTooltip {
+		op := &render.TextOptions{
+			Screen: o.Screen,
+			Font:   assets.DisplayFont,
+			Color:  color.NRGBA{184, 152, 93, 200},
+		}
+		width, _ := text.Measure(b.tooltip, assets.DisplayFont.Face, assets.BodyFont.LineHeight)
+		x, y := b.Position()
+		w, h := b.sprite.Size()
+		x += w
+		op.GeoM.Translate(x-width, y+h)
+		render.DrawText(op, b.tooltip)
+	}
 }
 
 type SpeedPanel struct {

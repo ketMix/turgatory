@@ -176,18 +176,22 @@ func (g *Game) Init() {
 		if g.audioController.tracksPaused {
 			g.audioController.PlayRoomTracks()
 			g.ui.speedPanel.musicButton.SetImage("music")
+			g.ui.speedPanel.musicButton.tooltip = "music on"
 		} else {
 			g.audioController.PauseRoomTracks()
 			g.ui.speedPanel.musicButton.SetImage("music-mute")
+			g.ui.speedPanel.musicButton.tooltip = "music off"
 		}
 	}
 	g.ui.speedPanel.soundButton.onClick = func() {
 		if g.audioController.sfxPaused {
 			g.audioController.sfxPaused = false
 			g.ui.speedPanel.soundButton.SetImage("sound")
+			g.ui.speedPanel.soundButton.tooltip = "sound on"
 		} else {
 			g.audioController.sfxPaused = true
 			g.ui.speedPanel.soundButton.SetImage("sound-mute")
+			g.ui.speedPanel.soundButton.tooltip = "sound off"
 		}
 	}
 
@@ -202,8 +206,10 @@ func (g *Game) TogglePause() {
 	g.paused = !g.paused
 	if g.paused {
 		g.ui.speedPanel.pauseButton.SetImage("pause")
+		g.ui.speedPanel.pauseButton.tooltip = "paused"
 	} else {
 		g.ui.speedPanel.pauseButton.SetImage("play")
+		g.ui.speedPanel.pauseButton.tooltip = "playing"
 	}
 }
 
@@ -215,10 +221,13 @@ func (g *Game) AdjustSpeed() {
 	switch g.speed {
 	case 0:
 		g.ui.speedPanel.speedButton.SetImage("fast")
+		g.ui.speedPanel.speedButton.tooltip = "fast"
 	case 2:
 		g.ui.speedPanel.speedButton.SetImage("medium")
+		g.ui.speedPanel.speedButton.tooltip = "medium"
 	case 4:
 		g.ui.speedPanel.speedButton.SetImage("slow")
+		g.ui.speedPanel.speedButton.tooltip = "slow"
 	}
 }
 
@@ -226,12 +235,15 @@ func (g *Game) AdjustCamera() {
 	if g.camera.Mode == render.CameraModeTower {
 		g.camera.SetMode(render.CameraModeStack)
 		g.ui.speedPanel.cameraButton.SetImage("story")
+		g.ui.speedPanel.cameraButton.tooltip = "camera: story"
 	} else if g.camera.Mode == render.CameraModeStack {
 		g.camera.SetMode(render.CameraModeSuperZoom)
 		g.ui.speedPanel.cameraButton.SetImage("room")
+		g.ui.speedPanel.cameraButton.tooltip = "camera: room"
 	} else {
 		g.camera.SetMode(render.CameraModeTower)
 		g.ui.speedPanel.cameraButton.SetImage("tower")
+		g.ui.speedPanel.cameraButton.tooltip = "camera: tower"
 	}
 }
 
