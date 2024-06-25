@@ -69,6 +69,8 @@ func (r *RoomKind) String() string {
 		return "library"
 	case Empty:
 		return "empty"
+	case Trap:
+		return "trap"
 	default:
 		return "Unknown"
 	}
@@ -118,6 +120,8 @@ const (
 	Library
 	// Curse - % to curse dude
 	Curse
+	// Trap - % to damage dude based on stats
+	Trap
 
 	// Marker for the end... allows for iteration
 	RoomKindEnd
@@ -185,7 +189,7 @@ func NewRoom(size RoomSize, kind RoomKind) *Room {
 // Update updates the stuff in the room.
 func (r *Room) Update(req *ActivityRequests) {
 	r.stacks.Update()
-	if r.kind == Combat {
+	if r.kind == Combat || r.kind == Trap {
 		r.combatTicks++
 		if r.combatTicks >= CombatTickrate {
 			r.combatTicks = 0
@@ -313,6 +317,12 @@ func (r *Room) GetRoomEffect(e Event) {
 		return
 	}
 	switch e := e.(type) {
+	case EventCombatRoom:
+		switch r.kind {
+		case Trap:
+			// Damage dude based on stats
+			e.dude.TrapDamage(r.story.level + 1)
+		}
 	case EventEnterRoom:
 		switch r.kind {
 		case Combat:

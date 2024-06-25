@@ -287,6 +287,8 @@ func (d *Dude) Trigger(e Event) {
 				}
 			}
 		}
+		// Else it may be a trap room
+		d.room.GetRoomEffect(e)
 	case EventEnterRoom:
 		d.room = e.room
 		d.room.GetRoomEffect(e)
@@ -652,4 +654,22 @@ func (d *Dude) Cursify(roomLevel int) {
 		t := MakeFloatingTextFromDude(d, "-level", color.NRGBA{100, 0, 0, 200}, 50, 0.5)
 		d.story.AddText(t)
 	}
+}
+
+func (d *Dude) TrapDamage(roomLevel int) {
+	// Chance based on agility
+	agilityRoll := rand.Intn(d.stats.agility + 1)
+
+	// Higher agility, lower chance of being hit
+	threshold := 1.0 - math.Log10(float64(agilityRoll+1))
+	trapRoll := rand.Float64()
+
+	if trapRoll > threshold {
+		return
+	}
+
+	// Damage based on room level
+	damage := roomLevel * 2
+
+	d.ApplyDamage(damage)
 }
