@@ -84,12 +84,15 @@ func (g *Game) Update() error {
 		g.camera.SetPosition(x, y+1)
 	}
 
-	if ebiten.IsKeyPressed(ebiten.Key1) {
+	if inpututil.IsKeyJustPressed(ebiten.Key1) {
 		g.camera.SetMode(render.CameraModeTower)
-	} else if ebiten.IsKeyPressed(ebiten.Key2) {
+		g.ui.speedPanel.cameraButton.SetImage("tower")
+	} else if inpututil.IsKeyJustPressed(ebiten.Key2) {
 		g.camera.SetMode(render.CameraModeStack)
-	} else if ebiten.IsKeyPressed(ebiten.Key3) {
+		g.ui.speedPanel.cameraButton.SetImage("story")
+	} else if inpututil.IsKeyJustPressed(ebiten.Key3) {
 		g.camera.SetMode(render.CameraModeSuperZoom)
+		g.ui.speedPanel.cameraButton.SetImage("room")
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyZ) {
@@ -168,6 +171,24 @@ func (g *Game) Init() {
 	}
 	g.ui.speedPanel.cameraButton.onClick = func() {
 		g.AdjustCamera()
+	}
+	g.ui.speedPanel.musicButton.onClick = func() {
+		if g.audioController.tracksPaused {
+			g.audioController.PlayRoomTracks()
+			g.ui.speedPanel.musicButton.SetImage("music")
+		} else {
+			g.audioController.PauseRoomTracks()
+			g.ui.speedPanel.musicButton.SetImage("music-mute")
+		}
+	}
+	g.ui.speedPanel.soundButton.onClick = func() {
+		if g.audioController.sfxPaused {
+			g.audioController.sfxPaused = false
+			g.ui.speedPanel.soundButton.SetImage("sound")
+		} else {
+			g.audioController.sfxPaused = true
+			g.ui.speedPanel.soundButton.SetImage("sound-mute")
+		}
 	}
 
 	g.camera = *render.NewCamera(0, 0)
