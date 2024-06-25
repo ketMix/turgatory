@@ -67,13 +67,7 @@ func NewAudioController() *AudioController {
 
 			player, err := audioContext.NewPlayer(panstream)
 
-			// For now...
-			if name == "empty" {
-				player.SetVolume(0.25)
-
-			} else {
-				player.SetVolume(0)
-			}
+			player.SetVolume(0)
 			if err != nil {
 				fmt.Println("Error creating player for track ", name, err)
 			}
@@ -94,9 +88,13 @@ func NewAudioController() *AudioController {
 }
 
 func (a *AudioController) PlayRoomTracks() {
-	for _, track := range a.tracks {
+	for name, track := range a.tracks {
 		fmt.Println("Playing track")
 		track.Play()
+
+		if name == Empty {
+			track.SetVolume(0.25)
+		}
 	}
 }
 
