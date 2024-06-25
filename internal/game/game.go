@@ -118,10 +118,7 @@ func (g *Game) Update() error {
 			}
 		}
 		if g.followDude != nil {
-			r := g.followDude.Rotation()
-
-			// FIXME: This snaps to opposite sometimes...
-
+			r := g.followDude.trueRotation
 			g.camera.SetRotation(-r)
 		}
 	}

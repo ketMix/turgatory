@@ -38,7 +38,8 @@ type Dude struct {
 	activity     DudeActivity
 	activityDone bool
 	variation    float64
-	enemy        *Enemy // currently fighting enemy
+	enemy        *Enemy  // currently fighting enemy
+	trueRotation float64 // This is the absolute rotation of the dude, ignoring facing.
 }
 
 func NewDude(pk ProfessionKind, level int) *Dude {
@@ -100,6 +101,7 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 			nx, ny := story.PositionFromCenter(r, distance-d.Speed()*100)
 
 			face := math.Atan2(ny-cy, nx-cx)
+			d.trueRotation = face
 
 			req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny, cb: func(success bool) {
 				d.stack.HeightOffset -= 0.15
@@ -120,6 +122,7 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 			nx, ny := story.PositionFromCenter(r, distance+d.Speed()*100)
 
 			face := math.Atan2(ny-cy, nx-cx)
+			d.trueRotation = face
 
 			req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny, cb: func(success bool) {
 				d.SyncEquipment()
@@ -145,6 +148,7 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 			nx, ny := story.PositionFromCenter(r, distance+d.Speed()*100)
 
 			face := math.Atan2(ny-cy, nx-cx)
+			d.trueRotation = face
 
 			req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny, cb: func(success bool) {
 				if success {
@@ -157,14 +161,13 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 		r := story.AngleFromCenter(cx, cy) + d.variation/5000
 		nx, ny := story.PositionFromCenter(r-d.Speed(), RoomPath+d.variation)
 
-		var face float64
+		face := math.Atan2(ny-cy, nx-cx)
+		d.trueRotation = face
 
 		// Face inwards if we have an enemy!
 		if d.enemy != nil {
 			fx, fy := story.PositionFromCenter(r-d.Speed(), d.variation)
 			face = math.Atan2(fy-cy, fx-cx)
-		} else {
-			face = math.Atan2(ny-cy, nx-cx)
 		}
 
 		req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny, cb: func(success bool) {
