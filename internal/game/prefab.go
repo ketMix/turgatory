@@ -55,7 +55,7 @@ func (p *Prefab) Draw(o *render.Options) {
 
 	// Get our rotated vgroup...
 	fakeOpts := render.Options{}
-	fakeOpts.DrawImageOptions.GeoM.Scale(o.Camera.Zoom, o.Camera.Zoom)
+	fakeOpts.DrawImageOptions.GeoM.Scale(o.Camera.Zoom(), o.Camera.Zoom())
 	fakeOpts.DrawImageOptions.GeoM.Translate(-p.X, -p.Y)
 	fakeOpts.DrawImageOptions.GeoM.Rotate(o.TowerRotation)
 	fakeOpts.DrawImageOptions.GeoM.Translate(p.X, p.Y)

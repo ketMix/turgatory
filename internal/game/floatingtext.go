@@ -18,8 +18,8 @@ type FloatingText struct {
 	textOptions render.TextOptions
 }
 
-func NewFloatingText(text string, color color.NRGBA, lifetime int) *FloatingText {
-	return &FloatingText{
+func MakeFloatingText(text string, color color.NRGBA, lifetime int) FloatingText {
+	return FloatingText{
 		text:      text,
 		color:     color,
 		lifetime:  lifetime,
@@ -58,12 +58,12 @@ func (t *FloatingText) Draw(o *render.Options) {
 	t.textOptions.GeoM.Translate(t.Origin())
 	t.textOptions.GeoM.Rotate(o.TowerRotation)
 	t.textOptions.GeoM.Translate(t.Position())
-	t.textOptions.GeoM.Scale(o.Camera.Zoom, o.Camera.Zoom)
+	t.textOptions.GeoM.Scale(o.Camera.Zoom(), o.Camera.Zoom())
 
 	// Get our own x&y without any rotations.
 	x1, y1 := t.textOptions.GeoM.Element(0, 2), t.textOptions.GeoM.Element(1, 2)
-	y1 /= o.Camera.Zoom             // This ensures the Y offset squashes/stretches with the zoom
-	y1 += t.YOffset * o.Camera.Zoom // Uh... this sorta works
+	y1 /= o.Camera.Zoom()                                       // This ensures the Y offset squashes/stretches with the zoom
+	y1 += (o.Camera.TextOffset() - t.YOffset) * o.Camera.Zoom() // Uh... this sorta works
 	t.textOptions.GeoM.Reset()
 	t.textOptions.GeoM.Translate(x1, y1)
 

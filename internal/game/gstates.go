@@ -34,6 +34,7 @@ func (s *GameStatePreBuild) Begin(g *Game) {
 		dude.stats.agility += i * 5
 		s.newDudes = append(s.newDudes, dude)
 	}
+	g.camera.SetMode(render.CameraModeTower)
 }
 func (s *GameStatePreBuild) End(g *Game) {
 	g.dudes = append(g.dudes, s.newDudes...)
@@ -50,6 +51,7 @@ type GameStateBuild struct {
 }
 
 func (s *GameStateBuild) Begin(g *Game) {
+	g.camera.SetMode(render.CameraModeStack)
 }
 func (s *GameStateBuild) End(g *Game) {
 }
@@ -63,6 +65,7 @@ type GameStatePlay struct {
 }
 
 func (s *GameStatePlay) Begin(g *Game) {
+	g.camera.SetMode(render.CameraModeStack)
 	// TODO: Set up dude state to spawn outside first story?
 	g.ui.dudePanel.SyncDudes(g.dudes)
 }

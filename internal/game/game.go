@@ -40,6 +40,8 @@ func (g *Game) Update() error {
 	// Transform mouse coordinates by camera.
 	g.cursorX, g.cursorY = g.camera.ScreenToWorld(float64(g.mouseX), float64(g.mouseY))
 
+	g.camera.Update()
+
 	// Move this stuff elsewhere, probs.
 	if ebiten.IsKeyPressed(ebiten.KeyUp) {
 		g.camera.Pitch += 0.01
@@ -71,10 +73,18 @@ func (g *Game) Update() error {
 		g.camera.SetPosition(x, y+1)
 	}
 
+	if ebiten.IsKeyPressed(ebiten.Key1) {
+		g.camera.SetMode(render.CameraModeTower)
+	} else if ebiten.IsKeyPressed(ebiten.Key2) {
+		g.camera.SetMode(render.CameraModeStack)
+	} else if ebiten.IsKeyPressed(ebiten.Key3) {
+		g.camera.SetMode(render.CameraModeSuperZoom)
+	}
+
 	if ebiten.IsKeyPressed(ebiten.KeyZ) {
-		g.camera.Zoom += g.camera.Zoom * 0.01
+		g.camera.ZoomIn()
 	} else if ebiten.IsKeyPressed(ebiten.KeyX) {
-		g.camera.Zoom -= g.camera.Zoom * 0.01
+		g.camera.ZoomOut()
 	}
 
 	if nextState := g.state.Update(g); nextState != nil {

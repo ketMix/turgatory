@@ -225,7 +225,7 @@ func (d *Dude) Draw(o *render.Options) {
 		}
 
 		x, y := d.stack.Position()
-		y /= o.Camera.Zoom
+		y /= o.Camera.Zoom()
 
 		ro.GeoM.Translate(x, y)
 

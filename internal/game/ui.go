@@ -87,7 +87,7 @@ type DudePanel struct {
 	midright     *render.Sprite
 	bot          *render.Sprite
 	botright     *render.Sprite
-	drawerInterp InterpNumber
+	drawerInterp render.InterpNumber
 	dudeProfiles []*DudeProfile
 }
 
@@ -254,7 +254,7 @@ type RoomPanel struct {
 	render.Originable
 	render.Positionable
 	drawered     bool
-	drawerInterp InterpNumber
+	drawerInterp render.InterpNumber
 	width        float64
 	height       float64
 	left         *render.Sprite

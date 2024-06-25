@@ -96,11 +96,11 @@ func NewStoryWithSize(size int) *Story {
 func (s *Story) Update(req *ActivityRequests) {
 	if s.textTimer <= 0 {
 		s.textTimer = 30
-		t := NewFloatingText("ok", color.NRGBA{255, 255, 255, 255}, 30)
+		t := MakeFloatingText("ok", color.NRGBA{255, 255, 255, 255}, 30)
 		t.SetOrigin(0, 60)
-		t.YOffset = -16
+		t.YOffset = 11
 
-		s.text = append(s.text, *t)
+		s.text = append(s.text, t)
 	} else {
 		s.textTimer--
 	}

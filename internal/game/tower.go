@@ -83,9 +83,8 @@ func (t *Tower) Update() {
 func (t *Tower) Draw(o *render.Options) {
 	for _, s := range t.Stories {
 		s.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(0, -StoryHeight*o.Camera.Zoom) // Transform our rendering, ofc
+		o.DrawImageOptions.GeoM.Translate(0, -StoryHeight*o.Camera.Zoom()) // Transform our rendering, ofc
 	}
-	//t.stairs.Draw(o) // We draw the stairs first and allow the stories to be drawn overtop.
 }
 
 // AddStory does as it says.
