@@ -159,8 +159,8 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 
 		var face float64
 
-		// Face into the room if it is a combat room!
-		if d.room != nil && d.room.kind == Combat {
+		// Face inwards if we have an enemy!
+		if d.enemy != nil {
 			fx, fy := story.PositionFromCenter(r-d.Speed(), d.variation)
 			face = math.Atan2(fy-cy, fx-cx)
 		} else {
@@ -356,8 +356,8 @@ func (d *Dude) Speed() float64 {
 	// This values probably belong somewhere else
 	speedScale := 0.1
 	baseSpeed := 0.005
-	// Slow dude down when in combat room -- should we do this? It would ensure damage is constant regardless of speed, unless we want to be able to skip combat rooms by yeeting thru them.
-	if d.room != nil && d.room.kind == Combat {
+	// Slow dude down when in combat.
+	if d.enemy != nil {
 		return baseSpeed * (1 + speedScale)
 	}
 	stats := d.GetCalculatedStats()
