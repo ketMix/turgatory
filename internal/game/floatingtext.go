@@ -20,17 +20,18 @@ type FloatingText struct {
 	textOptions render.TextOptions
 }
 
-func MakeFloatingText(text string, color color.NRGBA, lifetime int, speed float64) FloatingText {
+func MakeFloatingText(text string, clr color.NRGBA, lifetime int, speed float64) FloatingText {
+	clr2 := color.NRGBA{R: clr.R, G: clr.G, B: clr.B, A: 0}
 	return FloatingText{
 		text:      text,
-		color:     color,
-		origAlpha: color.A,
+		color:     clr2,
+		origAlpha: clr.A,
 		lifetime:  lifetime,
 		birthtime: lifetime,
 		speed:     speed,
 		textOptions: render.TextOptions{
 			Font:  assets.BodyFont,
-			Color: color,
+			Color: clr2,
 		},
 	}
 }
