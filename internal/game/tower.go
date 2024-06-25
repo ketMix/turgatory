@@ -39,7 +39,7 @@ func (t *Tower) Update() {
 		case RoomCombatActivity:
 			u.dude.Trigger(EventCombatRoom{room: u.room, dude: u.dude})
 		case RoomEnterActivity:
-			if u.room == nil {
+			/*if u.room == nil {
 				fmt.Printf("%s is in an empty room\n", u.initiator.Name())
 			} else {
 				var level int
@@ -47,7 +47,7 @@ func (t *Tower) Update() {
 					level = story.level
 				}
 				fmt.Printf("%s in story %d is moving to %s %s\n", u.initiator.Name(), level, u.room.size.String(), u.room.kind.String())
-			}
+			}*/
 			if dude, ok := u.initiator.(*Dude); ok {
 				if dude.room != nil {
 					dude.Trigger(EventLeaveRoom{room: dude.room, dude: dude})

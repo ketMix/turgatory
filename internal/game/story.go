@@ -1,7 +1,6 @@
 package game
 
 import (
-	"image/color"
 	"math"
 
 	"github.com/kettek/ebijam24/internal/render"
@@ -9,15 +8,14 @@ import (
 
 // Story is a single story in the tower. It contains rooms.
 type Story struct {
-	rooms     []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
-	dudes     []*Dude
-	stacks    render.Stacks
-	walls     render.Stacks
-	vgroup    *render.VGroup
-	level     int
-	open      bool
-	text      []FloatingText
-	textTimer int
+	rooms  []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
+	dudes  []*Dude
+	stacks render.Stacks
+	walls  render.Stacks
+	vgroup *render.VGroup
+	level  int
+	open   bool
+	texts  []FloatingText
 }
 
 // StoryHeight is the height of a story in da tower.
@@ -94,20 +92,10 @@ func NewStoryWithSize(size int) *Story {
 
 // Update updates the rooms.
 func (s *Story) Update(req *ActivityRequests) {
-	if s.textTimer <= 0 {
-		s.textTimer = 30
-		t := MakeFloatingText("ok", color.NRGBA{255, 255, 255, 255}, 30)
-		t.SetOrigin(0, 60)
-		t.YOffset = 11
-
-		s.text = append(s.text, t)
-	} else {
-		s.textTimer--
-	}
-	for i := 0; i < len(s.text); i++ {
-		s.text[i].Update()
-		if !s.text[i].Alive() {
-			s.text = append(s.text[:i], s.text[i+1:]...)
+	for i := 0; i < len(s.texts); i++ {
+		s.texts[i].Update()
+		if !s.texts[i].Alive() {
+			s.texts = append(s.texts[:i], s.texts[i+1:]...)
 			i--
 		}
 	}
@@ -247,18 +235,16 @@ func (s *Story) Draw(o *render.Options) {
 
 	s.vgroup.Draw(o)
 
-	for _, text := range s.text {
-		opts2 := render.Options{
-			Camera:        o.Camera,
-			Screen:        o.Screen,
-			Pitch:         o.Pitch,
-			VGroup:        s.vgroup,
-			TowerRotation: o.TowerRotation,
-		}
-
-		opts2.DrawImageOptions.GeoM.Concat(o.DrawImageOptions.GeoM)
-
-		text.Draw(&opts2)
+	textOpts := render.Options{
+		Camera:        o.Camera,
+		Screen:        o.Overlay, // Use overlay for render target
+		Pitch:         o.Pitch,
+		VGroup:        s.vgroup,
+		TowerRotation: o.TowerRotation,
+	}
+	textOpts.DrawImageOptions.GeoM.Concat(o.DrawImageOptions.GeoM)
+	for _, text := range s.texts {
+		text.Draw(&textOpts)
 	}
 }
 
@@ -408,6 +394,10 @@ func (s *Story) DistanceFromCenter(x, y float64) float64 {
 	cx := float64(TowerCenterX)
 	cy := float64(TowerCenterY)
 	return math.Sqrt(math.Pow(x-cx, 2) + math.Pow(y-cy, 2))
+}
+
+func (s *Story) AddText(t FloatingText) {
+	s.texts = append(s.texts, t)
 }
 
 const (

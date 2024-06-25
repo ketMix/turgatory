@@ -216,21 +216,6 @@ func (d *Dude) Draw(o *render.Options) {
 	d.stack.Draw(o)
 	d.shadow.Draw(o)
 
-	// THIS IS BORKED
-	if len(o.VGroup.Images) > 0 {
-		ro := render.TextOptions{
-			Font:   assets.BodyFont,
-			Color:  color.NRGBA{255, 0, 255, 255},
-			Screen: o.VGroup.Overlay,
-		}
-
-		x, y := d.stack.Position()
-		y /= o.Camera.Zoom()
-
-		ro.GeoM.Translate(x, y)
-
-		render.DrawText(&ro, d.name)
-	}
 	// Draw equipment
 	for _, eq := range d.equipped {
 		if eq != nil {
@@ -308,13 +293,23 @@ func (d *Dude) Trigger(e Event) {
 		d.room.GetRoomEffect(e)
 		d.room = nil
 	case EventEquip:
-		fmt.Println(d.name, "equipped", e.equipment.Name())
+		//fmt.Println(d.name, "equipped", e.equipment.Name())
+		if d.stack != nil {
+			t := MakeFloatingTextFromDude(d, fmt.Sprintf("equip %s", e.equipment.Name()), color.NRGBA{100, 200, 200, 255}, 120, 0.4)
+			d.story.AddText(t)
+		}
 	case EventUnequip:
-		fmt.Println(d.name, "unequipped", e.equipment.Name())
+		//fmt.Println(d.name, "unequipped", e.equipment.Name())
+		t := MakeFloatingTextFromDude(d, fmt.Sprintf("remove %s", e.equipment.Name()), color.NRGBA{200, 100, 100, 255}, 120, 0.4)
+		d.story.AddText(t)
 	case EventGoldGain:
-		fmt.Println(d.name, "gained", e.amount, "gold")
+		//fmt.Println(d.name, "gained", e.amount, "gold")
+		t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%.0fgp", e.amount), color.NRGBA{255, 255, 0, 255}, 40, 0.6)
+		d.story.AddText(t)
 	case EventGoldLoss:
-		fmt.Println(d.name, "lost", e.amount, "gold")
+		//fmt.Println(d.name, "lost", e.amount, "gold")
+		t := MakeFloatingTextFromDude(d, fmt.Sprintf("-%.0fgp", e.amount), color.NRGBA{255, 255, 0, 255}, 40, 0.4)
+		d.story.AddText(t)
 	}
 }
 
@@ -375,7 +370,8 @@ func (d *Dude) GetDamage() (int, bool) {
 
 	multiplier := 1.0
 	if randRoll < luckRoll {
-		fmt.Println(d.name, "crit!")
+		t := MakeFloatingTextFromDude(d, "*CRIT*", color.NRGBA{255, 128, 255, 128}, 60, 1.0)
+		d.story.AddText(t)
 		multiplier = 2.0
 		wasCrit = true
 	}
@@ -383,7 +379,8 @@ func (d *Dude) GetDamage() (int, bool) {
 	// Cowardice can cause miss
 	missRoll := float64(stats.cowardice+1) * 0.01
 	if rand.Float64() < missRoll {
-		fmt.Println(d.name, "missed!")
+		t := MakeFloatingTextFromDude(d, "*miss*", color.NRGBA{128, 128, 128, 128}, 30, 0.5)
+		d.story.AddText(t)
 		multiplier = 0.0
 	}
 
@@ -396,7 +393,8 @@ func (d *Dude) ApplyDamage(amount int) (int, bool) {
 	luckRoll := float64(stats.luck+1) * 0.1
 	agilityRoll := float64(stats.agility+1) * 0.1
 	if rand.Float64() < luckRoll || rand.Float64() < agilityRoll {
-		fmt.Println(d.name, "dodged!")
+		t := MakeFloatingTextFromDude(d, "*dodge*", color.NRGBA{255, 255, 0, 128}, 30, 0.5)
+		d.story.AddText(t)
 		return 0, true
 	}
 
@@ -412,7 +410,9 @@ func (d *Dude) ApplyDamage(amount int) (int, bool) {
 		d.stats.currentHp = 0
 	}
 
-	fmt.Println(d.name, "took", amount, "damage and has", d.stats.currentHp, "HP left")
+	//fmt.Println(d.name, "took", amount, "damage and has", d.stats.currentHp, "HP left")
+	t := MakeFloatingTextFromDude(d, fmt.Sprintf("%d", -amount), color.NRGBA{255, 0, 0, 255}, 40, 0.5)
+	d.story.AddText(t)
 	return amount, false
 
 	// If dead, uh, do something right? maybe an event or something idk
@@ -478,7 +478,9 @@ func (d *Dude) AddToInventory(eq *Equipment) {
 		d.Equip(eq)
 	}
 
-	fmt.Println(d.name, "added", eq.Name(), "to inventory")
+	//fmt.Println(d.name, "added", eq.Name(), "to inventory")
+	t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%s", eq.Name()), color.NRGBA{200, 200, 50, 128}, 100, 1.0)
+	d.story.AddText(t)
 }
 
 func (d *Dude) Inventory() []*Equipment {
@@ -506,6 +508,11 @@ func (d *Dude) AddXP(xp int) {
 	if d.xp >= nextLevelXP {
 		d.xp -= nextLevelXP
 		d.stats.LevelUp()
+		t := MakeFloatingTextFromDude(d, "LEVEL UP", color.NRGBA{100, 255, 255, 255}, 80, 1)
+		d.story.AddText(t)
+	} else {
+		t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%dxp", xp), color.NRGBA{100, 200, 200, 200}, 50, 1)
+		d.story.AddText(t)
 	}
 }
 
@@ -515,13 +522,15 @@ func (d *Dude) XP() int {
 
 func (d *Dude) Heal(amount int) {
 	stats := d.GetCalculatedStats()
-	initialHP := stats.currentHp
+	//initialHP := stats.currentHp
 	if d.stats.currentHp+amount > stats.totalHp {
 		d.stats.currentHp = stats.totalHp
 	} else {
 		d.stats.currentHp += amount
 	}
-	fmt.Println(d.name, "healed", amount, "HP", " and went from ", initialHP, " to ", d.stats.currentHp)
+	//fmt.Println(d.name, "healed", amount, "HP", " and went from ", initialHP, " to ", d.stats.currentHp)
+	t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%d", amount), color.NRGBA{0, 255, 0, 255}, 40, 0.5)
+	d.story.AddText(t)
 }
 
 func (d *Dude) RestoreUses(amount int) {
@@ -530,7 +539,9 @@ func (d *Dude) RestoreUses(amount int) {
 			eq.RestoreUses(amount)
 		}
 	}
-	fmt.Println(d.name, "restored equipment uses by", amount)
+	//fmt.Println(d.name, "restored equipment uses by", amount)
+	t := MakeFloatingTextFromDude(d, fmt.Sprintf("+eq restore %d", amount), color.NRGBA{0, 128, 255, 200}, 40, 0.5)
+	d.story.AddText(t)
 }
 
 func (d *Dude) LevelUpEquipment(amount int) {
@@ -541,7 +552,9 @@ func (d *Dude) LevelUpEquipment(amount int) {
 			}
 		}
 	}
-	fmt.Println(d.name, "leveled up equipment by", amount)
+	//fmt.Println(d.name, "leveled up equipment by", amount)
+	t := MakeFloatingTextFromDude(d, fmt.Sprintf("+eq up %d", amount), color.NRGBA{128, 128, 255, 255}, 50, 0.5)
+	d.story.AddText(t)
 }
 
 func (d *Dude) Perkify(maxQuality PerkQuality) {
@@ -553,15 +566,19 @@ func (d *Dude) Perkify(maxQuality PerkQuality) {
 		if eq.perk == nil {
 			prevName := eq.Name()
 			eq.perk = GetRandomPerk(PerkQualityTrash)
-			fmt.Println(d.name, "upgraded his equipment", prevName, "with", eq.perk.Name())
+			//fmt.Println(d.name, "upgraded his equipment", prevName, "with", eq.perk.Name())
+			t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%s perk %s", prevName, eq.perk.Name()), color.NRGBA{128, 255, 128, 255}, 100, 0.5)
+			d.story.AddText(t)
 		} else {
 			// Level up perk
 			previousQuality := eq.perk.Quality()
 			previousName := eq.Name()
 			eq.perk.LevelUp(maxQuality)
 			if eq.perk.Quality() != previousQuality {
-				fmt.Println(eq.perk.Quality(), previousQuality)
-				fmt.Println(d.name, "upgraded his equipment", previousName, "to", eq.Name())
+				//fmt.Println(eq.perk.Quality(), previousQuality)
+				//fmt.Println(d.name, "upgraded his equipment", previousName, "to", eq.Name())
+				t := MakeFloatingTextFromDude(d, fmt.Sprintf("+eq %s upgrade to %s", previousName, eq.Name()), color.NRGBA{128, 255, 128, 255}, 100, 0.5)
+				d.story.AddText(t)
 			}
 		}
 	}
@@ -600,7 +617,9 @@ func (d *Dude) Cursify(roomLevel int) {
 		equipmentType := RandomEquipmentType()
 		if eq := d.equipped[equipmentType]; eq != nil {
 			eq.LevelDown()
-			fmt.Println(d.name, "lost a level on", eq.Name())
+			//fmt.Println(d.name, "lost a level on", eq.Name())
+			t := MakeFloatingTextFromDude(d, fmt.Sprintf("-eq level %s", eq.Name()), color.NRGBA{200, 200, 32, 200}, 50, 0.5)
+			d.story.AddText(t)
 		}
 	}
 
@@ -616,7 +635,9 @@ func (d *Dude) Cursify(roomLevel int) {
 			randomEquipType := equipmentWithPerks[rand.Intn(len(equipmentWithPerks))]
 			if eq := d.equipped[randomEquipType]; eq != nil {
 				eq.perk.LevelDown()
-				fmt.Println(d.name, "lost a perk level on", eq.Name())
+				//fmt.Println(d.name, "lost a perk level on", eq.Name())
+				t := MakeFloatingTextFromDude(d, fmt.Sprintf("-eq perk %s", eq.Name()), color.NRGBA{200, 200, 32, 200}, 50, 0.5)
+				d.story.AddText(t)
 			}
 		}
 	}
@@ -624,6 +645,8 @@ func (d *Dude) Cursify(roomLevel int) {
 	// Check for dude delevel
 	if curseRoll <= threshold*0.1 { // lowest chance for dude delevel
 		d.stats.LevelDown()
-		fmt.Println(d.name, "lost a level")
+		//fmt.Println(d.name, "lost a level")
+		t := MakeFloatingTextFromDude(d, "-level", color.NRGBA{100, 0, 0, 200}, 50, 0.5)
+		d.story.AddText(t)
 	}
 }

@@ -338,7 +338,7 @@ func (r *Room) GetRoomEffect(e Event) {
 		if r.kind.Equipment() != nil {
 			// Roll for loot on exit
 			if eq := r.RollLoot(e.dude.stats.luck); eq != nil {
-				fmt.Println(e.dude.name, "found", eq.Name())
+				//fmt.Println(e.dude.name, "found", eq.Name())
 
 				// Add to inventory and equip if slot is empty
 				e.dude.AddToInventory(eq)
@@ -346,7 +346,6 @@ func (r *Room) GetRoomEffect(e Event) {
 		}
 		// Add other leave events here
 	case EventCenterRoom:
-		fmt.Println("Center room", r.kind.String())
 		// Add center room events here
 		switch r.kind {
 		case Armory:

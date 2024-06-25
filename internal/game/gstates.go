@@ -82,7 +82,7 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 	return nil
 }
 func (s *GameStatePlay) Draw(g *Game, screen *ebiten.Image) {
-	options := render.Options{Screen: screen, Camera: &g.camera}
+	options := render.Options{Screen: screen, Overlay: g.overlay, Camera: &g.camera}
 
 	// Transform our options via the camera.
 	g.camera.Transform(&options)

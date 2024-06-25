@@ -127,7 +127,31 @@ func (dp *DudeProfile) Draw(o *render.Options) {
 		op.GeoM.Reset()
 		op.GeoM.Translate(x+dp.width*2.5, y+assets.DisplayFont.LineHeight-assets.BodyFont.LineHeight/2)
 		render.DrawText(op, fmt.Sprintf("Level %d %s", dp.dude.Level(), dp.dude.Profession()))
+		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+		op.Color = color.RGBA{200, 50, 50, 255}
+		render.DrawText(op, fmt.Sprintf("HP: %d/%d", dp.dude.stats.currentHp, dp.dude.stats.totalHp))
+		op.Color = color.RGBA{200, 200, 200, 255}
+		op.GeoM.Translate(0, assets.BodyFont.LineHeight*2)
+		render.DrawText(op, fmt.Sprintf("%s strength", PaddedIntString(dp.dude.stats.strength, 4)))
+		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+		render.DrawText(op, fmt.Sprintf("%s agility", PaddedIntString(dp.dude.stats.agility, 4)))
+		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+		render.DrawText(op, fmt.Sprintf("%s defense", PaddedIntString(dp.dude.stats.defense, 4)))
+		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+		render.DrawText(op, fmt.Sprintf("%s wisdom", PaddedIntString(dp.dude.stats.wisdom, 4)))
+		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+		render.DrawText(op, fmt.Sprintf("%s cowardice", PaddedIntString(dp.dude.stats.cowardice, 4)))
+		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+		render.DrawText(op, fmt.Sprintf("%s luck", PaddedIntString(dp.dude.stats.luck, 4)))
 	}
+}
+
+func PaddedIntString(i int, pad int) string {
+	str := fmt.Sprintf("%d", i)
+	for len(str) < pad {
+		str = " " + str
+	}
+	return str
 }
 
 func InBounds(x, y, width, height, mx, my float64) bool {
@@ -188,17 +212,14 @@ func (dp *DudePanel) Update(o *UIOptions) {
 		}
 	}
 
-	//if !dp.drawered {
 	for _, p := range dp.dudeProfiles {
 		px, py := p.Position()
 		if InBounds(px, py, dp.width, p.height, mx, my) {
-			fmt.Println("!!! hovered over my guy: ", p.dude.name)
 			p.hovered = true
 		} else {
 			p.hovered = false
 		}
 	}
-	//}
 }
 
 func (dp *DudePanel) Draw(o *render.Options) {

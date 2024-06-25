@@ -14,21 +14,35 @@ type FloatingText struct {
 	text        string
 	birthtime   int
 	lifetime    int
+	speed       float64
 	color       color.NRGBA
+	origAlpha   uint8
 	textOptions render.TextOptions
 }
 
-func MakeFloatingText(text string, color color.NRGBA, lifetime int) FloatingText {
+func MakeFloatingText(text string, color color.NRGBA, lifetime int, speed float64) FloatingText {
 	return FloatingText{
 		text:      text,
 		color:     color,
+		origAlpha: color.A,
 		lifetime:  lifetime,
 		birthtime: lifetime,
+		speed:     speed,
 		textOptions: render.TextOptions{
 			Font:  assets.BodyFont,
 			Color: color,
 		},
 	}
+}
+
+func MakeFloatingTextFromDude(d *Dude, text string, color color.NRGBA, lifetime int, speed float64) FloatingText {
+	t := MakeFloatingText(text, color, lifetime, speed)
+	dx, dy := d.Position()
+	dx -= TowerCenterX
+	dy -= TowerCenterY
+	t.SetOrigin(dx, dy)
+	t.YOffset = float64(d.stack.SliceCount())
+	return t
 }
 
 func (t *FloatingText) Alive() bool {
@@ -40,17 +54,17 @@ func (t *FloatingText) Update() {
 
 	// Fade in first 3 ticks.
 	if t.birthtime-t.lifetime <= 3 {
-		t.color.A = uint8((float64(t.birthtime-t.lifetime) / 3) * 255)
+		t.color.A = uint8((float64(t.birthtime-t.lifetime) / 3) * float64(t.origAlpha))
 	}
 
 	// Fade out in last 5 ticks.
 	if t.lifetime <= 5 {
-		t.color.A = uint8((float64(t.lifetime) / 5) * 255)
+		t.color.A = uint8((float64(t.lifetime) / 5) * float64(t.origAlpha))
 	}
 	t.textOptions.Color = t.color
 
 	x, y := t.Position()
-	t.SetPosition(x, y-1)
+	t.SetPosition(x, y-t.speed)
 }
 
 func (t *FloatingText) Draw(o *render.Options) {

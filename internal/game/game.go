@@ -21,6 +21,7 @@ type Game struct {
 	uiOptions             UIOptions
 	state                 GameState
 	audioController       *AudioController
+	overlay               *ebiten.Image
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -29,6 +30,10 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 		g.camera.SetOrigin(float64(outsideWidth/2), float64(outsideHeight/2))
 		g.lastWidth, g.lastHeight = outsideWidth, outsideHeight
 		g.uiOptions.Width, g.uiOptions.Height = outsideWidth, outsideHeight
+		if g.overlay != nil {
+			g.overlay.Deallocate()
+		}
+		g.overlay = ebiten.NewImage(outsideWidth, outsideHeight)
 		g.ui.Layout(&g.uiOptions)
 	}
 
@@ -112,12 +117,11 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	g.state.Draw(g, screen)
 
-	// Debug render
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%0.1fx%0.1f", g.cursorX, g.cursorY), g.mouseX, g.mouseY-16)
+	// Draw overlay.
+	screen.DrawImage(g.overlay, nil)
+
 	// Print fps
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%0.2f", ebiten.CurrentFPS()), 0, 0)
-	ox, oy := g.camera.WorldToScreen(0, 0)
-	ebitenutil.DebugPrintAt(screen, "0x0", int(ox)-8, int(oy)-8)
 }
 
 func (g *Game) Init() {
@@ -140,7 +144,7 @@ func (g *Game) Init() {
 	g.uiOptions = UIOptions{Scale: 2.0}
 	g.camera = *render.NewCamera(0, 0)
 	g.audioController = NewAudioController()
-	g.audioController.PlayRoomTracks()
+	//g.audioController.PlayRoomTracks()
 	g.state = &GameStatePreBuild{}
 	g.state.Begin(g)
 }
