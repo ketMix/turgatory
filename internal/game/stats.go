@@ -53,14 +53,17 @@ func (s *Stats) LevelUp() {
 	variance := func() float64 {
 		return 1 + rand.Float64()*(float64(s.wisdom)/WISDOM_PER_VARIANCE)
 	}
-
+	getValue := func(base int) int {
+		return int(math.Round(float64(base) * variance()))
+	}
 	// apply the variance to the stats
-	s.totalHp += int(math.Round(float64(s.levelUpChange.totalHp) * variance()))
-	s.strength += int(math.Round(float64(s.levelUpChange.strength) * variance()))
-	s.wisdom += int(math.Round(float64(s.levelUpChange.wisdom) * variance()))
-	s.defense += int(math.Round(float64(s.levelUpChange.defense) * variance()))
-	s.agility += int(math.Round(float64(s.levelUpChange.agility) * variance()))
-	s.cowardice += int(math.Round(float64(s.levelUpChange.cowardice) * variance()))
+	s.ModifyStat(StatHP, getValue(s.levelUpChange.totalHp))
+	s.ModifyStat(StatStrength, getValue(s.levelUpChange.strength))
+	s.ModifyStat(StatWisdom, getValue(s.levelUpChange.wisdom))
+	s.ModifyStat(StatDefense, getValue(s.levelUpChange.defense))
+	s.ModifyStat(StatAgility, getValue(s.levelUpChange.agility))
+	s.ModifyStat(StatCowardice, getValue(s.levelUpChange.cowardice))
+	s.ModifyStat(StatLuck, getValue(s.levelUpChange.luck))
 
 	// a blesing from jesus himself
 	s.currentHp = s.totalHp
@@ -84,25 +87,25 @@ func (s *Stats) LevelDown() {
 
 	// conditionally apply the variance to the stats
 	if rand.Float64() > threshold {
-		s.totalHp -= s.levelUpChange.totalHp
+		s.ModifyStat(StatHP, -s.levelUpChange.totalHp)
 	}
 	if rand.Float64() > threshold {
-		s.strength -= s.levelUpChange.strength
+		s.ModifyStat(StatStrength, -s.levelUpChange.strength)
 	}
 	if rand.Float64() > threshold {
-		s.wisdom -= s.levelUpChange.wisdom
+		s.ModifyStat(StatWisdom, -s.levelUpChange.wisdom)
 	}
 	if rand.Float64() > threshold {
-		s.defense -= s.levelUpChange.defense
+		s.ModifyStat(StatDefense, -s.levelUpChange.defense)
 	}
 	if rand.Float64() > threshold {
-		s.agility -= s.levelUpChange.agility
+		s.ModifyStat(StatAgility, -s.levelUpChange.agility)
 	}
 	if rand.Float64() > threshold {
-		s.cowardice -= s.levelUpChange.cowardice
+		s.ModifyStat(StatCowardice, -s.levelUpChange.cowardice)
 	}
 	if rand.Float64() > threshold {
-		s.luck -= s.levelUpChange.luck
+		s.ModifyStat(StatLuck, -s.levelUpChange.luck)
 	}
 
 	// cant forget this part
@@ -119,14 +122,27 @@ func (s *Stats) ModifyStat(stat Stat, amount int) {
 		s.defense += amount
 	case StatAgility:
 		s.agility += amount
+	// Cowardice can't go below 0
 	case StatCowardice:
 		s.cowardice += amount
+		if s.cowardice < 0 {
+			s.cowardice = 0
+		}
 	case StatLuck:
 		s.luck += amount
-		// HP is a special case
+	// HP is a special case
 	case StatHP:
+		prevHp := s.totalHp
 		s.totalHp += amount
-		s.currentHp += amount
+		if s.totalHp < 1 {
+			s.totalHp = 1
+		}
+
+		// If the total HP is increased, increase the current HP by the same amount
+		if s.totalHp > prevHp {
+			s.currentHp += amount
+		}
+
 	default:
 		fmt.Printf("Unknown stat %s\n", stat)
 	}
@@ -164,14 +180,29 @@ func NewStats(levelUpChange *Stats) *Stats {
 }
 
 func (s *Stats) Add(a *Stats) *Stats {
-	return &Stats{
-		currentHp: s.currentHp + a.currentHp,
-		totalHp:   s.totalHp + a.totalHp,
-		strength:  s.strength + a.strength,
-		wisdom:    s.wisdom + a.wisdom,
-		defense:   s.defense + a.defense,
-		agility:   s.agility + a.agility,
-		cowardice: s.cowardice + a.cowardice,
-		luck:      s.luck + a.luck,
+	stats := &Stats{
+		currentHp: s.currentHp,
+		totalHp:   s.totalHp,
+		strength:  s.strength,
+		wisdom:    s.wisdom,
+		defense:   s.defense,
+		agility:   s.agility,
+		cowardice: s.cowardice,
+		luck:      s.luck,
 	}
+
+	if a == nil {
+		return stats
+	}
+
+	// Modify the stats using wrapper
+	stats.ModifyStat(StatHP, a.totalHp)
+	stats.ModifyStat(StatStrength, a.strength)
+	stats.ModifyStat(StatWisdom, a.wisdom)
+	stats.ModifyStat(StatDefense, a.defense)
+	stats.ModifyStat(StatAgility, a.agility)
+	stats.ModifyStat(StatCowardice, a.cowardice)
+	stats.ModifyStat(StatLuck, a.luck)
+
+	return stats
 }
