@@ -123,7 +123,7 @@ func getStartingStats(kind ProfessionKind, level int) *Stats {
 			wisdom:    3,
 			defense:   1,
 			agility:   2,
-			cowardice: 10, // balls get smaller
+			cowardice: 5, // balls get smaller
 			luck:      0,
 		})
 	case Vagabond:
@@ -146,7 +146,7 @@ func getStartingStats(kind ProfessionKind, level int) *Stats {
 			wisdom:    1,
 			defense:   1,
 			agility:   3,
-			cowardice: 5,
+			cowardice: 10,
 			luck:      0,
 		})
 	default:
