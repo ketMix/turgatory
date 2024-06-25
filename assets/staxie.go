@@ -2,6 +2,7 @@ package assets
 
 import (
 	"bytes"
+	"errors"
 	"image"
 	_ "image/png"
 
@@ -201,6 +202,11 @@ func (s *Staxie) acquireSliceImages() {
 	}
 }
 
+func (s *Staxie) GetStack(name string) (*StaxieStack, bool) {
+	stack, ok := s.Stacks[name]
+	return stack, ok
+}
+
 type StaxieStack struct {
 	Name       string // For convenience
 	SliceCount int
@@ -230,6 +236,13 @@ type StaxieFrame struct {
 	Slices []StaxieSlice
 }
 
+func (s *StaxieFrame) GetSlice(index int) (*StaxieSlice, bool) {
+	if index < 0 || index >= len(s.Slices) {
+		return nil, false
+	}
+	return &s.Slices[index], true
+}
+
 type StaxieSlice struct {
 	Shading uint8
 	X       int
@@ -237,3 +250,10 @@ type StaxieSlice struct {
 	// Might as well store the ebitengine subimage here for efficiency's sake.
 	Image *ebiten.Image
 }
+
+var (
+	ErrStackNotFound     = errors.New("stack not found")
+	ErrAnimationNotFound = errors.New("animation not found")
+	ErrFrameNotFound     = errors.New("frame not found")
+	ErrSliceNotFound     = errors.New("slice not found")
+)
