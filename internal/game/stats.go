@@ -17,7 +17,8 @@ const (
 	StatAgility   Stat = "Agi"
 	StatCowardice Stat = "Cow"
 	StatLuck      Stat = "Luc"
-	StatHP        Stat = "HP"
+	StatMaxHP     Stat = "MaxHP"
+	StatCurrentHP Stat = "CurrentHP"
 )
 
 type Stats struct {
@@ -56,8 +57,9 @@ func (s *Stats) LevelUp() {
 	getValue := func(base int) int {
 		return int(math.Round(float64(base) * variance()))
 	}
+
 	// apply the variance to the stats
-	s.ModifyStat(StatHP, getValue(s.levelUpChange.totalHp))
+	s.ModifyStat(StatMaxHP, getValue(s.levelUpChange.totalHp))
 	s.ModifyStat(StatStrength, getValue(s.levelUpChange.strength))
 	s.ModifyStat(StatWisdom, getValue(s.levelUpChange.wisdom))
 	s.ModifyStat(StatDefense, getValue(s.levelUpChange.defense))
@@ -87,7 +89,7 @@ func (s *Stats) LevelDown() {
 
 	// conditionally apply the variance to the stats
 	if rand.Float64() > threshold {
-		s.ModifyStat(StatHP, -s.levelUpChange.totalHp)
+		s.ModifyStat(StatMaxHP, -s.levelUpChange.totalHp)
 	}
 	if rand.Float64() > threshold {
 		s.ModifyStat(StatStrength, -s.levelUpChange.strength)
@@ -131,7 +133,7 @@ func (s *Stats) ModifyStat(stat Stat, amount int) {
 	case StatLuck:
 		s.luck += amount
 	// HP is a special case
-	case StatHP:
+	case StatMaxHP:
 		prevHp := s.totalHp
 		s.totalHp += amount
 		if s.totalHp < 1 {
@@ -143,6 +145,14 @@ func (s *Stats) ModifyStat(stat Stat, amount int) {
 			s.currentHp += amount
 		}
 
+	case StatCurrentHP:
+		s.currentHp += amount
+		if s.currentHp < 0 {
+			s.currentHp = 0
+		}
+		if s.currentHp > s.totalHp {
+			s.currentHp = s.totalHp
+		}
 	default:
 		fmt.Printf("Unknown stat %s\n", stat)
 	}
@@ -196,7 +206,7 @@ func (s *Stats) Add(a *Stats) *Stats {
 	}
 
 	// Modify the stats using wrapper
-	stats.ModifyStat(StatHP, a.totalHp)
+	stats.ModifyStat(StatMaxHP, a.totalHp)
 	stats.ModifyStat(StatStrength, a.strength)
 	stats.ModifyStat(StatWisdom, a.wisdom)
 	stats.ModifyStat(StatDefense, a.defense)

@@ -415,7 +415,7 @@ func GetRandomPerk(quality PerkQuality) IPerk {
 		PerkStatBoost{perk, StatAgility},
 		PerkStatBoost{perk, StatCowardice},
 		PerkStatBoost{perk, StatLuck},
-		PerkStatBoost{perk, StatHP},
+		PerkStatBoost{perk, StatMaxHP},
 		PerkHealOnRoomEnter{perk},
 		PerkHealOnSell{perk},
 		PerkHealOnGoldGain{perk},

@@ -528,11 +528,8 @@ func (d *Dude) XP() int {
 func (d *Dude) Heal(amount int) {
 	stats := d.GetCalculatedStats()
 	//initialHP := stats.currentHp
-	if d.stats.currentHp+amount > stats.totalHp {
-		d.stats.currentHp = stats.totalHp
-	} else {
-		d.stats.currentHp += amount
-	}
+
+	stats.ModifyStat(StatCurrentHP, amount)
 	//fmt.Println(d.name, "healed", amount, "HP", " and went from ", initialHP, " to ", d.stats.currentHp)
 	t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%d", amount), color.NRGBA{0, 255, 0, 255}, 40, 0.5)
 	d.story.AddText(t)
