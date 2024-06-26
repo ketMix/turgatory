@@ -4,6 +4,5 @@ type: armor
 professions: 
  - knight
 stats: 
-  agility: -1
   strength: 1
-  defence: 5
+  defense: 5
