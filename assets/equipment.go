@@ -73,13 +73,13 @@ func GetEquipment(name string) (*EquipmentAsset, error) {
 	return e, nil
 }
 
-func GetEquipmentWithTypes(equipmentTypes []string) []*EquipmentAsset {
-	var equipmentOfType []*EquipmentAsset
+func GetEquipmentWithTypes(equipmentTypes []string) map[string]*EquipmentAsset {
+	equipmentOfType := make(map[string]*EquipmentAsset)
 
-	for _, e := range equipment {
+	for name, e := range equipment {
 		for _, t := range equipmentTypes {
 			if e.Type == t {
-				equipmentOfType = append(equipmentOfType, e)
+				equipmentOfType[name] = e
 			}
 		}
 	}

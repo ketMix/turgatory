@@ -401,10 +401,12 @@ func GetEquipmentNamesWithTypes(equipmentTypes []EquipmentType) []*string {
 	for i, et := range equipmentTypes {
 		equipmentStrings[i] = string(et)
 	}
-	equipmentList := assets.GetEquipmentWithTypes(equipmentStrings)
-	names := make([]*string, len(equipmentList))
-	for i, e := range equipmentList {
-		names[i] = &e.Name
+	equipmentMap := assets.GetEquipmentWithTypes(equipmentStrings)
+	names := make([]*string, len(equipmentMap))
+	i := 0
+	for k := range equipmentMap {
+		names[i] = &k
+		i++
 	}
 	return names
 }
