@@ -154,6 +154,8 @@ func (g *Game) Init() {
 	tower.AddStory(firstStory)
 
 	tower.AddStory(NewStoryWithSize(8))
+	tower.Stories[1].Open()
+	firstStory.RemoveDoor()
 	tower.AddStory(NewStory())
 	tower.AddStory(NewStory())
 	tower.AddStory(NewStory())

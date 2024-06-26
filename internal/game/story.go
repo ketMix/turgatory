@@ -8,14 +8,15 @@ import (
 
 // Story is a single story in the tower. It contains rooms.
 type Story struct {
-	rooms  []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
-	dudes  []*Dude
-	stacks render.Stacks
-	walls  render.Stacks
-	vgroup *render.VGroup
-	level  int
-	open   bool
-	texts  []FloatingText
+	rooms     []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
+	dudes     []*Dude
+	stacks    render.Stacks
+	doorStack *render.Stack
+	walls     render.Stacks
+	vgroup    *render.VGroup
+	level     int
+	open      bool
+	texts     []FloatingText
 }
 
 // StoryHeight is the height of a story in da tower.
@@ -60,23 +61,33 @@ func NewStoryWithSize(size int) *Story {
 		}
 	}
 
-	room2 := NewRoom(Medium, Armory)
-	PanicIfErr(story.PlaceRoom(room2, 0))
+	// Add our closed door to our final room position.
+	{
+		stack := Must(render.NewStack("walls/door", "", ""))
+		x := float64(StoryVGroupWidth) / 2
+		y := float64(StoryVGroupHeight) / 2
+		stack.SetPosition(x, y)
+		stack.SetRotation(float64(7) * -(math.Pi / 4))
+		story.doorStack = stack
+	}
 
-	room3 := NewRoom(Small, Combat)
-	PanicIfErr(story.PlaceRoom(room3, 2))
+	room := NewRoom(Medium, Armory)
+	PanicIfErr(story.PlaceRoom(room, 0))
 
-	room4 := NewRoom(Small, Treasure)
-	PanicIfErr(story.PlaceRoom(room4, 3))
+	room2 := NewRoom(Small, Combat)
+	PanicIfErr(story.PlaceRoom(room2, 2))
 
-	room5 := NewRoom(Small, HealingShrine)
-	PanicIfErr(story.PlaceRoom(room5, 4))
+	room3 := NewRoom(Small, Treasure)
+	PanicIfErr(story.PlaceRoom(room3, 3))
 
-	room6 := NewRoom(Small, Trap)
-	PanicIfErr(story.PlaceRoom(room6, 5))
+	room4 := NewRoom(Small, HealingShrine)
+	PanicIfErr(story.PlaceRoom(room4, 4))
 
-	room7 := NewRoom(Medium, Curse)
-	PanicIfErr(story.PlaceRoom(room7, 6))
+	room5 := NewRoom(Medium, Library)
+	PanicIfErr(story.PlaceRoom(room5, 5))
+
+	room7 := NewRoom(Small, Stairs)
+	PanicIfErr(story.PlaceRoom(room7, 7))
 
 	{
 		center := Must(render.NewStack("rooms/center", "", ""))
@@ -136,31 +147,31 @@ func (s *Story) Update(req *ActivityRequests) {
 		case MoveActivity:
 			roomIndex := s.RoomIndexFromAngle(s.AngleFromCenter(u.x, u.y))
 			room := s.rooms[roomIndex]
-			if room != u.initiator.Room() {
-				// FIXME: Remove the Actor concept and assume Dude for all
+			if room != u.dude.room {
 				// Add dude to the given room and remove from existing room.
-				if d, ok := u.initiator.(*Dude); ok {
-					if d.room != nil {
-						d.room.RemoveDude(d)
-					}
-					if room != nil {
-						room.AddDude(d)
-					}
+				if u.dude.room != nil {
+					u.dude.room.RemoveDude(u.dude)
 				}
-				req.Add(RoomEnterActivity{initiator: u.initiator, room: room})
+				if room != nil {
+					room.AddDude(u.dude)
+				}
+				req.Add(RoomEnterActivity{dude: u.dude, room: room})
 			}
-			// Check if the initiator is in the center of the room and update as appropriate.
+			// Check if the dude is in the center of the room and update as appropriate.
 			if room != nil {
 				if s.IsInCenterOfRoom(s.AngleFromCenter(u.x, u.y), roomIndex) {
-					if !room.IsActorInCenter(u.initiator) {
-						room.AddActorToCenter(u.initiator)
-						req.Add(RoomCenterActivity{initiator: u.initiator, room: room})
+					if !room.IsDudeInCenter(u.dude) {
+						room.AddDudeToCenter(u.dude)
+						req.Add(RoomCenterActivity{dude: u.dude, room: room})
 					}
-				} else if room.IsActorInCenter(u.initiator) {
-					room.RemoveActorFromCenter(u.initiator)
-					req.Add(RoomEndActivity{initiator: u.initiator, room: room})
+				} else if room.IsDudeInCenter(u.dude) {
+					room.RemoveDudeFromCenter(u.dude)
+					req.Add(RoomEndActivity{dude: u.dude, room: room})
 				}
 			}
+		case StoryEnterNextActivity:
+			// Pass it up but with our story added.
+			req.Add(StoryEnterNextActivity{dude: u.dude, story: s})
 		}
 		if success {
 			u.Apply()
@@ -233,6 +244,11 @@ func (s *Story) Draw(o *render.Options) {
 		}
 	}
 
+	// Draw the door stack.
+	if s.doorStack != nil {
+		s.doorStack.Draw(opts)
+	}
+
 	s.vgroup.Draw(o)
 
 	textOpts := render.Options{
@@ -267,6 +283,11 @@ func (s *Story) RemoveDude(d *Dude) {
 	for i, v := range s.dudes {
 		if v == d {
 			d.story = nil
+			// Might as well remove dude from rooms.
+			if d.room != nil {
+				d.room.RemoveDudeFromCenter(d)
+				d.room.RemoveDude(d)
+			}
 			s.dudes = append(s.dudes[:i], s.dudes[i+1:]...)
 			return
 		}
@@ -276,6 +297,10 @@ func (s *Story) RemoveDude(d *Dude) {
 // Open marks the story as being open. This activates full updates and rendering.
 func (s *Story) Open() {
 	s.open = true
+}
+
+func (s *Story) RemoveDoor() {
+	s.doorStack = nil
 }
 
 // PlaceRoom places a room in the story, populating the rooms slice's pointer references accordingly.

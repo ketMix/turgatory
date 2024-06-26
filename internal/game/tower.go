@@ -36,33 +36,51 @@ func (t *Tower) Update() {
 	}
 	for _, u := range storyUpdates {
 		switch u := u.(type) {
+		case StoryEnterNextActivity:
+			// We can always allow this to happen since the logic is triggered in RoomEnterActivity with index 7.
+			nextStory := t.Stories[u.story.level+1]
+
+			if u.dude.room != nil {
+				u.dude.room.RemoveDudeFromCenter(u.dude)
+				u.dude.room.RemoveDude(u.dude)
+				u.dude.room = nil
+			}
+			u.story.RemoveDude(u.dude)
+			nextStory.AddDude(u.dude)
 		case RoomCombatActivity:
 			u.dude.Trigger(EventCombatRoom{room: u.room, dude: u.dude})
 		case RoomEnterActivity:
-			/*if u.room == nil {
-				fmt.Printf("%s is in an empty room\n", u.initiator.Name())
-			} else {
-				var level int
-				if story := u.room.story; story != nil {
-					level = story.level
-				}
-				fmt.Printf("%s in story %d is moving to %s %s\n", u.initiator.Name(), level, u.room.size.String(), u.room.kind.String())
-			}*/
-			if dude, ok := u.initiator.(*Dude); ok {
-				if dude.room != nil {
-					dude.Trigger(EventLeaveRoom{room: dude.room, dude: dude})
-				}
-				dude.Trigger(EventEnterRoom{room: u.room, dude: dude})
+			if u.dude.room != nil {
+				u.dude.Trigger(EventLeaveRoom{room: u.dude.room, dude: u.dude})
+				u.dude.room = nil
+			}
+			u.dude.room = u.room
+			u.dude.Trigger(EventEnterRoom{room: u.room, dude: u.dude})
+			// If it's the last room, then move upwards and go poof (unless we're coming from stairs or are entering the tower for the first time).
+			if u.dude.activity != StairsFromDown && u.dude.activity != FirstEntering && u.room.index == 7 {
+				u.dude.activity = StairsToUp
 			}
 		case RoomCenterActivity:
-			if dude, ok := u.initiator.(*Dude); ok {
-				dude.Trigger(EventCenterRoom{room: u.room, dude: dude})
-			}
+			u.dude.Trigger(EventCenterRoom{room: u.room, dude: u.dude})
 		case RoomEndActivity:
-			if dude, ok := u.initiator.(*Dude); ok {
-				dude.Trigger(EventEndRoom{room: u.room, dude: dude})
-			}
-			if u.room.index == 7 {
+			u.dude.Trigger(EventEndRoom{room: u.room, dude: u.dude})
+			// Check if the given room is the last room in the story.
+			if u.room.story.rooms[6] == u.room {
+				if u.room.story.level == len(t.Stories) {
+					fmt.Println("final level!! we made it")
+					u.dude.activity = Idle
+				} else if u.room.story.level < len(t.Stories)-1 {
+					nextStory := t.Stories[u.room.story.level+1]
+					if !nextStory.open {
+						fmt.Println("next not open! set tower to teleporting!")
+						u.dude.activity = Idle
+					} else {
+						fmt.Println("next is open, let's goooo")
+					}
+				}
+
+				//u.dude.activity = Idle
+
 				// NOTE: triggering a portal should only happen _once_, need to assign some sort of tower state.
 				if !u.room.story.open {
 					// TODO: If the next story is not open, then create a portal stack and have the lil dudes walk into + dematerialize (fade out).
@@ -89,6 +107,7 @@ func (t *Tower) Draw(o *render.Options) {
 
 // AddStory does as it says.
 func (t *Tower) AddStory(s *Story) {
+	s.level = len(t.Stories)
 	t.Stories = append(t.Stories, s)
 }
 
@@ -100,8 +119,12 @@ func (t *Tower) AddDude(d *Dude) {
 	story := t.Stories[0]
 	story.AddDude(d)
 	d.activity = FirstEntering
-	d.stack.HeightOffset = 20
-	d.SetPosition(story.PositionFromCenter(math.Pi/2, TowerEntrance+d.variation))
+	//d.stack.HeightOffset = 20
+	enter := TowerEntrance - d.variation
+	if enter < TowerEntrance+0.1 {
+		enter = TowerEntrance
+	}
+	d.SetPosition(story.PositionFromCenter(math.Pi/2, enter))
 }
 
 func (t *Tower) AddDudes(dudes ...*Dude) {

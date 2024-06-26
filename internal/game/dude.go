@@ -15,11 +15,13 @@ type DudeActivity int
 const (
 	Idle          DudeActivity = iota
 	FirstEntering              // First entering the tower.
-	GoingUp                    // Entering the room from a staircase, this basically does the fancy slice offset/limiting.
-	Centering                  // Move the dude to the center of the room.
-	Moving                     // Move the dude counter-clockwise.
-	Leaving                    // Move the dude to the stairs.
-	GoingDown                  // Leaving the room to the stairs, opposite of GoingUp.
+	StairsToUp
+	StairsFromDown
+	GoingUp   // Entering the room from a staircase, this basically does the fancy slice offset/limiting.
+	Centering // Move the dude to the center of the room.
+	Moving    // Move the dude counter-clockwise.
+	Leaving   // Move the dude to the stairs.
+	GoingDown // Leaving the room to the stairs, opposite of GoingUp.
 )
 
 type Dude struct {
@@ -103,13 +105,67 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 			face := math.Atan2(ny-cy, nx-cx)
 			d.trueRotation = face
 
-			req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny, cb: func(success bool) {
+			req.Add(MoveActivity{dude: d, face: face, x: nx, y: ny, cb: func(success bool) {
 				d.stack.HeightOffset -= 0.15
 				if d.stack.HeightOffset <= 0 {
 					d.stack.HeightOffset = 0
 				}
 				d.SyncEquipment()
 			}})
+		}
+	case StairsToUp:
+		d.timer++
+
+		if d.timer < 40 {
+			cx, cy := d.Position()
+			r := story.AngleFromCenter(cx, cy) + d.variation/5000
+			nx, ny := story.PositionFromCenter(r-0.005, RoomPath+d.variation)
+
+			d.stack.VgroupOffset = d.timer / 2
+
+			face := math.Atan2(ny-cy, nx-cx)
+			d.trueRotation = face
+
+			req.Add(MoveActivity{dude: d, face: face, x: nx, y: ny, cb: func(success bool) {
+				if success {
+					d.SyncEquipment()
+				}
+			}})
+		} else {
+			req.Add(StoryEnterNextActivity{dude: d, cb: func(success bool) {
+				if success {
+					d.SyncEquipment()
+				}
+			}})
+			d.timer = 0
+			d.stack.VgroupOffset = 0
+			d.activity = StairsFromDown
+		}
+	case StairsFromDown:
+		d.timer++
+		if d.stack.SliceOffset == 0 {
+			d.stack.SliceOffset = d.stack.SliceCount()
+			d.stack.MaxSliceIndex = 1
+		}
+		cx, cy := d.Position()
+		r := story.AngleFromCenter(cx, cy) + d.variation/5000
+		nx, ny := story.PositionFromCenter(r-0.01, RoomPath+d.variation)
+
+		face := math.Atan2(ny-cy, nx-cx)
+		d.trueRotation = face
+
+		req.Add(MoveActivity{dude: d, face: face, x: nx, y: ny, cb: func(success bool) {
+			d.SyncEquipment()
+		}})
+		if d.timer >= 2 {
+			d.stack.SliceOffset--
+			d.stack.MaxSliceIndex++
+			d.timer = 0
+		}
+		if d.stack.SliceOffset <= 0 {
+			d.stack.SliceOffset = 0
+			d.stack.MaxSliceIndex = 0
+			d.activity = Moving
 		}
 	case GoingUp:
 		d.timer++
@@ -124,7 +180,7 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 			face := math.Atan2(ny-cy, nx-cx)
 			d.trueRotation = face
 
-			req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny, cb: func(success bool) {
+			req.Add(MoveActivity{dude: d, face: face, x: nx, y: ny, cb: func(success bool) {
 				d.SyncEquipment()
 			}})
 		}
@@ -150,7 +206,7 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 			face := math.Atan2(ny-cy, nx-cx)
 			d.trueRotation = face
 
-			req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny, cb: func(success bool) {
+			req.Add(MoveActivity{dude: d, face: face, x: nx, y: ny, cb: func(success bool) {
 				if success {
 					d.SyncEquipment()
 				}
@@ -170,7 +226,7 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 			face = math.Atan2(fy-cy, fx-cx)
 		}
 
-		req.Add(MoveActivity{initiator: d, face: face, x: nx, y: ny, cb: func(success bool) {
+		req.Add(MoveActivity{dude: d, face: face, x: nx, y: ny, cb: func(success bool) {
 			if success {
 				d.SyncEquipment()
 			}
@@ -308,13 +364,11 @@ func (d *Dude) Trigger(e Event) {
 		// Else it may be a trap room
 		d.room.GetRoomEffect(e)
 	case EventEnterRoom:
-		d.room = e.room
 		d.room.GetRoomEffect(e)
 	case EventCenterRoom:
 		d.room.GetRoomEffect(e)
 	case EventLeaveRoom:
 		d.room.GetRoomEffect(e)
-		d.room = nil
 	case EventEquip:
 		//fmt.Println(d.name, "equipped", e.equipment.Name())
 		if d.stack != nil {

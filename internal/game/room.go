@@ -53,6 +53,8 @@ type RoomKind int
 
 func (r *RoomKind) String() string {
 	switch *r {
+	case Stairs:
+		return "stairs"
 	case Armory:
 		return "armory"
 	case HealingShrine:
@@ -108,6 +110,8 @@ func (r *RoomKind) Equipment() []*string {
 
 const (
 	Empty RoomKind = iota
+	//
+	Stairs
 	// Armory provide... armor up? damage up? Maybe should be different types.
 	Armory
 	// Healing shrine heals the adventurers over time.
@@ -159,10 +163,10 @@ type Room struct {
 	power       int // ???
 	combatTicks int
 
-	stacks         render.Stacks
-	walls          render.Stacks
-	actorsInCenter []Actor
-	dudes          []*Dude
+	stacks        render.Stacks
+	walls         render.Stacks
+	dudesInCenter []*Dude
+	dudes         []*Dude
 }
 
 func NewRoom(size RoomSize, kind RoomKind) *Room {
@@ -180,9 +184,12 @@ func NewRoom(size RoomSize, kind RoomKind) *Room {
 	// Add our walls.
 	for j := 0; j < 3; j++ {
 		for i := 0; i < 8; i++ {
-			stack, err := render.NewStack(fmt.Sprintf("walls/%s", size.String()), "template", "base")
+			stack, err := render.NewStack(fmt.Sprintf("walls/%s", size.String()), kind.String(), "base")
 			if err != nil {
-				continue
+				stack, err = render.NewStack(fmt.Sprintf("walls/%s", size.String()), "template", "base")
+				if err != nil {
+					continue
+				}
 			}
 			stack.VgroupOffset = j * StoryWallHeight
 			r.walls.Add(stack)
@@ -243,22 +250,22 @@ func (r *Room) RemoveDude(d *Dude) {
 	}
 }
 
-func (r *Room) AddActorToCenter(a Actor) {
-	r.actorsInCenter = append(r.actorsInCenter, a)
+func (r *Room) AddDudeToCenter(a *Dude) {
+	r.dudesInCenter = append(r.dudesInCenter, a)
 }
 
-func (r *Room) RemoveActorFromCenter(a Actor) {
-	for i, actor := range r.actorsInCenter {
-		if actor == a {
-			r.actorsInCenter = append(r.actorsInCenter[:i], r.actorsInCenter[i+1:]...)
+func (r *Room) RemoveDudeFromCenter(a *Dude) {
+	for i, dude := range r.dudesInCenter {
+		if dude == a {
+			r.dudesInCenter = append(r.dudesInCenter[:i], r.dudesInCenter[i+1:]...)
 			return
 		}
 	}
 }
 
-func (r *Room) IsActorInCenter(a Actor) bool {
-	for _, actor := range r.actorsInCenter {
-		if actor == a {
+func (r *Room) IsDudeInCenter(a *Dude) bool {
+	for _, dude := range r.dudesInCenter {
+		if dude == a {
 			return true
 		}
 	}
