@@ -86,6 +86,7 @@ func NewAudioController() *AudioController {
 	return &AudioController{
 		audioContext: audioContext,
 		tracks:       tracks,
+		sfx:          make(map[string]*Track),
 		tracksPaused: true,
 		sfxPaused:    false,
 	}
@@ -122,22 +123,13 @@ func (a *AudioController) SetPan(roomKind RoomKind, pan float64) {
 	}
 }
 
-func (a *AudioController) PlaySfx(name string, vol *float64, pan *float64) {
+func (a *AudioController) PlaySfx(name string, vol float64, pan float64) {
 	if a.sfxPaused {
 		return
 	}
 	if sfx, ok := a.sfx[name]; ok {
-		if vol == nil {
-			sfx.SetVolume(1)
-		} else {
-			sfx.SetVolume(*vol)
-		}
-
-		if pan == nil {
-			sfx.SetPan(0)
-		} else {
-			sfx.SetPan(*pan)
-		}
+		sfx.SetVolume(vol)
+		sfx.SetPan(pan)
 
 		sfx.Play()
 	} else {

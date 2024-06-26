@@ -261,6 +261,7 @@ type GameStateLose struct {
 
 func (s *GameStateLose) Begin(g *Game) {
 	g.camera.SetMode(render.CameraModeTower)
+	g.audioController.PlaySfx("loss", 0.5, 0.0)
 }
 func (s *GameStateLose) End(g *Game) {
 }
@@ -336,6 +337,7 @@ type GameStateWin struct {
 
 func (s *GameStateWin) Begin(g *Game) {
 	g.camera.SetMode(render.CameraModeTower)
+	g.audioController.PlaySfx("win", 0.5, 0.0)
 }
 func (s *GameStateWin) End(g *Game) {
 }
