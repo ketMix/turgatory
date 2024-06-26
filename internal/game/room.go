@@ -71,6 +71,8 @@ func (r *RoomKind) String() string {
 		return "empty"
 	case Trap:
 		return "trap"
+	case Boss:
+		return "boss"
 	default:
 		return "Unknown"
 	}
@@ -97,7 +99,7 @@ func (r *RoomKind) Equipment() []*string {
 	case Armory:
 		types := []EquipmentType{EquipmentTypeWeapon, EquipmentTypeArmor}
 		return GetEquipmentNamesWithTypes(types)
-	case HealingShrine:
+	case Treasure:
 		types := []EquipmentType{EquipmentTypeAccessory}
 		return GetEquipmentNamesWithTypes(types)
 	}
@@ -123,6 +125,9 @@ const (
 	// Trap - % to damage dude based on stats
 	Trap
 
+	// Boss room
+	Boss
+
 	// Marker for the end... allows for iteration
 	RoomKindEnd
 )
@@ -132,6 +137,7 @@ const (
 var badRooms = []RoomKind{
 	Combat,
 	Curse,
+	Trap,
 }
 
 // The set of GOOD rooms (those that are good for the dudes)
