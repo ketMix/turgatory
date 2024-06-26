@@ -728,6 +728,13 @@ func (d *Dude) RestoreUses(amount int) {
 	d.story.AddText(t)
 }
 
+func (d *Dude) FullUseRestore() {
+	for _, eq := range d.equipped {
+		if eq != nil {
+			eq.RestoreUses(100)
+		}
+	}
+}
 func (d *Dude) RandomEquippedItem() *Equipment {
 	equippedTypes := []EquipmentType{}
 	for t, eq := range d.equipped {

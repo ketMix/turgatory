@@ -230,6 +230,7 @@ func (g *Game) SellEquipment(e *Equipment) {
 	}
 
 	// Trigger on sell event
+	e.Activate(EventSell{equipment: e})
 }
 func (g *Game) Init() {
 	// Init the equipment

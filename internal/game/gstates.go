@@ -74,9 +74,10 @@ type GameStateBuild struct {
 func (s *GameStateBuild) Begin(g *Game) {
 	g.camera.SetMode(render.CameraModeTower)
 
-	// On build phase, full heal all dudes.
+	// On build phase, full heal all dudes and restore uses
 	for _, d := range g.dudes {
 		d.FullHeal()
+		d.FullUseRestore()
 	}
 }
 func (s *GameStateBuild) End(g *Game) {
