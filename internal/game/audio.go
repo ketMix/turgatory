@@ -98,7 +98,7 @@ func (a *AudioController) PlayRoomTracks() {
 		track.Play()
 
 		if name == Empty {
-			track.SetVolume(0.25)
+			track.SetVolume(0.5)
 		}
 	}
 }
