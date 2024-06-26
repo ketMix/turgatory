@@ -246,7 +246,15 @@ func (p PerkHealOnRoomEnter) Description() string {
 func (p PerkHealOnRoomEnter) Check(e Event) bool {
 	switch e := e.(type) {
 	case EventEnterRoom:
-		e.dude.Heal(int(p.amount(e.dude.stats.wisdom)))
+		if e.dude == nil {
+			return false
+		}
+		stats := e.dude.GetCalculatedStats()
+		amount := e.dude.Heal(p.amount(stats.wisdom))
+		if amount == 0 {
+			return false
+		}
+		return true
 	}
 	return false
 }

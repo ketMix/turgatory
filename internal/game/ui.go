@@ -341,7 +341,6 @@ func (dd *DudeDetails) Draw(o *render.Options) {
 	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
 
 	// XP
-	// slightly purple
 	op.Color = color.RGBA{200, 200, 255, 255}
 	render.DrawText(op, fmt.Sprintf("%d/%d XP", dd.dude.xp, dd.dude.NextLevelXP()))
 
@@ -433,6 +432,7 @@ func drawEquipmentDescription(o *render.Options, dd *DudeDetails, hoveredEquipme
 	op.Font = assets.DisplayFont
 	op.Color = hoveredEquipment.quality.TextColor()
 	render.DrawText(op, hoveredEquipment.Name())
+
 	op.GeoM.Translate(0, assets.DisplayFont.LineHeight+1)
 
 	op.Font = assets.BodyFont
@@ -456,6 +456,8 @@ func drawEquipmentDescription(o *render.Options, dd *DudeDetails, hoveredEquipme
 		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
 		op.Color = hoveredEquipment.perk.Quality().TextColor()
 		render.DrawText(op, hoveredEquipment.perk.Description())
+		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+		render.DrawText(op, fmt.Sprintf("Uses: %d/%d", hoveredEquipment.uses, hoveredEquipment.totalUses))
 	}
 
 	// RIGHT SIDE

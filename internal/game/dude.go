@@ -693,7 +693,7 @@ func (d *Dude) NextLevelXP() int {
 	return 50 * d.Level()
 }
 
-func (d *Dude) Heal(amount int) {
+func (d *Dude) Heal(amount int) int {
 	initialHP := d.stats.currentHp
 	stats := d.GetCalculatedStats()
 	d.stats.currentHp += amount
@@ -706,6 +706,7 @@ func (d *Dude) Heal(amount int) {
 		t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%d", amount), color.NRGBA{0, 255, 0, 255}, 40, 0.5)
 		d.story.AddText(t)
 	}
+	return amount
 }
 
 func (d *Dude) FullHeal() {
