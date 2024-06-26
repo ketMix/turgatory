@@ -11,7 +11,6 @@ import (
 type Tower struct {
 	render.Positionable // I guess it's okay to re-use this in such a fashion.
 	Stories             []*Story
-	stairs              *Prefab // Stairs at the bottom of the tower
 	portalOpen          bool
 	dudes               []*Dude
 }
@@ -20,17 +19,11 @@ type Tower struct {
 func NewTower() *Tower {
 	t := &Tower{}
 
-	// Create the stairs prefab.
-	t.stairs = NewPrefab(Must(render.NewStack("walls/stairs", "", "")))
-	t.stairs.SetPosition(0, 60)
-	t.stairs.vgroup.Debug = true
-
 	return t
 }
 
 // Update the tower.
 func (t *Tower) Update(req *ActivityRequests) {
-	t.stairs.Update()
 	// TODO: Should this only update "active" stories?
 	var storyUpdates ActivityRequests
 	for _, s := range t.Stories {

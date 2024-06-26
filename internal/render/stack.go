@@ -99,6 +99,8 @@ func (s *Stack) Draw(o *Options) {
 
 	opts.GeoM.Translate(0, s.HeightOffset)
 
+	oldGeoM := ebiten.GeoM{}
+	oldGeoM.Concat(opts.GeoM)
 	for index := 0; index < len(s.currentFrame.Slices); index++ {
 		if index+s.SliceOffset >= len(s.currentFrame.Slices) {
 			break
@@ -128,9 +130,11 @@ func (s *Stack) Draw(o *Options) {
 
 		if o.VGroup != nil {
 			i += s.VgroupOffset
-			if i < len(o.VGroup.Images) {
-				o.VGroup.Images[i].DrawImage(slice.Image, &opts)
-			}
+
+			opts.GeoM.Reset()
+			opts.GeoM.Concat(oldGeoM)
+			opts.GeoM.Translate(0, float64(i*o.VGroup.Height))
+			o.VGroup.Images[0].DrawImage(slice.Image, &opts)
 		} else if o.Screen != nil {
 			o.Screen.DrawImage(slice.Image, &opts)
 			opts.GeoM.Translate(0, -o.Pitch)
