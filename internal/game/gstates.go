@@ -151,6 +151,9 @@ func (s *GameStatePlay) End(g *Game) {
 		}
 	}
 
+	// Clear out any floating text.
+	g.tower.ClearTexts()
+
 	// Collect gold
 	g.CollectGold()
 	// Collect inventory

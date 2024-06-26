@@ -182,3 +182,9 @@ func (t *Tower) ClearBodies() {
 	}
 	t.dudes = nil
 }
+
+func (t *Tower) ClearTexts() {
+	for _, s := range t.Stories {
+		s.texts = nil
+	}
+}
