@@ -611,12 +611,6 @@ func (d *Dude) UpdateGold(amount float64) {
 	if d.gold < 0 {
 		d.gold = 0
 	}
-
-	if amount > 0 {
-		d.Trigger(EventGoldGain{dude: d, amount: amount})
-	} else {
-		d.Trigger(EventGoldLoss{dude: d, amount: amount})
-	}
 }
 
 // Equips item to dude
