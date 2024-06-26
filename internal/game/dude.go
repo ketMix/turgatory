@@ -669,7 +669,7 @@ func (d *Dude) GetCalculatedStats() *Stats {
 func (d *Dude) AddXP(xp int) {
 	d.xp += xp
 	// If level reached
-	nextLevelXP := 100 * d.Level()
+	nextLevelXP := d.NextLevelXP()
 	if d.xp >= nextLevelXP {
 		d.xp -= nextLevelXP
 		d.stats.LevelUp()
@@ -683,6 +683,9 @@ func (d *Dude) AddXP(xp int) {
 
 func (d *Dude) XP() int {
 	return d.xp
+}
+func (d *Dude) NextLevelXP() int {
+	return 50 * d.Level()
 }
 
 func (d *Dude) Heal(amount int) {

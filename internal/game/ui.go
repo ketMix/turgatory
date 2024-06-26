@@ -339,6 +339,12 @@ func (dd *DudeDetails) Draw(o *render.Options) {
 	op.Color = color.RGBA{255, 215, 0, 255}
 	render.DrawText(op, fmt.Sprintf("%.2f gold", dd.dude.gold))
 	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+
+	// XP
+	// slightly purple
+	op.Color = color.RGBA{200, 200, 255, 255}
+	render.DrawText(op, fmt.Sprintf("%d/%d XP", dd.dude.xp, dd.dude.NextLevelXP()))
+
 	op.Color = color.RGBA{200, 200, 200, 255}
 	op.GeoM.Translate(0, assets.BodyFont.LineHeight*2)
 	render.DrawText(op, fmt.Sprintf("%s strength", PaddedIntString(stats.strength, 4)))
