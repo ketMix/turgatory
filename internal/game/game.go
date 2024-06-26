@@ -217,6 +217,20 @@ func (g *Game) BuyEquipment() {
 	g.equipment = append(g.equipment, e)
 }
 
+func (g *Game) SellEquipment(e *Equipment) {
+	if e == nil {
+		return
+	}
+	g.gold += int(e.GoldValue())
+	for i, eq := range g.equipment {
+		if eq == e {
+			g.equipment = append(g.equipment[:i], g.equipment[i+1:]...)
+			break
+		}
+	}
+
+	// Trigger on sell event
+}
 func (g *Game) Init() {
 	// Init the equipment
 	assets.LoadEquipment()
