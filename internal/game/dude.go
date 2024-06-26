@@ -23,6 +23,8 @@ const (
 	Leaving   // Move the dude to the stairs.
 	GoingDown // Leaving the room to the stairs, opposite of GoingUp.
 	EnterPortal
+	Ded
+	BornAgain
 )
 
 type Dude struct {
@@ -52,6 +54,10 @@ func NewDude(pk ProfessionKind, level int) *Dude {
 	if err != nil {
 		panic(err)
 	}
+
+	// Randomize which dude it be.
+	stack.SetStack(stack.Stacks()[rand.Intn(len(stack.Stacks()))])
+	stack.SetAnimation("base")
 
 	// Get shadow.
 	shadowStack, err := render.NewStack("dudes/shadow", "", "")
@@ -88,16 +94,30 @@ func NewDude(pk ProfessionKind, level int) *Dude {
 	return dude
 }
 
+func (d *Dude) SetActivity(a DudeActivity) {
+	d.activity = a
+	d.timer = 0
+	if a == Ded {
+		d.stack.SetAnimation("ded")
+	} else if a == BornAgain {
+		d.stack.SetAnimation("base")
+	}
+}
+
 func (d *Dude) Update(story *Story, req *ActivityRequests) {
 	// NOTE: We should replace Centering/Moving direct position/rotation setting with a "pathing node" that the dude seeks to follow. This would allow more smoothly doing turns and such, as we could have a turn limit the dude would follow automatically...
 	switch d.activity {
 	case Idle:
 		// Do nothing.
+	case Ded:
+		// Also do nothing!
+	case BornAgain:
+		d.SetActivity(Moving) // Is this safe to just set moving?
 	case FirstEntering:
 		cx, cy := d.Position()
 		distance := story.DistanceFromCenter(cx, cy)
 		if distance < 50+d.variation {
-			d.activity = Centering
+			d.SetActivity(Centering)
 			d.stack.HeightOffset = 0
 		} else {
 			r := story.AngleFromCenter(cx, cy) + d.variation/5000
@@ -138,9 +158,8 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 					d.SyncEquipment()
 				}
 			}})
-			d.timer = 0
 			d.stack.VgroupOffset = 0
-			d.activity = StairsFromDown
+			d.SetActivity(StairsFromDown)
 		}
 	case StairsFromDown:
 		d.timer++
@@ -166,7 +185,7 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 		if d.stack.SliceOffset <= 0 {
 			d.stack.SliceOffset = 0
 			d.stack.MaxSliceIndex = 0
-			d.activity = Moving
+			d.SetActivity(Moving)
 		}
 	case GoingUp:
 		d.timer++
@@ -193,13 +212,13 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 		if d.stack.SliceOffset <= 0 {
 			d.stack.SliceOffset = 0
 			d.stack.MaxSliceIndex = 0
-			d.activity = Centering
+			d.SetActivity(Centering)
 		}
 	case Centering:
 		cx, cy := d.Position()
 		distance := story.DistanceFromCenter(cx, cy)
 		if distance >= RoomPath+d.variation {
-			d.activity = Moving
+			d.SetActivity(Moving)
 		} else {
 			r := story.AngleFromCenter(cx, cy) + d.variation/5000
 			nx, ny := story.PositionFromCenter(r, distance+d.Speed()*100)
@@ -249,7 +268,7 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 			if distance < PortalDistance-4+d.variation {
 				d.stack.Transparency = 1
 				d.shadow.Transparency = 1
-				d.activity = Idle
+				d.SetActivity(Idle)
 				req.Add(TowerLeaveActivity{dude: d})
 			} else {
 				r := story.AngleFromCenter(cx, cy)
@@ -304,6 +323,10 @@ func (d *Dude) SyncEquipment() {
 func (d *Dude) Draw(o *render.Options) {
 	d.stack.Draw(o)
 	d.shadow.Draw(o)
+
+	if d.IsDead() {
+		return
+	}
 
 	// Draw equipment
 	for _, eq := range d.equipped {
@@ -527,9 +550,15 @@ func (d *Dude) ApplyDamage(amount int) (int, bool) {
 		d.stats.currentHp = 0
 	}
 
-	//fmt.Println(d.name, "took", amount, "damage and has", d.stats.currentHp, "HP left")
-	t := MakeFloatingTextFromDude(d, fmt.Sprintf("%d", -amount), color.NRGBA{255, 0, 0, 255}, 40, 0.5)
-	d.story.AddText(t)
+	if d.stats.currentHp == 0 {
+		d.SetActivity(Ded)
+		t := MakeFloatingTextFromDude(d, "RIP", color.NRGBA{64, 64, 64, 255}, 80, 1)
+		d.story.AddText(t)
+	} else {
+		//fmt.Println(d.name, "took", amount, "damage and has", d.stats.currentHp, "HP left")
+		t := MakeFloatingTextFromDude(d, fmt.Sprintf("%d", -amount), color.NRGBA{255, 0, 0, 255}, 40, 0.5)
+		d.story.AddText(t)
+	}
 	return amount, false
 
 	// If dead, uh, do something right? maybe an event or something idk

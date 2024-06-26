@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/kettek/ebijam24/internal/render"
@@ -61,8 +60,7 @@ func (t *Tower) Update(req *ActivityRequests) {
 			u.dude.Trigger(EventEnterRoom{room: u.room, dude: u.dude})
 			// If it's the last room, then move upwards and go poof (unless we're coming from stairs or are entering the tower for the first time).
 			if u.dude.activity != StairsFromDown && u.dude.activity != FirstEntering && u.room.index == 7 {
-				u.dude.activity = StairsToUp
-				u.dude.timer = 0
+				u.dude.SetActivity(StairsToUp)
 			}
 		case RoomCenterActivity:
 			u.dude.Trigger(EventCenterRoom{room: u.room, dude: u.dude})
@@ -71,8 +69,7 @@ func (t *Tower) Update(req *ActivityRequests) {
 			// Check if the given room is the last room in the story.
 			if u.room.story.rooms[6] == u.room {
 				if u.room.story.level == len(t.Stories) {
-					fmt.Println("final level!! we made it")
-					u.dude.activity = Idle
+					u.dude.SetActivity(Idle)
 				} else if u.room.story.level < len(t.Stories)-1 {
 					nextStory := t.Stories[u.room.story.level+1]
 					if !nextStory.open {
@@ -80,8 +77,7 @@ func (t *Tower) Update(req *ActivityRequests) {
 							t.portalOpen = true
 							u.room.story.AddPortal()
 						}
-						u.dude.activity = EnterPortal
-						u.dude.timer = 0
+						u.dude.SetActivity(EnterPortal)
 					}
 				}
 			}
