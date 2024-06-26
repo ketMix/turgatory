@@ -131,3 +131,14 @@ func (r RoomCombatActivity) Apply() {
 func (r RoomCombatActivity) Cb() func(success bool) {
 	return nil
 }
+
+type DudeDeadActivity struct {
+	dude *Dude
+}
+
+func (d DudeDeadActivity) Apply() {
+}
+
+func (d DudeDeadActivity) Cb() func(success bool) {
+	return nil
+}

@@ -362,7 +362,7 @@ func (d *Dude) DrawProfile(o *render.Options) {
 	}
 }
 
-func (d *Dude) Trigger(e Event) {
+func (d *Dude) Trigger(e Event) Activity {
 	// Trigger equipped equipment
 	// It may modify event amounts
 	for _, eq := range d.equipped {
@@ -372,6 +372,10 @@ func (d *Dude) Trigger(e Event) {
 	}
 
 	switch e := e.(type) {
+	case EventDudeHit:
+		if d.IsDead() {
+			return DudeDeadActivity{dude: d}
+		}
 	case EventCombatRoom:
 		// Attack enemy if there is one
 		if d.enemy != nil {
@@ -404,7 +408,9 @@ func (d *Dude) Trigger(e Event) {
 			} else {
 				takenDamage, isDodge := d.ApplyDamage(d.enemy.Hit())
 				if !isDodge {
-					d.Trigger(EventDudeHit{dude: d, amount: takenDamage})
+					if act := d.Trigger(EventDudeHit{dude: d, amount: takenDamage}); act != nil {
+						return act
+					}
 				} else {
 					d.Trigger(EventDudeDodge{dude: d, enemy: d.enemy})
 					AddMessage(
@@ -415,13 +421,21 @@ func (d *Dude) Trigger(e Event) {
 			}
 		}
 		// Else it may be a trap room
-		d.room.GetRoomEffect(e)
+		if act := d.room.GetRoomEffect(e); act != nil {
+			return act
+		}
 	case EventEnterRoom:
-		d.room.GetRoomEffect(e)
+		if act := d.room.GetRoomEffect(e); act != nil {
+			return act
+		}
 	case EventCenterRoom:
-		d.room.GetRoomEffect(e)
+		if act := d.room.GetRoomEffect(e); act != nil {
+			return act
+		}
 	case EventLeaveRoom:
-		d.room.GetRoomEffect(e)
+		if act := d.room.GetRoomEffect(e); act != nil {
+			return act
+		}
 	case EventEquip:
 		//fmt.Println(d.name, "equipped", e.equipment.Name())
 		if d.stack != nil {
@@ -445,6 +459,7 @@ func (d *Dude) Trigger(e Event) {
 		t := MakeFloatingTextFromDude(d, fmt.Sprintf("-%.0fgp", e.amount), color.NRGBA{255, 255, 0, 255}, 40, 0.4)
 		d.story.AddText(t)
 	}
+	return nil
 }
 
 func (d *Dude) Position() (float64, float64) {

@@ -325,9 +325,9 @@ func (r *Room) RollLoot(luck int) *Equipment {
 	return equipment
 }
 
-func (r *Room) GetRoomEffect(e Event) {
+func (r *Room) GetRoomEffect(e Event) Activity {
 	if r == nil {
-		return
+		return nil
 	}
 	switch e := e.(type) {
 	case EventCombatRoom:
@@ -335,6 +335,9 @@ func (r *Room) GetRoomEffect(e Event) {
 		case Trap:
 			// Damage dude based on stats
 			e.dude.TrapDamage(r.story.level + 1)
+			if e.dude.IsDead() {
+				return DudeDeadActivity{dude: e.dude}
+			}
 		}
 	case EventEnterRoom:
 		switch r.kind {
@@ -402,6 +405,7 @@ func (r *Room) GetRoomEffect(e Event) {
 			e.dude.Perkify(maxQuality)
 		}
 	}
+	return nil
 }
 
 // For populating the optional rooms to place

@@ -661,6 +661,7 @@ func (dp *DudePanel) Draw(o *render.Options) {
 }
 
 func (dp *DudePanel) SyncDudes(dudes []*Dude) {
+	dp.dudeProfiles = nil // Reset them dude profiles
 	for _, dude := range dudes {
 		stack := render.CopyStack(dude.stack)
 		stack.SetPosition(0, 0)

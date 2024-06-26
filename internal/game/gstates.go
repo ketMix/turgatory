@@ -40,6 +40,21 @@ func (s *GameStatePreBuild) Begin(g *Game) {
 		s.newDudes = append(s.newDudes, dude)
 	}
 	g.camera.SetMode(render.CameraModeTower)
+
+	// Create a new tower, yo.
+	tower := NewTower()
+
+	firstStory := NewStory()
+	firstStory.Open()
+	tower.AddStory(firstStory)
+	tower.AddStory(NewStory())
+	tower.AddStory(NewStory())
+	tower.AddStory(NewStory())
+	tower.AddStory(NewStory())
+	// Always remove door from last story(?)
+	tower.Stories[len(tower.Stories)-1].RemoveDoor()
+
+	g.tower = tower
 }
 func (s *GameStatePreBuild) End(g *Game) {
 	g.dudes = append(g.dudes, s.newDudes...)
@@ -147,6 +162,10 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 			g.tower.Update(&req)
 			for _, u := range req {
 				switch u := u.(type) {
+				case DudeDeadActivity:
+					if !g.tower.HasAliveDudes() {
+						return &GameStateLose{}
+					}
 				case TowerCompleteActivity:
 					return &GameStateWin{}
 				case TowerLeaveActivity:
@@ -228,6 +247,76 @@ func (s *GameStatePlay) Draw(g *Game, screen *ebiten.Image) {
 }
 
 type GameStateLose struct {
+	wobbler float64
+}
+
+func (s *GameStateLose) Begin(g *Game) {
+	g.camera.SetMode(render.CameraModeTower)
+}
+func (s *GameStateLose) End(g *Game) {
+}
+func (s *GameStateLose) Update(g *Game) GameState {
+	s.wobbler += 0.05
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		return &GameStatePreBuild{}
+	}
+	return nil
+}
+func (s *GameStateLose) Draw(g *Game, screen *ebiten.Image) {
+	geom := ebiten.GeoM{}
+	geom.Scale(4, 4)
+	opts := &render.TextOptions{
+		Screen: screen,
+		Font:   assets.DisplayFont,
+		Color:  color.Black,
+		GeoM:   geom,
+	}
+
+	w, h := text.Measure("GAME OVER", opts.Font.Face, opts.Font.LineHeight)
+	w *= 4
+	h *= 4
+
+	opts.GeoM.Translate(-w/2, -h/2)
+	opts.GeoM.Rotate(math.Sin(s.wobbler) * 0.1)
+	opts.GeoM.Translate(w/2, h/2)
+	opts.GeoM.Translate(float64(screen.Bounds().Dx()/2)-w/2, float64(screen.Bounds().Dy()/4)-h/2+h)
+	opts.GeoM.Translate(0, math.Cos(s.wobbler)*20)
+
+	opts.GeoM.Translate(-10, -10)
+	opts.Color = color.NRGBA{50, 0, 0, 200}
+	render.DrawText(opts, "GAME OVER")
+	opts.GeoM.Translate(20, 20)
+	render.DrawText(opts, "GAME OVER")
+	opts.Color = color.NRGBA{255, 52, 33, 200}
+	opts.GeoM.Translate(-10, -10)
+	render.DrawText(opts, "GAME OVER")
+
+	opts.Font = assets.BodyFont
+	y := 0.0
+	{
+		opts.GeoM.Reset()
+		opts.GeoM.Scale(4, 4)
+
+		w, h := text.Measure("all ur dudes r ded :((", opts.Font.Face, opts.Font.LineHeight)
+		w *= 4
+		h *= 4
+
+		opts.GeoM.Translate(float64(screen.Bounds().Dx()/2)-w/2, float64(screen.Bounds().Dy()/2)-h/2)
+		y = float64(screen.Bounds().Dy()/2) - h/2
+		render.DrawText(opts, "all ur dudes r ded :((")
+	}
+
+	{
+		opts.GeoM.Reset()
+		opts.GeoM.Scale(4, 4)
+
+		w, h := text.Measure("Press SPACE to try again!", opts.Font.Face, opts.Font.LineHeight)
+		w *= 4
+		h *= 4
+
+		opts.GeoM.Translate(float64(screen.Bounds().Dx()/2)-w/2, y+h)
+		render.DrawText(opts, "Press SPACE to try again!")
+	}
 }
 
 type GameStateWin struct {

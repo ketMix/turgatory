@@ -50,22 +50,32 @@ func (t *Tower) Update(req *ActivityRequests) {
 				nextStory.AddDude(u.dude)
 			}
 		case RoomCombatActivity:
-			u.dude.Trigger(EventCombatRoom{room: u.room, dude: u.dude})
+			if act := u.dude.Trigger(EventCombatRoom{room: u.room, dude: u.dude}); act != nil {
+				req.Add(act)
+			}
 		case RoomEnterActivity:
 			if u.dude.room != nil {
-				u.dude.Trigger(EventLeaveRoom{room: u.dude.room, dude: u.dude})
+				if act := u.dude.Trigger(EventLeaveRoom{room: u.dude.room, dude: u.dude}); act != nil {
+					req.Add(act)
+				}
 				u.dude.room = nil
 			}
 			u.dude.room = u.room
-			u.dude.Trigger(EventEnterRoom{room: u.room, dude: u.dude})
+			if act := u.dude.Trigger(EventEnterRoom{room: u.room, dude: u.dude}); act != nil {
+				req.Add(act)
+			}
 			// If it's the last room, then move upwards and go poof (unless we're coming from stairs or are entering the tower for the first time).
 			if u.dude.activity != StairsFromDown && u.dude.activity != FirstEntering && u.room.index == 7 {
 				u.dude.SetActivity(StairsToUp)
 			}
 		case RoomCenterActivity:
-			u.dude.Trigger(EventCenterRoom{room: u.room, dude: u.dude})
+			if act := u.dude.Trigger(EventCenterRoom{room: u.room, dude: u.dude}); act != nil {
+				req.Add(act)
+			}
 		case RoomEndActivity:
-			u.dude.Trigger(EventEndRoom{room: u.room, dude: u.dude})
+			if act := u.dude.Trigger(EventEndRoom{room: u.room, dude: u.dude}); act != nil {
+				req.Add(act)
+			}
 			// Check if the given room is the last room in the story.
 			if u.room.story.rooms[6] == u.room {
 				if u.room.story.level == len(t.Stories) {
