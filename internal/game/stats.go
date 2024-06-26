@@ -161,12 +161,16 @@ func (s *Stats) ModifyStat(stat Stat, amount int) {
 	}
 }
 
-func NewStats(levelUpChange *Stats) *Stats {
+func NewStats(levelUpChange *Stats, isEnemy bool) *Stats {
 	// start the stats at a negative level
 	// then level up a few times in order to set the starting stats
 	startingLevels := 3
+	// Don't start enemy with extra levels
+	if isEnemy {
+		startingLevels = 0
+	}
 	// Added this because GetCalculatedStats passes nil to this func... --kts
-	level := -3
+	level := -startingLevels
 	if levelUpChange != nil {
 		level = levelUpChange.level - startingLevels
 	}

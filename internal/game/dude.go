@@ -418,6 +418,9 @@ func (d *Dude) Trigger(e Event) Activity {
 						fmt.Sprintf("%s dodged an attack from %s", d.name, d.enemy.name),
 					)
 				}
+				if d.IsDead() {
+					d.enemy = nil
+				}
 			}
 		}
 		// Else it may be a trap room
@@ -663,7 +666,7 @@ func (d *Dude) Equipped() map[EquipmentType]*Equipment {
 
 // Returns the stats of the dude with the equipment stats added
 func (d *Dude) GetCalculatedStats() *Stats {
-	stats := NewStats(nil)
+	stats := NewStats(nil, false)
 	stats = stats.Add(&d.stats)
 	for _, eq := range d.equipped {
 		stats = stats.Add(eq.Stats())

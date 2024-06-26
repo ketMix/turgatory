@@ -348,7 +348,7 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 			if err != nil {
 				fmt.Println("Error creating enemy stack", err)
 			} else {
-				enemy := NewEnemy(EnemyRat, r.story.level, enemyStack)
+				enemy := NewEnemy(enemyName, r.story.level, enemyStack)
 				e.dude.enemy = enemy
 			}
 		}

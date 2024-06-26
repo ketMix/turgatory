@@ -29,9 +29,9 @@ func (e EnemyKind) String() string {
 func (e EnemyKind) Stats() *Stats {
 	switch e {
 	case EnemyRat:
-		return &Stats{strength: 1, defense: 1, totalHp: 5, luck: 1}
+		return &Stats{strength: 3, defense: 3, totalHp: 15, luck: 1}
 	case EnemySlime:
-		return &Stats{strength: 3, defense: 3, totalHp: 15, luck: 2}
+		return &Stats{strength: 5, defense: 5, totalHp: 30, luck: 2}
 	default:
 		return &Stats{strength: 1, defense: 0, totalHp: 1, luck: 1}
 	}
@@ -47,7 +47,7 @@ func NewEnemy(name EnemyKind, level int, stack *render.Stack) *Enemy {
 	if level < 1 {
 		level = 1
 	}
-	stats := NewStats(name.Stats())
+	stats := NewStats(name.Stats(), true)
 	for i := 0; i < level; i++ {
 		stats.LevelUp()
 	}
