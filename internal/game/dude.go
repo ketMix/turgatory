@@ -417,9 +417,15 @@ func (d *Dude) GetDamage() (int, bool) {
 func (d *Dude) ApplyDamage(amount int) (int, bool) {
 	// Luck and agility can cause dodge
 	stats := d.GetCalculatedStats()
-	luckRoll := float64(stats.luck+1) * 0.1
-	agilityRoll := float64(stats.agility+1) * 0.1
-	if rand.Float64() < luckRoll || rand.Float64() < agilityRoll {
+	baseChance := 0.05                                   // 5% base dodge chance
+	luckContribution := float64(stats.luck) * 0.005      // 0.5% per luck point
+	agilityContribution := float64(stats.agility) * 0.01 // 1% per agility point
+
+	dodgeChance := baseChance + luckContribution + agilityContribution
+
+	// Cap the maximum dodge chance at 50%
+	chance := math.Min(dodgeChance, 0.5)
+	if rand.Float64() < chance {
 		t := MakeFloatingTextFromDude(d, "*dodge*", color.NRGBA{255, 255, 0, 128}, 30, 0.5)
 		d.story.AddText(t)
 		return 0, true
