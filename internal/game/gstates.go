@@ -53,6 +53,7 @@ func (s *GameStatePreBuild) Draw(g *Game, screen *ebiten.Image) {
 
 type GameStateBuild struct {
 	availableRooms []RoomDef
+	wobbler        float64
 	titleTimer     int
 }
 
@@ -62,6 +63,7 @@ func (s *GameStateBuild) Begin(g *Game) {
 func (s *GameStateBuild) End(g *Game) {
 }
 func (s *GameStateBuild) Update(g *Game) GameState {
+	s.wobbler += 0.05
 	s.titleTimer++
 	if s.titleTimer > 120 {
 		return &GameStatePlay{}
@@ -69,7 +71,7 @@ func (s *GameStateBuild) Update(g *Game) GameState {
 	return nil
 }
 func (s *GameStateBuild) Draw(g *Game, screen *ebiten.Image) {
-	if s.titleTimer < 120 {
+	if s.titleTimer < 240 {
 		opts := render.TextOptions{
 			Screen: screen,
 			Font:   assets.DisplayFont,
@@ -81,6 +83,9 @@ func (s *GameStateBuild) Draw(g *Game, screen *ebiten.Image) {
 		w *= 4
 		h *= 4
 
+		opts.GeoM.Translate(-w/2, -h/2)
+		opts.GeoM.Rotate(math.Sin(s.wobbler) * 0.05)
+		opts.GeoM.Translate(w/2, h/2)
 		opts.GeoM.Translate(float64(screen.Bounds().Dx()/2)-w/2, float64(screen.Bounds().Dy()/4)-h/2)
 
 		render.DrawText(&opts, "BUILD")
@@ -89,7 +94,7 @@ func (s *GameStateBuild) Draw(g *Game, screen *ebiten.Image) {
 
 type GameStatePlay struct {
 	titleTimer     int
-	pauseWobbler   float64
+	wobbler        float64
 	updateTicker   int
 	returningDudes []*Dude
 }
@@ -132,9 +137,7 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		g.TogglePause()
 	}
-	if g.paused {
-		s.pauseWobbler += 0.05
-	}
+	s.wobbler += 0.05
 
 	// Update the game!
 	if !g.paused {
@@ -173,7 +176,7 @@ func (s *GameStatePlay) Draw(g *Game, screen *ebiten.Image) {
 	options.DrawImageOptions.ColorScale.Reset()
 	g.ui.Draw(&options)
 
-	if s.titleTimer < 120 {
+	if s.titleTimer < 240 {
 		opts := render.TextOptions{
 			Screen: screen,
 			Font:   assets.DisplayFont,
@@ -185,6 +188,9 @@ func (s *GameStatePlay) Draw(g *Game, screen *ebiten.Image) {
 		w *= 4
 		h *= 4
 
+		opts.GeoM.Translate(-w/2, -h/2)
+		opts.GeoM.Rotate(math.Sin(s.wobbler) * 0.05)
+		opts.GeoM.Translate(w/2, h/2)
 		opts.GeoM.Translate(float64(screen.Bounds().Dx()/2)-w/2, float64(screen.Bounds().Dy()/4)-h/2)
 
 		render.DrawText(&opts, "ADVENTURE")
@@ -206,7 +212,7 @@ func (s *GameStatePlay) Draw(g *Game, screen *ebiten.Image) {
 		h *= 4
 
 		opts.GeoM.Translate(-w/2, -h/2)
-		opts.GeoM.Rotate(math.Sin(s.pauseWobbler) * 0.05)
+		opts.GeoM.Rotate(math.Sin(s.wobbler) * 0.05)
 		opts.GeoM.Translate(w/2, h/2)
 		opts.GeoM.Translate(float64(screen.Bounds().Dx()/2)-w/2, float64(screen.Bounds().Dy()/4)-h/2)
 
