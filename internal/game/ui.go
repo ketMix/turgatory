@@ -13,9 +13,10 @@ import (
 )
 
 type UIOptions struct {
-	Scale  float64
-	Width  int
-	Height int
+	Scale    float64
+	Width    int
+	Height   int
+	Messages []string
 }
 
 func (o UIOptions) CoordsToScreen(x, y float64) (float64, float64) {
@@ -27,10 +28,11 @@ func (o UIOptions) ScreenToCoords(x, y float64) (float64, float64) {
 }
 
 type UI struct {
-	dudePanel  DudePanel
-	roomPanel  RoomPanel
-	speedPanel SpeedPanel
-	options    *UIOptions
+	dudePanel    DudePanel
+	roomPanel    RoomPanel
+	speedPanel   SpeedPanel
+	messagePanel MessagePanel
+	options      *UIOptions
 }
 
 func NewUI() *UI {
@@ -58,7 +60,18 @@ func NewUI() *UI {
 			botleft:  Must(render.NewSubSprite(panelSprite, 0, 32, 16, 16)),
 		}
 	}
-
+	{
+		panelSprite := Must(render.NewSprite("ui/panels"))
+		ui.messagePanel = MessagePanel{
+			maxLines: 50,
+			top:      Must(render.NewSubSprite(panelSprite, 16, 0, 16, 16)),
+			topleft:  Must(render.NewSubSprite(panelSprite, 0, 0, 16, 16)),
+			topright: Must(render.NewSubSprite(panelSprite, 32, 0, 16, 16)),
+			mid:      Must(render.NewSubSprite(panelSprite, 16, 16, 16, 16)),
+			midleft:  Must(render.NewSubSprite(panelSprite, 0, 16, 16, 16)),
+			midright: Must(render.NewSubSprite(panelSprite, 32, 16, 16, 16)),
+		}
+	}
 	{
 		panelSprite := Must(render.NewSprite("ui/botPanel"))
 		ui.roomPanel = RoomPanel{
@@ -87,20 +100,24 @@ func (ui *UI) Layout(o *UIOptions) {
 	ui.dudePanel.Layout(o)
 	ui.roomPanel.Layout(o)
 	ui.speedPanel.Layout(o)
+	ui.messagePanel.Layout(o)
 }
 
 func (ui *UI) Update(o *UIOptions) {
 	ui.dudePanel.Update(o)
 	ui.roomPanel.Update(o)
 	ui.speedPanel.Update(o)
+	ui.messagePanel.Update(o)
 }
 
 func (ui *UI) Draw(o *render.Options) {
 	ui.dudePanel.Draw(o)
-	o.DrawImageOptions.GeoM.Reset()
-	ui.roomPanel.Draw(o)
+	// o.DrawImageOptions.GeoM.Reset()
+	// ui.roomPanel.Draw(o)
 	o.DrawImageOptions.GeoM.Reset()
 	ui.speedPanel.Draw(o)
+	o.DrawImageOptions.GeoM.Reset()
+	ui.messagePanel.Draw(o)
 }
 
 type DudeDetails struct {
@@ -903,4 +920,132 @@ func (sp *SpeedPanel) Draw(o *render.Options) {
 	sp.cameraButton.Draw(o)
 	sp.pauseButton.Draw(o)
 	sp.speedButton.Draw(o)
+}
+
+type MessagePanel struct {
+	render.Positionable
+	width        float64
+	height       float64
+	drawered     bool
+	pinned       bool
+	maxLines     int
+	drawerInterp render.InterpNumber
+	top          *render.Sprite
+	topleft      *render.Sprite
+	topright     *render.Sprite
+	mid          *render.Sprite
+	midleft      *render.Sprite
+	midright     *render.Sprite
+}
+
+func (mp *MessagePanel) Layout(o *UIOptions) {
+	// eww
+	mp.mid.Scale = o.Scale
+	mp.midleft.Scale = o.Scale
+	mp.midright.Scale = o.Scale
+	mp.top.Scale = o.Scale
+	mp.topleft.Scale = o.Scale
+	mp.topright.Scale = o.Scale
+
+	mp.width = float64(o.Width) * 0.75
+	mp.height = assets.BodyFont.LineHeight*float64(mp.maxLines) + 15 // buffer
+	mp.SetPosition((float64(o.Width))/2-(mp.width/2), float64(o.Height)-mp.height+50)
+}
+
+func (mp *MessagePanel) Update(o *UIOptions) {
+	mp.drawerInterp.Update()
+
+	rpx, rpy := mp.Position()
+	mx, my := IntToFloat2(ebiten.CursorPosition())
+
+	maxX := rpx + float64(mp.width)
+	maxY := rpy + mp.height
+
+	_, ph := mp.topleft.Size()
+
+	if mx > rpx && mx < maxX && my > rpy && my < maxY {
+		if mp.drawered {
+			mp.drawered = false
+			mp.drawerInterp.Set(0, 4)
+		}
+	} else {
+		if !mp.drawered {
+			mp.drawered = true
+			mp.drawerInterp.Set(mp.height-ph*2, 4)
+		}
+	}
+}
+
+func (mp *MessagePanel) Draw(o *render.Options) {
+	// Draw the panel
+	x, y := mp.Position()
+	pw, ph := mp.top.Size()
+
+	op := &render.Options{
+		Screen: o.Screen,
+	}
+	op.DrawImageOptions.GeoM.Translate(0, mp.drawerInterp.Current)
+	op.DrawImageOptions.GeoM.Translate(x, y)
+
+	// top
+	mp.topleft.Draw(op)
+	op.DrawImageOptions.GeoM.Translate(pw, 0)
+	for x := 0; x < int(mp.width/pw)-2; x++ {
+		mp.top.Draw(op)
+		op.DrawImageOptions.GeoM.Translate(pw, 0)
+	}
+	mp.topright.Draw(op)
+	op.DrawImageOptions.GeoM.Translate(-mp.width+pw, ph)
+
+	// mid
+	for y := 0; y < int(mp.height/ph)-2; y++ {
+		mp.midleft.Draw(op)
+		op.DrawImageOptions.GeoM.Translate(pw, 0)
+		for x := 0; x < int(mp.width/pw)-2; x++ {
+			mp.mid.Draw(op)
+			op.DrawImageOptions.GeoM.Translate(pw, 0)
+		}
+		mp.midright.Draw(op)
+		op.DrawImageOptions.GeoM.Translate(-mp.width+pw, ph)
+	}
+
+	if mp.drawered && !mp.pinned {
+		return
+	}
+
+	messages := GetMessages()
+
+	// Set initial position to bottom right of message panel
+	baseX := x + mp.width - 10
+	baseY := y + mp.height - 10 // Bottom edge minus padding
+
+	// Calculate the number of messages to display
+	maxLines := min(mp.maxLines-1, len(messages))
+
+	// Render messages from bottom to top
+	for i := 0; i < maxLines; i++ {
+		messageIndex := len(messages) - 1 - i
+		if messageIndex < 0 {
+			break
+		}
+		message := messages[messageIndex]
+
+		tOp := &render.TextOptions{
+			Screen: o.Screen,
+			Font:   assets.BodyFont,
+			Color:  message.kind.Color(),
+		}
+
+		w, h := text.Measure(message.text, assets.BodyFont.Face, assets.BodyFont.LineHeight)
+		posX := baseX - w
+		posY := baseY - float64(h*float64(i+1))
+
+		// Ensure the text doesn't go above the panel
+		if posY < y {
+			break
+		}
+
+		tOp.GeoM.Translate(posX, posY)
+		render.DrawText(tOp, message.text)
+	}
 }

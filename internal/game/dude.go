@@ -269,7 +269,15 @@ func (d *Dude) Trigger(e Event) {
 			damage, isCrit := d.GetDamage()
 			if damage == 0 {
 				d.Trigger(EventDudeMiss{dude: d, enemy: d.enemy})
+				AddMessage(
+					MessageCombat,
+					fmt.Sprintf("%s missed their attack against %s!", d.name, d.enemy.name),
+				)
 			} else if isCrit {
+				AddMessage(
+					MessageCombat,
+					fmt.Sprintf("%s crit %s for %d damage!", d.name, d.enemy.name, damage),
+				)
 				d.Trigger(EventDudeCrit{dude: d, enemy: d.enemy, amount: damage})
 			}
 			isDead := d.enemy.Damage(d.stats.strength)
@@ -279,11 +287,21 @@ func (d *Dude) Trigger(e Event) {
 				gold := d.enemy.Gold()
 				d.UpdateGold(gold)
 				d.AddXP(xp)
+				AddMessage(
+					MessageCombat,
+					fmt.Sprintf("%s defeated %s and gained %d xp and %.0fgp", d.name, d.enemy.name, xp, gold),
+				)
 				d.enemy = nil
 			} else {
 				takenDamage, isDodge := d.ApplyDamage(d.enemy.Hit())
 				if !isDodge {
 					d.Trigger(EventDudeHit{dude: d, amount: takenDamage})
+				} else {
+					d.Trigger(EventDudeDodge{dude: d, enemy: d.enemy})
+					AddMessage(
+						MessageCombat,
+						fmt.Sprintf("%s dodged an attack from %s", d.name, d.enemy.name),
+					)
 				}
 			}
 		}
@@ -301,6 +319,10 @@ func (d *Dude) Trigger(e Event) {
 		//fmt.Println(d.name, "equipped", e.equipment.Name())
 		if d.stack != nil {
 			t := MakeFloatingTextFromDude(d, fmt.Sprintf("equip %s", e.equipment.Name()), color.NRGBA{100, 200, 200, 255}, 120, 0.4)
+			AddMessage(
+				MessageInfo,
+				fmt.Sprintf("%s equipped %s", d.name, e.equipment.Name()),
+			)
 			d.story.AddText(t)
 		}
 	case EventUnequip:
@@ -668,5 +690,11 @@ func (d *Dude) TrapDamage(roomLevel int) {
 	// Damage based on room level
 	damage := roomLevel * 2
 
-	d.ApplyDamage(damage)
+	amount, miss := d.ApplyDamage(damage)
+	if !miss {
+		AddMessage(
+			MessageCombat,
+			fmt.Sprintf("%s took %d damage from a trap", d.name, amount),
+		)
+	}
 }

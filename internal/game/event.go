@@ -151,3 +151,12 @@ type EventDudeMiss struct {
 func (e EventDudeMiss) String() string {
 	return "Dude Miss"
 }
+
+type EventDudeDodge struct {
+	dude  *Dude
+	enemy *Enemy
+}
+
+func (e EventDudeDodge) String() string {
+	return "Dude Dodge"
+}
