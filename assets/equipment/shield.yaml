@@ -3,5 +3,5 @@ description: Protects your vital bits
 type: accessory
 stats: 
   defence: 3
-  wisdom: -2
-  agility: -2
+  wisdom: -1
+  agility: -1

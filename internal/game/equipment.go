@@ -106,7 +106,6 @@ type Equipment struct {
 	//material   string // Material of the equipment, maybe
 
 	name          string           // Standard name of the equipment ("Bow", "Sword", "Book", "Boots")
-	level         int              // Level of the equipment affects stats, maybe this could be material too?
 	quality       EquipmentQuality // Quality of the equipment, dictates total uses
 	uses          int              // Current uses of the equipment (number of times the perk can be triggered)
 	totalUses     int              // Total uses of the equipment
@@ -156,7 +155,6 @@ func NewEquipment(name string, level int, quality EquipmentQuality, perk IPerk) 
 
 	equipment := &Equipment{
 		name:          baseEquipment.Name,
-		level:         level,
 		quality:       quality,
 		uses:          int(quality) + 1,
 		totalUses:     int(quality) + 1,
@@ -176,6 +174,10 @@ func NewEquipment(name string, level int, quality EquipmentQuality, perk IPerk) 
 				luck:      baseEquipment.Stats["luck"],
 			},
 		},
+	}
+
+	for i := 0; i < level; i++ {
+		equipment.LevelUp()
 	}
 
 	equipment.Draw = func(o *render.Options) {
@@ -215,7 +217,7 @@ func (e *Equipment) Name() string {
 
 // Level returns the level of the equipment.
 func (e *Equipment) Level() int {
-	return e.level
+	return e.stats.level
 }
 
 func (e *Equipment) ChangeQuality(delta int) {
@@ -268,15 +270,16 @@ func (e *Equipment) ChangeQuality(delta int) {
 func (e *Equipment) LevelUp() {
 	// If we have stats we can level this item up
 	if e.stats == nil {
+		fmt.Println("No stats for equipment", e.name)
 		return
 	}
 
 	e.stats.LevelUp()
 
 	// If we hit level 5 we can upgrade the quality
-	if e.level == 5 && e.quality < EquipmentQualityLegendary {
+	if e.stats.level == 5 && e.quality < EquipmentQualityLegendary {
 		e.ChangeQuality(1)
-		e.level = 0
+		e.stats.level = 1
 	}
 }
 
@@ -286,12 +289,12 @@ func (e *Equipment) LevelDown() {
 		return
 	}
 
-	e.level--
+	e.stats.level--
 
 	// If we hit level 0 downgrade the quality if possible
-	if e.level < 0 && e.quality > EquipmentQualityCommon {
+	if e.stats.level < 0 && e.quality > EquipmentQualityCommon {
 		e.ChangeQuality(-1)
-		e.level = 4
+		e.stats.level = 4
 	}
 }
 
@@ -347,7 +350,7 @@ func (e *Equipment) Stats() *Stats {
 	// While level increases the base stats by 2% per level
 	// This way when you upgrade quality, the stats continually increase
 	qualityMultiplier := (float64(e.quality) * 0.15) + 1
-	levelMultiplier := (float64(e.level) * 0.02) + 1
+	levelMultiplier := (float64(e.stats.level) * 0.02) + 1
 	m := qualityMultiplier * levelMultiplier
 
 	applyMultiplier := func(s int) int {
@@ -386,7 +389,7 @@ func (e *Equipment) Type() EquipmentType {
 }
 
 func (e *Equipment) GoldValue() float32 {
-	return float32(e.level * (1 + int(e.quality)))
+	return float32(e.stats.level * (1 + int(e.quality)))
 }
 
 func (e *Equipment) RestoreUses(i int) {

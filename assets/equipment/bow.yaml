@@ -4,5 +4,6 @@ professions:
  - ranger
 type: weapon
 stats: 
-  agility: 2
-  cowardice: 15
+  strength: 1
+  agility: 1
+  cowardice: 10

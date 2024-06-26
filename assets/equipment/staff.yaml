@@ -6,5 +6,5 @@ professions:
 stats: 
   strength: 1
   wisdom: 2
-  cowardice: 10
+  cowardice: 5
 perk: Heal On Room Enter

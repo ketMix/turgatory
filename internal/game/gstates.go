@@ -29,16 +29,15 @@ func (s *GameStatePreBuild) Begin(g *Game) {
 	for i := 0; i < dudeLimit; i++ {
 		pk := professions[i%len(professions)]
 		dude := NewDude(pk, 1)
-		dude.stats.agility += i * 5
 		s.newDudes = append(s.newDudes, dude)
 	}
 	// Add some more randomized dudes.
 	for i := 0; i < 3; i++ {
 		pk := professions[rand.Intn(len(professions))]
 		dude := NewDude(pk, 1)
-		dude.stats.agility += i * 5
 		s.newDudes = append(s.newDudes, dude)
 	}
+
 	g.camera.SetMode(render.CameraModeTower)
 
 	// Create a new tower, yo.
@@ -74,6 +73,11 @@ type GameStateBuild struct {
 
 func (s *GameStateBuild) Begin(g *Game) {
 	g.camera.SetMode(render.CameraModeTower)
+
+	// On build phase, full heal all dudes.
+	for _, d := range g.dudes {
+		d.FullHeal()
+	}
 }
 func (s *GameStateBuild) End(g *Game) {
 }

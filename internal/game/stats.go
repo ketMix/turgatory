@@ -47,15 +47,12 @@ func (s *Stats) LevelUp() {
 	// need 5 wisdom to get a variance of 2
 	// lowest variance is 1
 	// multiplier can get pretty high with his wisdom and level
-	level := s.level
-	if level <= 0 {
-		level = 1
-	}
+
 	variance := func() float64 {
 		return 1 + rand.Float64()*(float64(s.wisdom)/WISDOM_PER_VARIANCE)
 	}
 	getValue := func(base int) int {
-		return int(math.Round(float64(base) * variance()))
+		return int(math.Floor(float64(base) * variance()))
 	}
 
 	// apply the variance to the stats
@@ -118,12 +115,24 @@ func (s *Stats) ModifyStat(stat Stat, amount int) {
 	switch stat {
 	case StatStrength:
 		s.strength += amount
+		if s.strength < 0 {
+			s.strength = 0
+		}
 	case StatWisdom:
 		s.wisdom += amount
+		if s.wisdom < 0 {
+			s.wisdom = 0
+		}
 	case StatDefense:
 		s.defense += amount
+		if s.defense < 0 {
+			s.defense = 0
+		}
 	case StatAgility:
 		s.agility += amount
+		if s.agility < 0 {
+			s.agility = 0
+		}
 	// Cowardice can't go below 0
 	case StatCowardice:
 		s.cowardice += amount
@@ -132,6 +141,9 @@ func (s *Stats) ModifyStat(stat Stat, amount int) {
 		}
 	case StatLuck:
 		s.luck += amount
+		if s.luck < 0 {
+			s.luck = 0
+		}
 	// HP is a special case
 	case StatMaxHP:
 		prevHp := s.totalHp

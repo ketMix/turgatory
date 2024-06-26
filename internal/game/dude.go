@@ -79,10 +79,10 @@ func NewDude(pk ProfessionKind, level int) *Dude {
 	// Initialize stats and equipment
 	profession := NewProfession(pk, level)
 	dude.stats = profession.StartingStats()
-	fmt.Println(dude.name, "the", pk.String(), "has been created with stats", dude.stats)
-	dude.inventory = profession.StartingEquipment()
+	dude.inventory = make([]*Equipment, 0)
+
 	dude.equipped = make(map[EquipmentType]*Equipment)
-	for _, eq := range dude.inventory {
+	for _, eq := range profession.StartingEquipment() {
 		dude.Equip(eq)
 	}
 
@@ -554,9 +554,12 @@ func (d *Dude) ApplyDamage(amount int) (int, bool) {
 	}
 
 	// Apply defense stat
-	amount -= d.stats.defense
+	// Higher defense means less damage taken with diminishing returns
+	// 1 defense = 1% damage reduction
+	// 100 defense = 50% damage reduction
+	amount = int(float64(amount) * (1.0 - float64(stats.defense)/200.0))
 	if amount < 0 {
-		amount = 0
+		amount = 1
 	}
 
 	d.stats.currentHp -= amount
@@ -659,6 +662,7 @@ func (d *Dude) GetCalculatedStats() *Stats {
 	for _, eq := range d.equipped {
 		stats = stats.Add(eq.Stats())
 	}
+	stats.currentHp = d.stats.currentHp
 	return stats
 }
 
@@ -682,13 +686,21 @@ func (d *Dude) XP() int {
 }
 
 func (d *Dude) Heal(amount int) {
-	stats := d.GetCalculatedStats()
 	//initialHP := stats.currentHp
+	d.stats.ModifyStat(StatCurrentHP, amount)
 
-	stats.ModifyStat(StatCurrentHP, amount)
 	//fmt.Println(d.name, "healed", amount, "HP", " and went from ", initialHP, " to ", d.stats.currentHp)
 	t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%d", amount), color.NRGBA{0, 255, 0, 255}, 40, 0.5)
 	d.story.AddText(t)
+}
+
+func (d *Dude) FullHeal() {
+	stats := d.GetCalculatedStats()
+
+	// No rez
+	if d.stats.currentHp >= 0 {
+		d.stats.currentHp = stats.totalHp
+	}
 }
 
 func (d *Dude) RestoreUses(amount int) {
@@ -702,13 +714,31 @@ func (d *Dude) RestoreUses(amount int) {
 	d.story.AddText(t)
 }
 
-func (d *Dude) LevelUpEquipment(amount int) {
-	for _, eq := range d.equipped {
+func (d *Dude) RandomEquippedItem() *Equipment {
+	equippedTypes := []EquipmentType{}
+	for t, eq := range d.equipped {
 		if eq != nil {
-			for i := 0; i < amount; i++ {
-				eq.LevelUp()
-			}
+			equippedTypes = append(equippedTypes, t)
 		}
+	}
+
+	if len(equippedTypes) == 0 {
+		return nil
+	}
+
+	et := equippedTypes[rand.Intn(len(equippedTypes))]
+	return d.equipped[et]
+}
+
+func (d *Dude) LevelUpEquipment(amount int) {
+	// Random equipped item
+	eq := d.RandomEquippedItem()
+	if eq == nil {
+		return
+	}
+
+	for i := 0; i < amount; i++ {
+		eq.LevelUp()
 	}
 	//fmt.Println(d.name, "leveled up equipment by", amount)
 	t := MakeFloatingTextFromDude(d, fmt.Sprintf("+eq up %d", amount), color.NRGBA{128, 128, 255, 255}, 50, 0.5)
@@ -716,28 +746,28 @@ func (d *Dude) LevelUpEquipment(amount int) {
 }
 
 func (d *Dude) Perkify(maxQuality PerkQuality) {
-	// Random equipped item
-	equipmentType := RandomEquipmentType()
+	eq := d.RandomEquippedItem()
+	if eq == nil {
+		return
+	}
 
-	if eq := d.equipped[equipmentType]; eq != nil {
-		// Assign random perk
-		if eq.perk == nil {
-			prevName := eq.Name()
-			eq.perk = GetRandomPerk(PerkQualityTrash)
-			//fmt.Println(d.name, "upgraded his equipment", prevName, "with", eq.perk.Name())
-			t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%s perk %s", prevName, eq.perk.Name()), color.NRGBA{128, 255, 128, 255}, 100, 0.5)
+	// Assign random perk
+	if eq.perk == nil {
+		prevName := eq.Name()
+		eq.perk = GetRandomPerk(PerkQualityTrash)
+		//fmt.Println(d.name, "upgraded his equipment", prevName, "with", eq.perk.Name())
+		t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%s perk %s", prevName, eq.perk.Name()), color.NRGBA{128, 255, 128, 255}, 100, 0.5)
+		d.story.AddText(t)
+	} else {
+		// Level up perk
+		previousQuality := eq.perk.Quality()
+		previousName := eq.Name()
+		eq.perk.LevelUp(maxQuality)
+		if eq.perk.Quality() != previousQuality {
+			//fmt.Println(eq.perk.Quality(), previousQuality)
+			//fmt.Println(d.name, "upgraded his equipment", previousName, "to", eq.Name())
+			t := MakeFloatingTextFromDude(d, fmt.Sprintf("+eq %s upgrade to %s", previousName, eq.Name()), color.NRGBA{128, 255, 128, 255}, 100, 0.5)
 			d.story.AddText(t)
-		} else {
-			// Level up perk
-			previousQuality := eq.perk.Quality()
-			previousName := eq.Name()
-			eq.perk.LevelUp(maxQuality)
-			if eq.perk.Quality() != previousQuality {
-				//fmt.Println(eq.perk.Quality(), previousQuality)
-				//fmt.Println(d.name, "upgraded his equipment", previousName, "to", eq.Name())
-				t := MakeFloatingTextFromDude(d, fmt.Sprintf("+eq %s upgrade to %s", previousName, eq.Name()), color.NRGBA{128, 255, 128, 255}, 100, 0.5)
-				d.story.AddText(t)
-			}
 		}
 	}
 }
@@ -750,8 +780,6 @@ func (d *Dude) Perkify(maxQuality PerkQuality) {
 // - Delevel dude (low chance)
 func (d *Dude) Cursify(roomLevel int) {
 	stats := d.GetCalculatedStats()
-	fmt.Println(stats.wisdom)
-	fmt.Println(stats.luck)
 
 	// Ensure stats are not negative
 	wis := max(stats.wisdom, 1)
@@ -768,6 +796,15 @@ func (d *Dude) Cursify(roomLevel int) {
 	if curseRoll > threshold {
 		// Spared
 		return
+	}
+
+	// Check for gold loss
+	if curseRoll <= threshold*0.75 { // high chance for gold loss
+		goldLoss := float32(roomLevel * 10)
+		d.UpdateGold(-goldLoss)
+		//fmt.Println(d.name, "lost", goldLoss, "gold")
+		t := MakeFloatingTextFromDude(d, fmt.Sprintf("-%.0fgp", goldLoss), color.NRGBA{255, 255, 0, 200}, 40, 0.5)
+		d.story.AddText(t)
 	}
 
 	// Check for equipment delevel

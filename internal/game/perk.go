@@ -172,7 +172,7 @@ func (p PerkFindGold) String() string {
 
 func (p PerkFindGold) Description() string {
 	amount := float32(p.quality) * 0.25
-	return fmt.Sprintf("Has a %f Chance to find finds %f gold", p.chance()*100, amount)
+	return fmt.Sprintf("Has a %.2f Chance to find finds %.2f gold", p.chance()*100, amount)
 }
 
 func (p PerkFindGold) Check(e Event) bool {

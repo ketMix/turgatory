@@ -63,7 +63,7 @@ func NewUI() *UI {
 	{
 		panelSprite := Must(render.NewSprite("ui/panels"))
 		ui.messagePanel = MessagePanel{
-			maxLines: 50,
+			maxLines: 10,
 			top:      Must(render.NewSubSprite(panelSprite, 16, 0, 16, 16)),
 			topleft:  Must(render.NewSubSprite(panelSprite, 0, 0, 16, 16)),
 			topright: Must(render.NewSubSprite(panelSprite, 32, 0, 16, 16)),
@@ -202,20 +202,21 @@ func (dp *DudeProfile) Draw(o *render.Options) {
 		render.DrawText(op, fmt.Sprintf("Level %d %s", dp.dude.Level(), dp.dude.Profession()))
 		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
 		op.Color = color.RGBA{200, 50, 50, 255}
-		render.DrawText(op, fmt.Sprintf("HP: %d/%d", dp.dude.stats.currentHp, dp.dude.stats.totalHp))
+		stats := dp.dude.GetCalculatedStats()
+		render.DrawText(op, fmt.Sprintf("HP: %d/%d", stats.currentHp, stats.totalHp))
 		op.Color = color.RGBA{200, 200, 200, 255}
 		op.GeoM.Translate(0, assets.BodyFont.LineHeight*2)
-		render.DrawText(op, fmt.Sprintf("%s strength", PaddedIntString(dp.dude.stats.strength, 4)))
+		render.DrawText(op, fmt.Sprintf("%s strength", PaddedIntString(stats.strength, 4)))
 		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-		render.DrawText(op, fmt.Sprintf("%s agility", PaddedIntString(dp.dude.stats.agility, 4)))
+		render.DrawText(op, fmt.Sprintf("%s agility", PaddedIntString(stats.agility, 4)))
 		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-		render.DrawText(op, fmt.Sprintf("%s defense", PaddedIntString(dp.dude.stats.defense, 4)))
+		render.DrawText(op, fmt.Sprintf("%s defense", PaddedIntString(stats.defense, 4)))
 		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-		render.DrawText(op, fmt.Sprintf("%s wisdom", PaddedIntString(dp.dude.stats.wisdom, 4)))
+		render.DrawText(op, fmt.Sprintf("%s wisdom", PaddedIntString(stats.wisdom, 4)))
 		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-		render.DrawText(op, fmt.Sprintf("%s cowardice", PaddedIntString(dp.dude.stats.cowardice, 4)))
+		render.DrawText(op, fmt.Sprintf("%s cowardice", PaddedIntString(stats.cowardice, 4)))
 		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-		render.DrawText(op, fmt.Sprintf("%s luck", PaddedIntString(dp.dude.stats.luck, 4)))
+		render.DrawText(op, fmt.Sprintf("%s luck", PaddedIntString(stats.luck, 4)))
 	}
 }
 
@@ -316,6 +317,8 @@ func (dd *DudeDetails) Draw(o *render.Options) {
 	}
 	dd.botright.Draw(o)
 
+	// Use calculated stats for display
+	stats := dd.dude.GetCalculatedStats()
 	// Details
 	op := &render.TextOptions{
 		Screen: o.Screen,
@@ -331,20 +334,24 @@ func (dd *DudeDetails) Draw(o *render.Options) {
 	render.DrawText(op, fmt.Sprintf("Level %d %s", dd.dude.Level(), dd.dude.Profession()))
 	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
 	op.Color = color.RGBA{200, 50, 50, 255}
-	render.DrawText(op, fmt.Sprintf("HP: %d/%d", dd.dude.stats.currentHp, dd.dude.stats.totalHp))
+	render.DrawText(op, fmt.Sprintf("HP: %d/%d", stats.currentHp, stats.totalHp))
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+	op.Color = color.RGBA{255, 215, 0, 255}
+	render.DrawText(op, fmt.Sprintf("%.2f gold", dd.dude.gold))
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
 	op.Color = color.RGBA{200, 200, 200, 255}
 	op.GeoM.Translate(0, assets.BodyFont.LineHeight*2)
-	render.DrawText(op, fmt.Sprintf("%s strength", PaddedIntString(dd.dude.stats.strength, 4)))
+	render.DrawText(op, fmt.Sprintf("%s strength", PaddedIntString(stats.strength, 4)))
 	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s agility", PaddedIntString(dd.dude.stats.agility, 4)))
+	render.DrawText(op, fmt.Sprintf("%s agility", PaddedIntString(stats.agility, 4)))
 	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s defense", PaddedIntString(dd.dude.stats.defense, 4)))
+	render.DrawText(op, fmt.Sprintf("%s defense", PaddedIntString(stats.defense, 4)))
 	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s wisdom", PaddedIntString(dd.dude.stats.wisdom, 4)))
+	render.DrawText(op, fmt.Sprintf("%s wisdom", PaddedIntString(stats.wisdom, 4)))
 	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s cowardice", PaddedIntString(dd.dude.stats.cowardice, 4)))
+	render.DrawText(op, fmt.Sprintf("%s cowardice", PaddedIntString(stats.cowardice, 4)))
 	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s luck", PaddedIntString(dd.dude.stats.luck, 4)))
+	render.DrawText(op, fmt.Sprintf("%s luck", PaddedIntString(stats.luck, 4)))
 
 	// Equipment
 	op.GeoM.Reset()
@@ -448,11 +455,10 @@ func drawEquipmentDescription(o *render.Options, dd *DudeDetails, hoveredEquipme
 	// RIGHT SIDE
 	// Draw equipment type
 	op.GeoM.Reset()
-	op.GeoM.Translate(x+dd.width-50, y+dd.height-10)
+	op.GeoM.Translate(x+dd.width-100, y+dd.height-10)
 	op.Color = color.RGBA{200, 200, 200, 255}
-	render.DrawText(op, hoveredEquipment.Type().String())
+	render.DrawText(op, fmt.Sprintf("Level %d %s", hoveredEquipment.stats.level, hoveredEquipment.Type().String()))
 	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	op.GeoM.Translate(-50, 0)
 
 	// Draw Stats
 	op.Color = color.RGBA{200, 200, 200, 255}
