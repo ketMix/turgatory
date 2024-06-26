@@ -21,6 +21,8 @@ type Stack struct {
 	VgroupOffset     int
 	SliceOffset      int
 	HeightOffset     float64
+	NoLighting       bool
+	Transparency     float32
 }
 
 func NewStack(name string, stackName string, animationName string) (*Stack, error) {
@@ -111,13 +113,18 @@ func (s *Stack) Draw(o *Options) {
 		c := float64(index) / float64(len(s.currentFrame.Slices))
 		c = math.Min(1.0, math.Max(0.5, c))
 		color := float32(c)
-		// Temporarily disable color
 		// TODO: Add color offsets...
-		//color = 1.0
+		if s.NoLighting {
+			color = 1.0
+		}
 
 		opts.ColorScale.Reset()
 		opts.ColorScale.Scale(color, color, color, 1.0)
 		opts.ColorScale.ScaleWithColorScale(o.DrawImageOptions.ColorScale)
+
+		if s.Transparency != 0 {
+			opts.ColorScale.ScaleAlpha(1.0 - s.Transparency)
+		}
 
 		if o.VGroup != nil {
 			i += s.VgroupOffset

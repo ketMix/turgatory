@@ -43,9 +43,9 @@ func (s *GameStatePreBuild) Begin(g *Game) {
 }
 func (s *GameStatePreBuild) End(g *Game) {
 	g.dudes = append(g.dudes, s.newDudes...)
-	g.tower.AddDudes(s.newDudes...)
 }
 func (s *GameStatePreBuild) Update(g *Game) GameState {
+	//return &GameStateWin{}
 	return &GameStateBuild{}
 }
 func (s *GameStatePreBuild) Draw(g *Game, screen *ebiten.Image) {
@@ -53,33 +53,82 @@ func (s *GameStatePreBuild) Draw(g *Game, screen *ebiten.Image) {
 
 type GameStateBuild struct {
 	availableRooms []RoomDef
+	titleTimer     int
 }
 
 func (s *GameStateBuild) Begin(g *Game) {
-	g.camera.SetMode(render.CameraModeStack)
+	g.camera.SetMode(render.CameraModeTower)
 }
 func (s *GameStateBuild) End(g *Game) {
 }
 func (s *GameStateBuild) Update(g *Game) GameState {
-	return &GameStatePlay{}
+	s.titleTimer++
+	if s.titleTimer > 120 {
+		return &GameStatePlay{}
+	}
+	return nil
 }
 func (s *GameStateBuild) Draw(g *Game, screen *ebiten.Image) {
+	if s.titleTimer < 120 {
+		opts := render.TextOptions{
+			Screen: screen,
+			Font:   assets.DisplayFont,
+			Color:  color.NRGBA{184, 152, 93, 200},
+		}
+		opts.GeoM.Scale(4, 4)
+
+		w, h := text.Measure("BUILD", opts.Font.Face, opts.Font.LineHeight)
+		w *= 4
+		h *= 4
+
+		opts.GeoM.Translate(float64(screen.Bounds().Dx()/2)-w/2, float64(screen.Bounds().Dy()/4)-h/2)
+
+		render.DrawText(&opts, "BUILD")
+	}
 }
 
 type GameStatePlay struct {
-	pauseWobbler float64
-	updateTicker int
+	titleTimer     int
+	pauseWobbler   float64
+	updateTicker   int
+	returningDudes []*Dude
 }
 
 func (s *GameStatePlay) Begin(g *Game) {
 	g.camera.SetMode(render.CameraModeStack)
+
+	// Make sure our dudes are visible.
+	for _, d := range g.dudes {
+		d.stack.Transparency = 0
+		d.shadow.Transparency = 0
+	}
+
+	// Add our dudes to the tower!
+	g.tower.AddDudes(g.dudes...)
 	// TODO: Set up dude state to spawn outside first story?
 	g.ui.dudePanel.SyncDudes(g.dudes)
 }
 func (s *GameStatePlay) End(g *Game) {
-	// TODO: Create a portal at highest story's last room and issue dudes to walk into it?
+	// Replace our current dudes!
+	g.dudes = nil
+	g.dudes = append(g.dudes, s.returningDudes...)
+	for i, s := range g.tower.Stories {
+		if !s.open {
+			s.Open()
+			if i-1 >= 0 {
+				// Remove door, ofc
+				g.tower.Stories[i-1].RemoveDoor()
+				// Remove old portal
+				g.tower.Stories[i-1].RemovePortal()
+				g.tower.portalOpen = false
+			}
+			break
+		}
+	}
 }
 func (s *GameStatePlay) Update(g *Game) GameState {
+	s.titleTimer++
+
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		g.TogglePause()
 	}
@@ -91,7 +140,22 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 	if !g.paused {
 		s.updateTicker++
 		if s.updateTicker > g.speed {
-			g.tower.Update()
+			var req ActivityRequests
+			g.tower.Update(&req)
+			for _, u := range req {
+				switch u := u.(type) {
+				case TowerCompleteActivity:
+					return &GameStateWin{}
+				case TowerLeaveActivity:
+					s.returningDudes = append(s.returningDudes, u.dude)
+					if !g.tower.HasAliveDudes() {
+						// No more alive dudes! Switch game state, yo.
+						g.tower.ClearBodies()
+						return &GameStateBuild{}
+					}
+				}
+			}
+
 			s.updateTicker = 0
 		}
 	}
@@ -104,21 +168,27 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 func (s *GameStatePlay) Draw(g *Game, screen *ebiten.Image) {
 	options := render.Options{Screen: screen, Overlay: g.overlay, Camera: &g.camera}
 
-	// Transform our options via the camera.
-	g.camera.Transform(&options)
-
-	// Draw that tower -> story -> room -> ???
-	g.tower.Draw(&options)
-
-	// Render stuff
-	for _, r := range g.renderables {
-		r.Draw(&options)
-	}
-
 	// Draw UI
 	options.DrawImageOptions.GeoM.Reset()
 	options.DrawImageOptions.ColorScale.Reset()
 	g.ui.Draw(&options)
+
+	if s.titleTimer < 120 {
+		opts := render.TextOptions{
+			Screen: screen,
+			Font:   assets.DisplayFont,
+			Color:  color.NRGBA{184, 152, 93, 200},
+		}
+		opts.GeoM.Scale(4, 4)
+
+		w, h := text.Measure("ADVENTURE", opts.Font.Face, opts.Font.LineHeight)
+		w *= 4
+		h *= 4
+
+		opts.GeoM.Translate(float64(screen.Bounds().Dx()/2)-w/2, float64(screen.Bounds().Dy()/4)-h/2)
+
+		render.DrawText(&opts, "ADVENTURE")
+	}
 
 	// Draw pause
 	if g.paused {
@@ -155,4 +225,88 @@ type GameStateLose struct {
 }
 
 type GameStateWin struct {
+	wobbler float64
+}
+
+func (s *GameStateWin) Begin(g *Game) {
+	g.camera.SetMode(render.CameraModeTower)
+}
+func (s *GameStateWin) End(g *Game) {
+}
+
+func (s *GameStateWin) Update(g *Game) GameState {
+	s.wobbler += 0.05
+	g.camera.SetRotation(g.camera.Rotation() + 0.005)
+	return nil
+}
+
+func (s *GameStateWin) Draw(g *Game, screen *ebiten.Image) {
+	s.DrawRainbow(screen, "U   WINNE!1!")
+}
+
+func (s *GameStateWin) DrawRainbow(screen *ebiten.Image, t string) {
+	geom := ebiten.GeoM{}
+	geom.Scale(4, 4)
+	opts := &render.TextOptions{
+		Screen: screen,
+		Font:   assets.DisplayFont,
+		Color:  color.Black,
+		GeoM:   geom,
+	}
+
+	w, h := text.Measure(t, opts.Font.Face, opts.Font.LineHeight)
+	w *= 4
+	h *= 4
+
+	opts.GeoM.Translate(-w/2, -h/2)
+	opts.GeoM.Rotate(math.Sin(s.wobbler) * 0.05)
+	opts.GeoM.Translate(w/2, h/2)
+	opts.GeoM.Translate(float64(screen.Bounds().Dx()/2)-w/2, float64(screen.Bounds().Dy()/4)-h/2)
+
+	opts.GeoM.Translate(0, h*2) // Uh... this *2 is odd.
+
+	// RAINBOW
+	var colors = []color.NRGBA{
+		{255, 0, 0, 255},
+		{255, 127, 0, 255},
+		{255, 255, 0, 255},
+		{0, 255, 0, 255},
+		{0, 0, 255, 255},
+		{75, 0, 130, 255},
+		{238, 130, 238, 255},
+	}
+	ci := 0
+
+	// Draw "shadow"
+	oldGeoM := ebiten.GeoM{}
+	oldGeoM.Concat(opts.GeoM)
+	for _, r := range t {
+		tx, _ := text.Measure(string(r), opts.Font.Face, opts.Font.LineHeight)
+		tx *= 4
+
+		opts.GeoM.Translate(-10, -10)
+		opts.Color = color.NRGBA{10, 0, 0, 200}
+		render.DrawText(opts, string(r))
+		opts.GeoM.Translate(20, 20)
+		render.DrawText(opts, string(r))
+		opts.GeoM.Translate(-10, -10)
+
+		opts.GeoM.Translate(tx, 0)
+		opts.GeoM.Rotate(math.Cos(s.wobbler) * 0.003)
+	}
+
+	// Draw main text
+	opts.GeoM = oldGeoM
+	for _, r := range t {
+		tx, _ := text.Measure(string(r), opts.Font.Face, opts.Font.LineHeight)
+		tx *= 4
+
+		opts.Color = colors[ci%len(colors)]
+		render.DrawText(opts, string(r))
+
+		opts.GeoM.Translate(tx, 0)
+		opts.GeoM.Rotate(math.Cos(s.wobbler) * 0.003)
+
+		ci++
+	}
 }

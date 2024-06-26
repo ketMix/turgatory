@@ -41,6 +41,30 @@ func (s StoryEnterNextActivity) Cb() func(success bool) {
 	return s.cb
 }
 
+type TowerLeaveActivity struct {
+	dude *Dude
+	cb   func(success bool)
+}
+
+func (t TowerLeaveActivity) Apply() {
+}
+
+func (t TowerLeaveActivity) Cb() func(success bool) {
+	return t.cb
+}
+
+type TowerCompleteActivity struct {
+	dude *Dude
+	cb   func(success bool)
+}
+
+func (t TowerCompleteActivity) Apply() {
+}
+
+func (t TowerCompleteActivity) Cb() func(success bool) {
+	return t.cb
+}
+
 type RoomEnterActivity struct {
 	dude *Dude
 	room *Room

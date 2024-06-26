@@ -8,25 +8,28 @@ import (
 
 // Story is a single story in the tower. It contains rooms.
 type Story struct {
-	rooms     []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
-	dudes     []*Dude
-	stacks    render.Stacks
-	doorStack *render.Stack
-	walls     render.Stacks
-	vgroup    *render.VGroup
-	level     int
-	open      bool
-	texts     []FloatingText
+	rooms       []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
+	dudes       []*Dude
+	portalStack *render.Stack
+	stacks      render.Stacks
+	doorStack   *render.Stack
+	walls       render.Stacks
+	vgroup      *render.VGroup
+	level       int
+	open        bool
+	texts       []FloatingText
 }
 
 // StoryHeight is the height of a story in da tower.
-const StoryHeight = 28                       // StoryHeight is used to space stories apart from each other vertically.
-const StorySlices = 28                       // The amount of slices used for the frame buffers, should be equal to maximum staxie slice count used in a story.
-const StoryWallHeight = 9                    // The height of the wall stack -- this is repeated 3 times to get the full height (roughly)
-const StoryVGroupWidth = 256                 // Framebuffer's maximum width for rendering.
-const StoryVGroupHeight = 256                // Framebuffer's maximum height for rendering.
-const TowerCenterX = StoryVGroupWidth/2 - 5  // Center of the tower. Have to offset lightly for some dumb reason...
-const TowerCenterY = StoryVGroupHeight/2 - 5 // Center of the tower.
+const StoryHeight = 28                                // StoryHeight is used to space stories apart from each other vertically.
+const StorySlices = 28                                // The amount of slices used for the frame buffers, should be equal to maximum staxie slice count used in a story.
+const StoryWallHeight = 9                             // The height of the wall stack -- this is repeated 3 times to get the full height (roughly)
+const StoryVGroupWidth = 256                          // Framebuffer's maximum width for rendering.
+const StoryVGroupHeight = 256                         // Framebuffer's maximum height for rendering.
+const PortalDistance = 44                             // Distance from the center of the tower to the portal.
+const PortalRotation = 7.0*-(math.Pi/8) - math.Pi/3.5 // Rotation of the portal.
+const TowerCenterX = StoryVGroupWidth/2 - 5           // Center of the tower. Have to offset lightly for some dumb reason...
+const TowerCenterY = StoryVGroupHeight/2 - 5          // Center of the tower.
 
 // NewStory creates a grand new spankin' story.
 func NewStory() *Story {
@@ -172,6 +175,9 @@ func (s *Story) Update(req *ActivityRequests) {
 		case StoryEnterNextActivity:
 			// Pass it up but with our story added.
 			req.Add(StoryEnterNextActivity{dude: u.dude, story: s})
+		case TowerLeaveActivity:
+			// Pass it up.
+			req.Add(u)
 		}
 		if success {
 			u.Apply()
@@ -242,11 +248,16 @@ func (s *Story) Draw(o *render.Options) {
 		for _, dude := range s.dudes {
 			dude.Draw(opts)
 		}
-	}
 
-	// Draw the door stack.
-	if s.doorStack != nil {
-		s.doorStack.Draw(opts)
+		// Draw the door stack.
+		if s.doorStack != nil {
+			s.doorStack.Draw(opts)
+		}
+
+		if s.portalStack != nil {
+			s.portalStack.Draw(opts)
+		}
+
 	}
 
 	s.vgroup.Draw(o)
@@ -301,6 +312,21 @@ func (s *Story) Open() {
 
 func (s *Story) RemoveDoor() {
 	s.doorStack = nil
+}
+
+func (s *Story) AddPortal() {
+	stack := Must(render.NewStack("walls/portal", "", ""))
+	x, y := s.PositionFromCenter(PortalRotation, PortalDistance)
+
+	stack.SetRotation(math.Pi + math.Pi/2 - math.Pi/8)
+	stack.SetPosition(x, y)
+	stack.NoLighting = true
+	stack.VgroupOffset = 2
+	s.portalStack = stack
+}
+
+func (s *Story) RemovePortal() {
+	s.portalStack = nil
 }
 
 // PlaceRoom places a room in the story, populating the rooms slice's pointer references accordingly.

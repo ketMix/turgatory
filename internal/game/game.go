@@ -135,6 +135,8 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	g.DrawTower(screen)
+
 	g.state.Draw(g, screen)
 
 	// Draw overlay.
@@ -142,6 +144,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// Print fps
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%0.2f", ebiten.CurrentFPS()), 0, 0)
+}
+
+func (g *Game) DrawTower(screen *ebiten.Image) {
+	options := render.Options{Screen: screen, Overlay: g.overlay, Camera: &g.camera}
+	// Transform our options via the camera.
+	g.camera.Transform(&options)
+
+	// Draw that tower -> story -> room -> ???
+	g.tower.Draw(&options)
+
+	// Render stuff
+	for _, r := range g.renderables {
+		r.Draw(&options)
+	}
 }
 
 func (g *Game) Init() {
@@ -154,8 +170,8 @@ func (g *Game) Init() {
 	tower.AddStory(firstStory)
 
 	tower.AddStory(NewStoryWithSize(8))
-	tower.Stories[1].Open()
-	firstStory.RemoveDoor()
+	//tower.Stories[1].Open()
+	//firstStory.RemoveDoor()
 	tower.AddStory(NewStory())
 	tower.AddStory(NewStory())
 	tower.AddStory(NewStory())

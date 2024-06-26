@@ -12,6 +12,8 @@ type Tower struct {
 	render.Positionable // I guess it's okay to re-use this in such a fashion.
 	Stories             []*Story
 	stairs              *Prefab // Stairs at the bottom of the tower
+	portalOpen          bool
+	dudes               []*Dude
 }
 
 // NewTower creates a new tower.
@@ -27,7 +29,7 @@ func NewTower() *Tower {
 }
 
 // Update the tower.
-func (t *Tower) Update() {
+func (t *Tower) Update(req *ActivityRequests) {
 	t.stairs.Update()
 	// TODO: Should this only update "active" stories?
 	var storyUpdates ActivityRequests
@@ -36,17 +38,25 @@ func (t *Tower) Update() {
 	}
 	for _, u := range storyUpdates {
 		switch u := u.(type) {
+		case TowerLeaveActivity:
+			t.RemoveDude(u.dude)
+			// Send it up to the game so it can do logic to see if all dudes are gone.
+			req.Add(u)
 		case StoryEnterNextActivity:
 			// We can always allow this to happen since the logic is triggered in RoomEnterActivity with index 7.
-			nextStory := t.Stories[u.story.level+1]
+			if u.story.level == len(t.Stories)-1 {
+				req.Add(TowerCompleteActivity{dude: u.dude})
+			} else {
+				nextStory := t.Stories[u.story.level+1]
 
-			if u.dude.room != nil {
-				u.dude.room.RemoveDudeFromCenter(u.dude)
-				u.dude.room.RemoveDude(u.dude)
-				u.dude.room = nil
+				if u.dude.room != nil {
+					u.dude.room.RemoveDudeFromCenter(u.dude)
+					u.dude.room.RemoveDude(u.dude)
+					u.dude.room = nil
+				}
+				u.story.RemoveDude(u.dude)
+				nextStory.AddDude(u.dude)
 			}
-			u.story.RemoveDude(u.dude)
-			nextStory.AddDude(u.dude)
 		case RoomCombatActivity:
 			u.dude.Trigger(EventCombatRoom{room: u.room, dude: u.dude})
 		case RoomEnterActivity:
@@ -59,6 +69,7 @@ func (t *Tower) Update() {
 			// If it's the last room, then move upwards and go poof (unless we're coming from stairs or are entering the tower for the first time).
 			if u.dude.activity != StairsFromDown && u.dude.activity != FirstEntering && u.room.index == 7 {
 				u.dude.activity = StairsToUp
+				u.dude.timer = 0
 			}
 		case RoomCenterActivity:
 			u.dude.Trigger(EventCenterRoom{room: u.room, dude: u.dude})
@@ -72,22 +83,14 @@ func (t *Tower) Update() {
 				} else if u.room.story.level < len(t.Stories)-1 {
 					nextStory := t.Stories[u.room.story.level+1]
 					if !nextStory.open {
-						fmt.Println("next not open! set tower to teleporting!")
-						u.dude.activity = Idle
-					} else {
-						fmt.Println("next is open, let's goooo")
+						if !t.portalOpen {
+							t.portalOpen = true
+							u.room.story.AddPortal()
+						}
+						u.dude.activity = EnterPortal
+						u.dude.timer = 0
 					}
 				}
-
-				//u.dude.activity = Idle
-
-				// NOTE: triggering a portal should only happen _once_, need to assign some sort of tower state.
-				if !u.room.story.open {
-					// TODO: If the next story is not open, then create a portal stack and have the lil dudes walk into + dematerialize (fade out).
-				} else {
-					// TODO: If the next story is open, then move to center stairs, set dude state to GoUpStairs, upon which the success of will cause an Activity of "EnterStory", which will move the dude to the next story and set the ComeFromStairs state.
-				}
-				fmt.Println("END OF STORY, OH GOSH")
 			}
 		}
 		u.Apply()
@@ -125,10 +128,58 @@ func (t *Tower) AddDude(d *Dude) {
 		enter = TowerEntrance
 	}
 	d.SetPosition(story.PositionFromCenter(math.Pi/2, enter))
+	t.dudes = append(t.dudes, d)
+}
+
+func (t *Tower) RemoveDude(d *Dude) {
+	// Remove dude from any rooms.
+	if d.room != nil {
+		d.room.RemoveDudeFromCenter(d)
+		d.room.RemoveDude(d)
+		d.room = nil
+	}
+	// Remove from story.
+	if d.story != nil {
+		d.story.RemoveDude(d)
+		d.story = nil
+	}
+	// Finally remove from our own slice.
+	for i, dude := range t.dudes {
+		if dude == d {
+			t.dudes = append(t.dudes[:i], t.dudes[i+1:]...)
+			return
+		}
+	}
 }
 
 func (t *Tower) AddDudes(dudes ...*Dude) {
 	for _, d := range dudes {
 		t.AddDude(d)
 	}
+}
+
+func (t *Tower) HasAliveDudes() bool {
+	b := false
+	for _, d := range t.dudes {
+		if !d.IsDead() {
+			b = true
+			break
+		}
+	}
+	return b
+}
+
+func (t *Tower) ClearBodies() {
+	// Remove dude from any rooms.
+	for _, d := range t.dudes {
+		if d.room != nil {
+			d.room.RemoveDudeFromCenter(d)
+			d.room.RemoveDude(d)
+		}
+		// Remove from story.
+		if d.story != nil {
+			d.story.RemoveDude(d)
+		}
+	}
+	t.dudes = nil
 }

@@ -22,6 +22,7 @@ const (
 	Moving    // Move the dude counter-clockwise.
 	Leaving   // Move the dude to the stairs.
 	GoingDown // Leaving the room to the stairs, opposite of GoingUp.
+	EnterPortal
 )
 
 type Dude struct {
@@ -235,6 +236,34 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 		// TODO
 	case GoingDown:
 		// TODO
+	case EnterPortal:
+		d.timer++
+		// Wait a little bit before entering!
+		if d.timer >= 30 {
+			cx, cy := d.Position()
+			distance := story.DistanceFromCenter(cx, cy)
+
+			d.stack.Transparency = float32(d.timer-30) / 20
+			d.shadow.Transparency = float32(d.timer-30) / 20
+
+			if distance < PortalDistance-4+d.variation {
+				d.stack.Transparency = 1
+				d.shadow.Transparency = 1
+				d.activity = Idle
+				req.Add(TowerLeaveActivity{dude: d})
+			} else {
+				r := story.AngleFromCenter(cx, cy)
+				nx, ny := story.PositionFromCenter(r, distance-0.005*100)
+
+				face := math.Atan2(ny-cy, nx-cx)
+				d.trueRotation = face
+
+				req.Add(MoveActivity{dude: d, face: face, x: nx, y: ny, cb: func(success bool) {
+					d.SyncEquipment()
+				}})
+			}
+		}
+
 	}
 
 	d.stack.Update()
@@ -264,6 +293,7 @@ func (d *Dude) SyncEquipment() {
 			eq.stack.MaxSliceIndex = d.stack.MaxSliceIndex
 			eq.stack.HeightOffset = d.stack.HeightOffset
 			eq.stack.VgroupOffset = d.stack.VgroupOffset
+			eq.stack.Transparency = d.stack.Transparency
 			eq.stack.SetOrigin(d.stack.Origin())
 			eq.stack.SetPosition(d.stack.Position())
 			eq.stack.SetRotation(d.stack.Rotation())
@@ -757,4 +787,8 @@ func (d *Dude) TrapDamage(roomLevel int) {
 			fmt.Sprintf("%s took %d damage from a trap", d.name, amount),
 		)
 	}
+}
+
+func (d *Dude) IsDead() bool {
+	return d.stats.currentHp <= 0
 }
