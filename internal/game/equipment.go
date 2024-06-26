@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"image/color"
 	"math"
 	"math/rand"
 
@@ -57,6 +58,21 @@ func (eq EquipmentQuality) Color() ebiten.ColorScale {
 		// No change
 	}
 	return cs
+}
+
+func (eq EquipmentQuality) TextColor() color.Color {
+	switch eq {
+	case EquipmentQualityUncommon: // green
+		return color.RGBA{75, 250, 75, 255}
+	case EquipmentQualityRare: // blue
+		return color.RGBA{75, 75, 250, 255}
+	case EquipmentQualityEpic: // purple
+		return color.RGBA{250, 75, 250, 255}
+	case EquipmentQualityLegendary: // orange
+		return color.RGBA{250, 75, 75, 255}
+	default:
+		return color.White
+	}
 }
 
 type EquipmentType string
@@ -181,13 +197,18 @@ func (e *Equipment) Update() {
 	e.stack.Update()
 }
 
-// Name returns the name of the equipment.
-func (e *Equipment) Name() string {
+// Name returns the full name of the equipment including perk.
+func (e *Equipment) FullName() string {
 	perkName := ""
 	if e.perk != nil {
 		perkName = " of " + e.perk.Name()
 	}
-	return fmt.Sprintf("%s (%s)%s", e.name, e.quality, perkName)
+	return fmt.Sprintf("%s %s%s", e.quality, e.name, perkName)
+}
+
+// Name returns the name of the equipment with quality
+func (e *Equipment) Name() string {
+	return fmt.Sprintf("%s %s", e.quality, e.name)
 }
 
 // Level returns the level of the equipment.

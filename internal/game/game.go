@@ -23,7 +23,7 @@ type Game struct {
 	state                 GameState
 	audioController       *AudioController
 	overlay               *ebiten.Image
-	followDude            *Dude
+	selectedDude          *Dude
 	paused                bool
 	speed                 int
 }
@@ -63,10 +63,10 @@ func (g *Game) Update() error {
 
 	if ebiten.IsKeyPressed(ebiten.KeyQ) || ebiten.IsKeyPressed(ebiten.KeyLeft) {
 		g.camera.SetRotation(g.camera.Rotation() - 0.01)
-		g.followDude = nil
+		g.selectedDude = nil
 	} else if ebiten.IsKeyPressed(ebiten.KeyE) || ebiten.IsKeyPressed(ebiten.KeyRight) {
 		g.camera.SetRotation(g.camera.Rotation() + 0.01)
-		g.followDude = nil
+		g.selectedDude = nil
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyA) {
@@ -105,7 +105,7 @@ func (g *Game) Update() error {
 	}
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		g.followDude = nil
+		g.selectedDude = nil
 	}
 
 	if nextState := g.state.Update(g); nextState != nil {
@@ -125,8 +125,8 @@ func (g *Game) Update() error {
 				}
 			}
 		}
-		if g.followDude != nil {
-			r := g.followDude.trueRotation
+		if g.selectedDude != nil {
+			r := g.selectedDude.trueRotation
 			g.camera.SetRotation(-r)
 		}
 	}
@@ -163,8 +163,8 @@ func (g *Game) Init() {
 	g.ui = NewUI()
 	g.uiOptions = UIOptions{Scale: 2.0}
 	g.ui.dudePanel.onDudeClick = func(d *Dude) {
-		// follow dat dude
-		g.followDude = d
+		// select dat dude
+		g.selectedDude = d
 	}
 	g.ui.speedPanel.pauseButton.onClick = func() {
 		g.TogglePause()

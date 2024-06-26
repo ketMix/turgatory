@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"image/color"
 	"math/rand"
 )
 
@@ -43,22 +44,22 @@ func (pq *PerkQuality) String() string {
 	}
 }
 
-func (pq PerkQuality) Color() string {
+func (pq PerkQuality) TextColor() color.Color {
 	switch pq {
-	case PerkQualityTrash:
-		return "gray"
-	case PerkQualityPathetic:
-		return "white"
-	case PerkQualityLesser:
-		return "green"
-	case PerkQualityCommon:
-		return "blue"
-	case PerkQualityGreater:
-		return "purple"
-	case PerkQualityGodly:
-		return "orange"
+	case PerkQualityTrash: // gray
+		return color.RGBA{150, 150, 150, 255}
+	case PerkQualityPathetic: // white
+		return color.RGBA{200, 200, 200, 255}
+	case PerkQualityLesser: // green
+		return color.RGBA{75, 250, 75, 255}
+	case PerkQualityCommon: // blue
+		return color.RGBA{75, 75, 250, 255}
+	case PerkQualityGreater: // purple
+		return color.RGBA{250, 75, 250, 255}
+	case PerkQualityGodly: // orange
+		return color.RGBA{250, 75, 75, 255}
 	default:
-		return "white"
+		return color.RGBA{200, 200, 200, 255}
 	}
 }
 

@@ -39,14 +39,26 @@ func NewUI() *UI {
 	{
 		panelSprite := Must(render.NewSprite("ui/panels"))
 		ui.dudePanel = DudePanel{
-			top:      Must(render.NewSubSprite(panelSprite, 0, 0, 16, 16)),
-			topright: Must(render.NewSubSprite(panelSprite, 16, 0, 16, 16)),
-			mid:      Must(render.NewSubSprite(panelSprite, 0, 16, 16, 16)),
-			midright: Must(render.NewSubSprite(panelSprite, 16, 16, 16, 16)),
-			bot:      Must(render.NewSubSprite(panelSprite, 0, 32, 16, 16)),
-			botright: Must(render.NewSubSprite(panelSprite, 16, 32, 16, 16)),
+			top:      Must(render.NewSubSprite(panelSprite, 16, 0, 16, 16)),
+			topright: Must(render.NewSubSprite(panelSprite, 32, 0, 16, 16)),
+			mid:      Must(render.NewSubSprite(panelSprite, 16, 16, 16, 16)),
+			midright: Must(render.NewSubSprite(panelSprite, 32, 16, 16, 16)),
+			bot:      Must(render.NewSubSprite(panelSprite, 16, 32, 16, 16)),
+			botright: Must(render.NewSubSprite(panelSprite, 32, 32, 16, 16)),
+		}
+		ui.dudePanel.dudeDetails = &DudeDetails{
+			top:      ui.dudePanel.top,
+			topright: ui.dudePanel.topright,
+			topleft:  Must(render.NewSubSprite(panelSprite, 0, 0, 16, 16)),
+			mid:      ui.dudePanel.mid,
+			midright: ui.dudePanel.midright,
+			midleft:  Must(render.NewSubSprite(panelSprite, 0, 16, 16, 16)),
+			bot:      ui.dudePanel.bot,
+			botright: ui.dudePanel.botright,
+			botleft:  Must(render.NewSubSprite(panelSprite, 0, 32, 16, 16)),
 		}
 	}
+
 	{
 		panelSprite := Must(render.NewSprite("ui/botPanel"))
 		ui.roomPanel = RoomPanel{
@@ -91,6 +103,32 @@ func (ui *UI) Draw(o *render.Options) {
 	ui.speedPanel.Draw(o)
 }
 
+type DudeDetails struct {
+	render.Positionable
+	dude             *Dude
+	width            float64
+	height           float64
+	top              *render.Sprite
+	topleft          *render.Sprite
+	topright         *render.Sprite
+	mid              *render.Sprite
+	midleft          *render.Sprite
+	midright         *render.Sprite
+	bot              *render.Sprite
+	botleft          *render.Sprite
+	botright         *render.Sprite
+	equipmentDetails []*EquipmentDetails
+}
+
+type EquipmentDetails struct {
+	render.Positionable
+	equipmentType EquipmentType
+	equipment     *Equipment
+	height        float64
+	width         float64
+	hovered       bool
+}
+
 type DudePanel struct {
 	render.Originable
 	render.Positionable
@@ -105,6 +143,7 @@ type DudePanel struct {
 	botright     *render.Sprite
 	drawerInterp render.InterpNumber
 	dudeProfiles []*DudeProfile
+	dudeDetails  *DudeDetails
 	onDudeClick  func(*Dude)
 }
 
@@ -163,6 +202,314 @@ func (dp *DudeProfile) Draw(o *render.Options) {
 	}
 }
 
+func (dd *DudeDetails) SetDude(dude *Dude) {
+	dd.dude = dude
+	if dude == nil {
+		return
+	}
+
+	// Set equipment details
+	dd.equipmentDetails = []*EquipmentDetails{}
+	// Armor
+	dd.equipmentDetails = append(dd.equipmentDetails, &EquipmentDetails{
+		equipmentType: EquipmentTypeArmor,
+		equipment:     dude.equipped[EquipmentTypeArmor],
+	})
+
+	// Weapon
+	dd.equipmentDetails = append(dd.equipmentDetails, &EquipmentDetails{
+		equipmentType: EquipmentTypeWeapon,
+		equipment:     dude.equipped[EquipmentTypeWeapon],
+	})
+
+	// Accessory
+	dd.equipmentDetails = append(dd.equipmentDetails, &EquipmentDetails{
+		equipmentType: EquipmentTypeAccessory,
+		equipment:     dude.equipped[EquipmentTypeAccessory],
+	})
+}
+
+func (dd *DudeDetails) Layout(o *UIOptions, dp *DudePanel) {
+	// eww
+	scale := o.Scale * 1.1
+	dd.bot.Scale = scale
+	dd.botleft.Scale = scale
+	dd.botright.Scale = scale
+	dd.mid.Scale = scale
+	dd.midleft.Scale = scale
+	dd.midright.Scale = scale
+	dd.top.Scale = scale
+	dd.topleft.Scale = scale
+	dd.topright.Scale = scale
+
+	partWidth, _ := dd.top.Size()
+	dd.width = partWidth * 9
+	dd.height = dd.width * 0.5
+
+	// Position at vertical center + width of dude panel
+	x, y := dp.width+dd.width/3, float64(o.Height/2)-dd.height/2
+	dd.SetPosition(x, y)
+
+	// Layout equipment details
+	for i, ed := range dd.equipmentDetails {
+		ed.Layout(dd, i)
+	}
+}
+
+func (dd *DudeDetails) Draw(o *render.Options) {
+	if dd.dude == nil {
+		return
+	}
+	x, y := dd.Position()
+	pw, ph := dd.top.Size()
+	o.DrawImageOptions.GeoM.Translate(x, y)
+
+	// Calculate parts
+	verticalParts := int(math.Floor(dd.height/ph)) - 2
+	horizontalParts := int(math.Floor(dd.width/pw)) - 2
+
+	// top
+	dd.topleft.Draw(o)
+	o.DrawImageOptions.GeoM.Translate(pw, 0)
+	for x := 0; x < horizontalParts; x++ {
+		dd.top.Draw(o)
+		o.DrawImageOptions.GeoM.Translate(pw, 0)
+	}
+	dd.topright.Draw(o)
+	o.DrawImageOptions.GeoM.Translate(-dd.width+pw, ph)
+
+	// mid
+	for y := 0; y < verticalParts; y++ {
+		dd.midleft.Draw(o)
+		o.DrawImageOptions.GeoM.Translate(pw, 0)
+		for x := 0; x < horizontalParts; x++ {
+			dd.mid.Draw(o)
+			o.DrawImageOptions.GeoM.Translate(pw, 0)
+		}
+		dd.midright.Draw(o)
+		o.DrawImageOptions.GeoM.Translate(-dd.width+pw, ph)
+	}
+
+	// bottom
+	dd.botleft.Draw(o)
+	o.DrawImageOptions.GeoM.Translate(pw, 0)
+	for x := 0; x < horizontalParts; x++ {
+		dd.bot.Draw(o)
+		o.DrawImageOptions.GeoM.Translate(pw, 0)
+	}
+	dd.botright.Draw(o)
+
+	// Details
+	op := &render.TextOptions{
+		Screen: o.Screen,
+		Font:   assets.DisplayFont,
+		Color:  color.White,
+	}
+	op.GeoM.Reset()
+	op.GeoM.Translate(x+15, y+10)
+	render.DrawText(op, dd.dude.Name())
+	op.Font = assets.BodyFont
+	op.GeoM.Reset()
+	op.GeoM.Translate(x+15, y+10+assets.DisplayFont.LineHeight-assets.BodyFont.LineHeight/2)
+	render.DrawText(op, fmt.Sprintf("Level %d %s", dd.dude.Level(), dd.dude.Profession()))
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+	op.Color = color.RGBA{200, 50, 50, 255}
+	render.DrawText(op, fmt.Sprintf("HP: %d/%d", dd.dude.stats.currentHp, dd.dude.stats.totalHp))
+	op.Color = color.RGBA{200, 200, 200, 255}
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight*2)
+	render.DrawText(op, fmt.Sprintf("%s strength", PaddedIntString(dd.dude.stats.strength, 4)))
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+	render.DrawText(op, fmt.Sprintf("%s agility", PaddedIntString(dd.dude.stats.agility, 4)))
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+	render.DrawText(op, fmt.Sprintf("%s defense", PaddedIntString(dd.dude.stats.defense, 4)))
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+	render.DrawText(op, fmt.Sprintf("%s wisdom", PaddedIntString(dd.dude.stats.wisdom, 4)))
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+	render.DrawText(op, fmt.Sprintf("%s cowardice", PaddedIntString(dd.dude.stats.cowardice, 4)))
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+	render.DrawText(op, fmt.Sprintf("%s luck", PaddedIntString(dd.dude.stats.luck, 4)))
+
+	// Equipment
+	op.GeoM.Reset()
+	op.GeoM.Translate(x+dd.width*0.40, y+10)
+	op.Font = assets.DisplayFont
+	op.Color = color.White
+	render.DrawText(op, "Equipment")
+	op.GeoM.Translate(0, assets.DisplayFont.LineHeight)
+
+	hoveredEquipment := (*Equipment)(nil)
+	for _, ed := range dd.equipmentDetails {
+		ed.Draw(o)
+		if ed.hovered {
+			hoveredEquipment = ed.equipment
+		}
+	}
+
+	if hoveredEquipment != nil {
+		drawEquipmentDescription(o, dd, hoveredEquipment)
+	}
+}
+
+func drawEquipmentDescription(o *render.Options, dd *DudeDetails, hoveredEquipment *Equipment) {
+	x, y := dd.Position()
+
+	// hasPerk := hoveredEquipment.perk != nil
+
+	// Draw equipment description below
+	o.DrawImageOptions.GeoM.Reset()
+	o.DrawImageOptions.GeoM.Translate(x, y+dd.height-20)
+
+	// top
+	dd.topleft.Draw(o)
+	pw, ph := dd.top.Size()
+	o.DrawImageOptions.GeoM.Translate(pw, 0)
+	horizontalParts := int(math.Floor(dd.width/pw)) - 2
+	for x := 0; x < horizontalParts; x++ {
+		dd.top.Draw(o)
+		o.DrawImageOptions.GeoM.Translate(pw, 0)
+	}
+	dd.topright.Draw(o)
+	o.DrawImageOptions.GeoM.Translate(-dd.width+pw, ph)
+
+	// mid
+	dd.midleft.Draw(o)
+	o.DrawImageOptions.GeoM.Translate(pw, 0)
+	for x := 0; x < horizontalParts; x++ {
+		dd.mid.Draw(o)
+		o.DrawImageOptions.GeoM.Translate(pw, 0)
+	}
+	dd.midright.Draw(o)
+	o.DrawImageOptions.GeoM.Translate(-dd.width+pw, ph)
+
+	// bottom
+	dd.botleft.Draw(o)
+	o.DrawImageOptions.GeoM.Translate(pw, 0)
+	for x := 0; x < horizontalParts; x++ {
+		dd.bot.Draw(o)
+		o.DrawImageOptions.GeoM.Translate(pw, 0)
+	}
+	dd.botright.Draw(o)
+
+	// Details
+	op := &render.TextOptions{
+		Screen: o.Screen,
+		Font:   assets.DisplayFont,
+		Color:  color.White,
+	}
+
+	// LEFT SIDE
+	op.GeoM.Reset()
+	op.GeoM.Translate(x+15, y+dd.height-10)
+	op.Font = assets.DisplayFont
+	op.Color = hoveredEquipment.quality.TextColor()
+	render.DrawText(op, hoveredEquipment.Name())
+	op.GeoM.Translate(0, assets.DisplayFont.LineHeight+1)
+
+	op.Font = assets.BodyFont
+	if hoveredEquipment.perk != nil {
+		op.GeoM.Translate(10, 0)
+		op.Color = hoveredEquipment.perk.Quality().TextColor()
+		render.DrawText(op, "of "+hoveredEquipment.perk.Name())
+		op.GeoM.Translate(0, assets.DisplayFont.LineHeight+1)
+		op.GeoM.Translate(-10, 0)
+	} else {
+		op.GeoM.Translate(0, assets.DisplayFont.LineHeight+1)
+	}
+
+	// Draw equipment description
+	op.Color = color.RGBA{200, 200, 200, 255}
+	render.DrawText(op, hoveredEquipment.Description())
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+
+	// Draw equipment perks
+	if hoveredEquipment.perk != nil {
+		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+		op.Color = hoveredEquipment.perk.Quality().TextColor()
+		render.DrawText(op, hoveredEquipment.perk.Description())
+	}
+
+	// RIGHT SIDE
+	// Draw equipment type
+	op.GeoM.Reset()
+	op.GeoM.Translate(x+dd.width-50, y+dd.height-10)
+	op.Color = color.RGBA{200, 200, 200, 255}
+	render.DrawText(op, hoveredEquipment.Type().String())
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+	op.GeoM.Translate(-50, 0)
+
+	// Draw Stats
+	op.Color = color.RGBA{200, 200, 200, 255}
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+	render.DrawText(op, fmt.Sprintf("%s strength", PaddedIntString(hoveredEquipment.stats.strength, 4)))
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+	render.DrawText(op, fmt.Sprintf("%s agility", PaddedIntString(hoveredEquipment.stats.agility, 4)))
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+	render.DrawText(op, fmt.Sprintf("%s defense", PaddedIntString(hoveredEquipment.stats.defense, 4)))
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+	render.DrawText(op, fmt.Sprintf("%s wisdom", PaddedIntString(hoveredEquipment.stats.wisdom, 4)))
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+	render.DrawText(op, fmt.Sprintf("%s cowardice", PaddedIntString(hoveredEquipment.stats.cowardice, 4)))
+	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+	render.DrawText(op, fmt.Sprintf("%s luck", PaddedIntString(hoveredEquipment.stats.luck, 4)))
+
+}
+
+func (ed *EquipmentDetails) Layout(dd *DudeDetails, i int) {
+	ed.height = (assets.BodyFont.LineHeight + 2) * 3
+	ed.width = dd.width * 0.45
+
+	ddX, ddY := dd.Position()
+	yOffset := ed.height * float64(i+1)
+	edX, edY := ddX+ed.width, ddY+yOffset
+	ed.SetPosition(edX, edY)
+}
+
+func (ed *EquipmentDetails) Update(o *UIOptions) {
+	ed.hovered = false
+	x, y := ed.Position()
+	mx, my := IntToFloat2(ebiten.CursorPosition())
+	if InBounds(x, y, ed.width, ed.height, mx, my) {
+		ed.hovered = true
+	} else {
+		ed.hovered = false
+	}
+}
+
+func (ed *EquipmentDetails) Draw(o *render.Options) {
+	// Details
+	op := &render.TextOptions{
+		Screen: o.Screen,
+		Font:   assets.DisplayFont,
+		Color:  color.White,
+	}
+
+	op.GeoM.Translate(ed.Position())
+	op.Font = assets.BodyFont
+	op.Color = color.RGBA{200, 200, 200, 255}
+
+	render.DrawText(op, ed.equipmentType.String())
+	op.GeoM.Translate(10, assets.BodyFont.LineHeight+1)
+	equipment := ed.equipment
+
+	if equipment != nil {
+		op.Color = equipment.quality.TextColor()
+		render.DrawText(op, equipment.Name())
+		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+		if equipment.perk != nil {
+			op.GeoM.Translate(10, 0)
+			op.Color = equipment.perk.Quality().TextColor()
+			render.DrawText(op, equipment.perk.Name())
+			op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+			op.GeoM.Translate(-10, 0)
+		} else {
+			op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
+		}
+	} else {
+		op.GeoM.Translate(0, (assets.BodyFont.LineHeight+1)*2)
+	}
+	op.GeoM.Translate(-10, 0)
+}
+
 func PaddedIntString(i int, pad int) string {
 	str := fmt.Sprintf("%d", i)
 	for len(str) < pad {
@@ -206,6 +553,8 @@ func (dp *DudePanel) Layout(o *UIOptions) {
 
 		y += p.height + 4
 	}
+
+	dp.dudeDetails.Layout(o, dp)
 }
 
 func (dp *DudePanel) Update(o *UIOptions) {
@@ -229,18 +578,30 @@ func (dp *DudePanel) Update(o *UIOptions) {
 		}
 	}
 
+	selectedDude := false
 	for _, p := range dp.dudeProfiles {
 		px, py := p.Position()
 		if InBounds(px, py, dp.width, p.height, mx, my) {
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+				selectedDude = true
+				dp.dudeDetails.SetDude(p.dude)
 				if dp.onDudeClick != nil {
 					dp.onDudeClick(p.dude)
 				}
 			}
 			p.hovered = true
 		} else {
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+				if !selectedDude {
+					dp.dudeDetails.SetDude(nil)
+				}
+			}
 			p.hovered = false
 		}
+	}
+
+	for _, ed := range dp.dudeDetails.equipmentDetails {
+		ed.Update(o)
 	}
 }
 
@@ -275,6 +636,11 @@ func (dp *DudePanel) Draw(o *render.Options) {
 	for _, p := range dp.dudeProfiles {
 		p.Draw(o)
 	}
+
+	o.DrawImageOptions.GeoM.Reset()
+
+	// Draw dude details
+	dp.dudeDetails.Draw(o)
 }
 
 func (dp *DudePanel) SyncDudes(dudes []*Dude) {
