@@ -162,6 +162,10 @@ func (p PerkFindGold) chance() float64 {
 	return 0.25 * float64(p.quality)
 }
 
+func (p PerkFindGold) amount() float64 {
+	return float64(p.quality) * 5
+}
+
 func (p PerkFindGold) Name() string {
 	return constructName(p.String(), p.quality, nil)
 }
@@ -171,15 +175,13 @@ func (p PerkFindGold) String() string {
 }
 
 func (p PerkFindGold) Description() string {
-	amount := float32(p.quality) * 0.25
-	return fmt.Sprintf("Has a %.2f Chance to find finds %.2f gold", p.chance()*100, amount)
+	return fmt.Sprintf("Has a %.2f Chance to find finds %.2f gold", p.chance()*100, p.amount())
 }
 
 func (p PerkFindGold) Check(e Event) bool {
 	switch e := e.(type) {
 	case EventEnterRoom:
-		amount := float32(p.quality) * 0.25
-		e.dude.UpdateGold(amount)
+		e.dude.Trigger(EventGoldGain{dude: e.dude, amount: p.amount()})
 		return true
 	}
 	return false
@@ -345,8 +347,8 @@ type PerkStickyFingers struct {
 	*Perk
 }
 
-func (p PerkStickyFingers) amount() float32 {
-	return float32(p.quality) * 0.1
+func (p PerkStickyFingers) amount() float64 {
+	return float64(p.quality) * 0.1
 }
 
 func (p PerkStickyFingers) Name() string {
@@ -375,8 +377,8 @@ type PerkGoldBoost struct {
 	*Perk
 }
 
-func (p PerkGoldBoost) amount() float32 {
-	return float32(p.quality) * 0.1
+func (p PerkGoldBoost) amount() float64 {
+	return float64(p.quality) * 0.1
 }
 
 func (p PerkGoldBoost) Name() string {
@@ -394,7 +396,7 @@ func (p PerkGoldBoost) Description() string {
 func (p PerkGoldBoost) Check(e Event) bool {
 	switch e := e.(type) {
 	case EventGoldGain:
-		e.amount = e.amount * p.amount()
+		e.amount *= (1 + p.amount())
 		return true
 	}
 	return false

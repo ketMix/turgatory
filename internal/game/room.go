@@ -395,7 +395,7 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 		case Treasure:
 			// Add gold
 			goldAmount := (r.story.level + 1) * rand.Intn(10*int(r.size))
-			e.dude.UpdateGold(float32(goldAmount))
+			e.dude.Trigger(EventGoldGain{dude: e.dude, amount: float64(goldAmount)})
 		case Library:
 			// Level up a random equipment perk or add one
 			maxQuality := PerkQuality(r.story.level + 1)

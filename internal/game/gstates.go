@@ -149,6 +149,11 @@ func (s *GameStatePlay) End(g *Game) {
 			break
 		}
 	}
+
+	// Collect gold
+	g.CollectGold()
+	// Collect inventory
+	g.CollectInventory()
 }
 func (s *GameStatePlay) Update(g *Game) GameState {
 	s.titleTimer++

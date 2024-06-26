@@ -98,7 +98,7 @@ func (e *Enemy) XP() int {
 	return e.stats.level * 10
 }
 
-func (e *Enemy) Gold() float32 {
-	randMultiplier := 0.5 + rand.Float32()
-	return float32(e.stats.totalHp*e.stats.level) * randMultiplier
+func (e *Enemy) Gold() float64 {
+	randMultiplier := 0.5 + rand.Float64()
+	return float64(e.stats.totalHp*e.stats.level) * randMultiplier
 }

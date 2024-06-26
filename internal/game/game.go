@@ -26,6 +26,8 @@ type Game struct {
 	selectedDude          *Dude
 	paused                bool
 	speed                 int
+	gold                  int
+	equipment             []*Equipment
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -160,6 +162,24 @@ func (g *Game) DrawTower(screen *ebiten.Image) {
 	}
 }
 
+// For all dudes, remove their gold and add it to the player's gold.
+func (g *Game) CollectGold() {
+	gold := 0.0
+	for _, dude := range g.dudes {
+		gold += dude.gold
+		dude.gold = 0
+	}
+	g.gold += int(gold)
+}
+
+// For all dudes, remove their inventory and add it to player's inventory
+func (g *Game) CollectInventory() {
+	for _, dude := range g.dudes {
+		g.equipment = append(g.equipment, dude.inventory...)
+		dude.inventory = make([]*Equipment, 0)
+	}
+}
+
 func (g *Game) Init() {
 	// Init the equipment
 	assets.LoadEquipment()
@@ -218,6 +238,8 @@ func (g *Game) Init() {
 
 	g.camera = *render.NewCamera(0, 0)
 	g.audioController = NewAudioController()
+	g.gold = 0
+	g.equipment = make([]*Equipment, 0)
 	//g.audioController.PlayRoomTracks()
 	g.state = &GameStatePreBuild{}
 	g.state.Begin(g)
