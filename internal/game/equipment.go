@@ -413,3 +413,35 @@ func GetEquipmentNamesWithTypes(equipmentTypes []EquipmentType) []*string {
 	}
 	return names
 }
+
+func GetRandomEquipment(level int) *Equipment {
+	// Random equipment type
+	et := RandomEquipmentType()
+
+	// Random equipment name
+	equipmentNames := GetEquipmentNamesWithTypes([]EquipmentType{et})
+	equipmentName := *equipmentNames[rand.Intn(len(equipmentNames))]
+
+	// Lower chance to get higher quality equipment
+	qualityroll := rand.Intn(50)
+	quality := EquipmentQualityCommon
+	if qualityroll < 10 {
+		quality = EquipmentQualityUncommon
+	} else if qualityroll < 5 {
+		quality = EquipmentQualityRare
+	} else if qualityroll < 2 {
+		quality = EquipmentQualityEpic
+	} else if qualityroll < 1 {
+		quality = EquipmentQualityLegendary
+	}
+
+	// Random perk
+	var perk IPerk
+	if rand.Intn(10) == 0 {
+		perkQuality := PerkQuality(rand.Intn(int(PerkQualityGodly)))
+		perk = GetRandomPerk(perkQuality)
+	} else {
+		perk = nil
+	}
+	return NewEquipment(equipmentName, level, quality, perk)
+}

@@ -1,5 +1,7 @@
 package game
 
+import "math/rand"
+
 // ProfessionKind is an enumeration of the different kinds of Professions a dude can have
 type ProfessionKind string
 
@@ -39,6 +41,11 @@ type Profession struct {
 	description       string
 	startingStats     Stats
 	startingEquipment []*Equipment
+}
+
+func RandomProfessionKind() ProfessionKind {
+	professions := []ProfessionKind{Vagabond, Knight, Cleric, Ranger}
+	return professions[rand.Intn(len(professions))]
 }
 
 func NewProfession(kind ProfessionKind, level int) *Profession {

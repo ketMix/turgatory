@@ -170,14 +170,51 @@ func (g *Game) CollectGold() {
 		dude.gold = 0
 	}
 	g.gold += int(gold)
+	AddMessage(MessageInfo, fmt.Sprintf("Collected %d gold from dudes.", int(gold)))
 }
 
 // For all dudes, remove their inventory and add it to player's inventory
 func (g *Game) CollectInventory() {
+	count := 0
 	for _, dude := range g.dudes {
+		count += len(dude.inventory)
 		g.equipment = append(g.equipment, dude.inventory...)
 		dude.inventory = make([]*Equipment, 0)
 	}
+	AddMessage(MessageInfo, fmt.Sprintf("Collected %d items from dudes.", count))
+}
+
+func (g *Game) BuyDude() {
+	// COST?
+	cost := 100
+	if g.gold < cost {
+		AddMessage(MessageError, "Not enough gold to buy a dude.")
+		return
+	}
+	g.gold -= cost
+	level := len(g.tower.Stories) / 2
+	if level < 1 {
+		level = 1
+	}
+
+	// Random profession ??
+	profession := RandomProfessionKind()
+	dude := NewDude(profession, level)
+	g.tower.AddDude(dude)
+}
+
+func (g *Game) BuyEquipment() {
+	// COST?
+	cost := 50
+	if g.gold < cost {
+		AddMessage(MessageError, "Not enough gold to buy equipment.")
+		return
+	}
+	g.gold -= cost
+
+	level := len(g.tower.Stories) / 2
+	e := GetRandomEquipment(level)
+	g.equipment = append(g.equipment, e)
 }
 
 func (g *Game) Init() {
