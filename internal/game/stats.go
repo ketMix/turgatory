@@ -156,15 +156,6 @@ func (s *Stats) ModifyStat(stat Stat, amount int) {
 		if s.totalHp > prevHp {
 			s.currentHp += amount
 		}
-
-	case StatCurrentHP:
-		s.currentHp += amount
-		if s.currentHp < 0 {
-			s.currentHp = 0
-		}
-		if s.currentHp > s.totalHp {
-			s.currentHp = s.totalHp
-		}
 	default:
 		fmt.Printf("Unknown stat %s\n", stat)
 	}

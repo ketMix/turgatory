@@ -695,12 +695,18 @@ func (d *Dude) NextLevelXP() int {
 }
 
 func (d *Dude) Heal(amount int) {
-	//initialHP := stats.currentHp
-	d.stats.ModifyStat(StatCurrentHP, amount)
-
+	initialHP := d.stats.currentHp
+	stats := d.GetCalculatedStats()
+	d.stats.currentHp += amount
+	if d.stats.currentHp > stats.totalHp {
+		d.stats.currentHp = stats.totalHp
+	}
+	amount = d.stats.currentHp - initialHP
 	//fmt.Println(d.name, "healed", amount, "HP", " and went from ", initialHP, " to ", d.stats.currentHp)
-	t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%d", amount), color.NRGBA{0, 255, 0, 255}, 40, 0.5)
-	d.story.AddText(t)
+	if d.story != nil {
+		t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%d", amount), color.NRGBA{0, 255, 0, 255}, 40, 0.5)
+		d.story.AddText(t)
+	}
 }
 
 func (d *Dude) FullHeal() {
@@ -708,7 +714,7 @@ func (d *Dude) FullHeal() {
 
 	// No rez
 	if d.stats.currentHp >= 0 {
-		d.stats.currentHp = stats.totalHp
+		d.Heal(stats.totalHp)
 	}
 }
 
