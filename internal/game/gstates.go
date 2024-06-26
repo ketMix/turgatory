@@ -286,9 +286,11 @@ func (s *GameStateLose) Draw(g *Game, screen *ebiten.Image) {
 	opts.Color = color.NRGBA{50, 0, 0, 200}
 	render.DrawText(opts, "GAME OVER")
 	opts.GeoM.Translate(20, 20)
+	opts.GeoM.Translate(0, math.Cos(s.wobbler)*2)
 	render.DrawText(opts, "GAME OVER")
 	opts.Color = color.NRGBA{255, 52, 33, 200}
 	opts.GeoM.Translate(-10, -10)
+	opts.GeoM.Translate(0, math.Cos(s.wobbler)*2)
 	render.DrawText(opts, "GAME OVER")
 
 	opts.Font = assets.BodyFont
