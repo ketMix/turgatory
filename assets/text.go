@@ -3,6 +3,7 @@ package assets
 import (
 	"bytes"
 	"math/rand"
+	"strings"
 )
 
 var dudeNames []string
@@ -18,7 +19,9 @@ func init() {
 		if len(name) == 0 || name[0] == '#' {
 			continue
 		}
-		dudeNames = append(dudeNames, string(name))
+		n := strings.TrimSpace(string(name)) // This is necessary for line differences on Windows.
+
+		dudeNames = append(dudeNames, n)
 	}
 }
 
