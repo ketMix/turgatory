@@ -519,6 +519,7 @@ func (d *Dude) GetDamage() (int, bool) {
 
 	multiplier := 1.0
 	if randRoll < luckRoll {
+		d.AddXP(1)
 		t := MakeFloatingTextFromDude(d, "*CRIT*", color.NRGBA{255, 128, 255, 128}, 60, 1.0)
 		d.story.AddText(t)
 		multiplier = 2.0
@@ -526,7 +527,11 @@ func (d *Dude) GetDamage() (int, bool) {
 	}
 
 	// Cowardice can cause miss
-	missRoll := float64(stats.cowardice+1) * 0.01
+	// capped at 50% miss chance
+	// 1 cowardice = 1% miss chance
+	// 100 cowardice = 50% miss chance
+	missRoll := math.Min(float64(stats.cowardice)/100.0, 0.5)
+
 	if rand.Float64() < missRoll {
 		t := MakeFloatingTextFromDude(d, "*miss*", color.NRGBA{128, 128, 128, 128}, 30, 0.5)
 		d.story.AddText(t)
@@ -548,6 +553,7 @@ func (d *Dude) ApplyDamage(amount int) (int, bool) {
 	// Cap the maximum dodge chance at 50%
 	chance := math.Min(dodgeChance, 0.5)
 	if rand.Float64() < chance {
+		d.AddXP(1)
 		t := MakeFloatingTextFromDude(d, "*dodge*", color.NRGBA{255, 255, 0, 128}, 30, 0.5)
 		d.story.AddText(t)
 		return 0, true
