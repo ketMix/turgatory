@@ -166,13 +166,15 @@ func NewEquipment(name string, level int, quality EquipmentQuality, perk IPerk) 
 		perk:          perk,
 		stack:         stack,
 		stats: &Stats{
-			totalHp:   baseEquipment.Stats["totalHp"],
-			strength:  baseEquipment.Stats["strength"],
-			wisdom:    baseEquipment.Stats["wisdom"],
-			defense:   baseEquipment.Stats["defense"],
-			agility:   baseEquipment.Stats["agility"],
-			cowardice: baseEquipment.Stats["cowardice"],
-			luck:      baseEquipment.Stats["luck"],
+			levelUpChange: &Stats{
+				totalHp:   baseEquipment.Stats["totalHp"],
+				strength:  baseEquipment.Stats["strength"],
+				wisdom:    baseEquipment.Stats["wisdom"],
+				defense:   baseEquipment.Stats["defense"],
+				agility:   baseEquipment.Stats["agility"],
+				cowardice: baseEquipment.Stats["cowardice"],
+				luck:      baseEquipment.Stats["luck"],
+			},
 		},
 	}
 
@@ -269,7 +271,7 @@ func (e *Equipment) LevelUp() {
 		return
 	}
 
-	e.level++
+	e.stats.LevelUp()
 
 	// If we hit level 5 we can upgrade the quality
 	if e.level == 5 && e.quality < EquipmentQualityLegendary {
