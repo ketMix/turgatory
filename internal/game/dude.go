@@ -502,7 +502,7 @@ func (d *Dude) Level() int {
 func (d *Dude) Speed() float64 {
 	// This values probably belong somewhere else
 	speedScale := 0.1
-	baseSpeed := 0.005
+	baseSpeed := 0.01
 	// Slow dude down when in combat.
 	if d.enemy != nil {
 		return baseSpeed * (1 + speedScale)
