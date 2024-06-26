@@ -207,16 +207,16 @@ func (p PerkStatBoost) Description() string {
 	if p.stat == "" {
 		return "No bonus! How sad."
 	}
-	return fmt.Sprintf("Boosts %s stat by %d", p.stat, p.quality)
+	return fmt.Sprintf("Boosts %s stat by %d", p.stat, p.quality+1)
 }
 
 func (p PerkStatBoost) Check(e Event) bool {
 	switch e := e.(type) {
 	case EventEquip:
-		e.dude.Stats().ModifyStat(p.stat, int(p.quality))
+		e.dude.Stats().ModifyStat(p.stat, int(p.quality)+1)
 		return true
 	case EventUnequip:
-		e.dude.Stats().ModifyStat(p.stat, -int(p.quality))
+		e.dude.Stats().ModifyStat(p.stat, -int(p.quality)+1)
 		return true
 	}
 	return false
@@ -228,7 +228,7 @@ type PerkHealOnRoomEnter struct {
 }
 
 func (p PerkHealOnRoomEnter) amount(wisdom int) int {
-	return (wisdom / 4) * int(p.quality)
+	return (wisdom / 4) * int(p.quality+1)
 }
 
 func (p PerkHealOnRoomEnter) Name() string {
@@ -257,7 +257,7 @@ type PerkHealOnSell struct {
 }
 
 func (p PerkHealOnSell) amount() int {
-	return int(p.quality) * 10
+	return int(p.quality+1) * 10
 }
 
 func (p PerkHealOnSell) Name() string {
@@ -288,7 +288,7 @@ type PerkHealOnGoldGain struct {
 }
 
 func (p PerkHealOnGoldGain) amount() int {
-	return int(p.quality) * 1
+	return int(p.quality+1) * 1
 }
 
 func (p PerkHealOnGoldGain) Name() string {
@@ -318,7 +318,7 @@ type PerkHealOnGoldLoss struct {
 }
 
 func (p PerkHealOnGoldLoss) amount() int {
-	return int(p.quality) * 1
+	return int(p.quality+1) * 1
 }
 
 func (p PerkHealOnGoldLoss) Name() string {
@@ -326,7 +326,7 @@ func (p PerkHealOnGoldLoss) Name() string {
 }
 
 func (p PerkHealOnGoldLoss) String() string {
-	return "Heal On Gold Gain"
+	return "Heal On Gold Loss"
 }
 
 func (p PerkHealOnGoldLoss) Description() string {
@@ -348,7 +348,7 @@ type PerkStickyFingers struct {
 }
 
 func (p PerkStickyFingers) amount() float64 {
-	return float64(p.quality) * 0.1
+	return float64(p.quality+1) * 0.1
 }
 
 func (p PerkStickyFingers) Name() string {
@@ -378,7 +378,7 @@ type PerkGoldBoost struct {
 }
 
 func (p PerkGoldBoost) amount() float64 {
-	return float64(p.quality) * 0.1
+	return float64(p.quality+1) * 0.1
 }
 
 func (p PerkGoldBoost) Name() string {
