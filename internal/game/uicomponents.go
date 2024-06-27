@@ -163,6 +163,7 @@ func NewUIItemList(direction int) *UIItemList {
 	l := &UIItemList{
 		direction:   direction,
 		centerItems: true,
+		selected:    -1,
 	}
 
 	l.decrementUIButton = NewUIButton("arrow", "")
@@ -233,6 +234,13 @@ func (l *UIItemList) Layout(parent UIElement, o *UIOptions) {
 func (l *UIItemList) Update(o *UIOptions) {
 	l.decrementUIButton.Update(o)
 	l.incrementUIButton.Update(o)
+
+	/*if l.lastVisibleIndex > len(l.items) {
+		l.lastVisibleIndex = len(l.items)
+	}
+	if l.itemOffset > len(l.items) {
+		l.itemOffset = len(l.items)
+	}*/
 
 	if l.changed {
 		v := 0.0
@@ -323,6 +331,9 @@ func (l *UIItemList) Draw(o *render.Options) {
 	l.incrementUIButton.Draw(o)
 	o.DrawImageOptions.GeoM.Reset()
 	for i := l.itemOffset; i < l.lastVisibleIndex; i++ {
+		if i >= len(l.items) {
+			break
+		}
 		if i == l.selected {
 			if l.direction == DirectionVertical {
 				vector.DrawFilledRect(o.Screen, float32(l.X()), float32(l.items[i].Y()), float32(l.Width()), float32(l.items[i].Height()), assets.ColorSelected, false)
@@ -335,6 +346,13 @@ func (l *UIItemList) Draw(o *render.Options) {
 }
 func (l *UIItemList) AddItem(item UIElement) {
 	l.items = append(l.items, item)
+	l.changed = true
+}
+func (l *UIItemList) RemoveItemByIndex(index int) {
+	l.items = append(l.items[:index], l.items[index+1:]...)
+	if l.selected >= index {
+		l.selected--
+	}
 	l.changed = true
 }
 func (l *UIItemList) Clear() {
@@ -532,6 +550,7 @@ type UIText struct {
 	textHeight  float64
 	textScale   float64
 	scale       float64
+	center      bool // This shouldn't be used for anything not intended to float
 	textOptions render.TextOptions
 }
 
@@ -567,8 +586,10 @@ func (t *UIText) Check(mx, my float64, kind UICheckKind) bool {
 func (t *UIText) Draw(o *render.Options) {
 	t.textOptions.Screen = o.Screen
 	t.textOptions.GeoM.Reset()
+
 	t.textOptions.GeoM.Scale(t.scale, t.scale)
 	t.textOptions.GeoM.Translate(t.X(), t.Y())
+
 	render.DrawText(&t.textOptions, t.text)
 }
 

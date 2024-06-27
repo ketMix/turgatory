@@ -12,6 +12,9 @@ type GameStateStart struct {
 }
 
 func (s *GameStateStart) Begin(g *Game) {
+	// Give the player a reasonable amount of GOLD
+	g.gold = 700
+
 	professions := []ProfessionKind{Knight, Vagabond, Ranger, Cleric}
 	dudeLimit := len(professions)
 	for i := 0; i < dudeLimit; i++ {

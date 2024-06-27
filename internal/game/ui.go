@@ -37,6 +37,7 @@ type UI struct {
 	roomPanel      RoomPanel
 	roomInfoPanel  RoomInfoPanel
 	options        *UIOptions
+	feedback       FeedbackPopup
 }
 
 func NewUI() *UI {
@@ -82,6 +83,7 @@ func NewUI() *UI {
 	ui.equipmentPanel = MakeEquipmentPanel()
 	ui.roomPanel = MakeRoomPanel()
 	ui.roomInfoPanel = MakeRoomInfoPanel()
+	ui.feedback = MakeFeedbackPopup()
 
 	return ui
 }
@@ -161,6 +163,15 @@ func (ui *UI) Layout(o *UIOptions) {
 	)
 	ui.roomInfoPanel.Layout(o)
 
+	ui.feedback.panel.SetSize(
+		320*o.Scale,
+		16*o.Scale,
+	)
+	ui.feedback.panel.SetPosition(
+		float64(o.Width)/2-ui.feedback.panel.Width()/2,
+		float64(o.Height)/2-ui.feedback.panel.Height()/2,
+	)
+	ui.feedback.Layout(o)
 }
 
 func (ui *UI) Update(o *UIOptions) {
@@ -170,6 +181,7 @@ func (ui *UI) Update(o *UIOptions) {
 	ui.roomPanel.Update(o)
 	ui.speedPanel.Update(o)
 	ui.messagePanel.Update(o)
+	ui.feedback.Update(o)
 }
 
 func (ui *UI) Check(mx, my float64, kind UICheckKind) bool {
@@ -207,6 +219,8 @@ func (ui *UI) Draw(o *render.Options) {
 	ui.dudePanel2.Draw(o)
 
 	ui.gameInfoPanel.Draw(o)
+
+	ui.feedback.Draw(o)
 }
 
 type DudeDetails struct {
@@ -1238,3 +1252,62 @@ func (ep *EquipmentPanel) Check(mx, my float64, kind UICheckKind) bool {
 func (ep *EquipmentPanel) Draw(o *render.Options) {
 	ep.panel.Draw(o)
 }
+
+type FeedbackPopup struct {
+	panel *UIPanel
+	text  *UIText
+	ticks int
+	kind  FeedbackKind
+}
+
+func MakeFeedbackPopup() FeedbackPopup {
+	fp := FeedbackPopup{
+		panel: NewUIPanel(true),
+		text:  NewUIText("Henlo???", assets.BodyFont, assets.ColorHeading),
+	}
+	fp.text.center = true
+	fp.panel.AddChild(fp.text)
+	fp.panel.hideBackground = true
+	fp.panel.centerChildren = true
+	return fp
+}
+
+func (fp *FeedbackPopup) Layout(o *UIOptions) {
+	fp.panel.Layout(nil, o)
+}
+
+func (fp *FeedbackPopup) Update(o *UIOptions) {
+	fp.ticks--
+	// Fade out the last 10 ticks
+	if fp.ticks < 10 {
+		fp.text.textOptions.Color = color.NRGBA{
+			R: fp.kind.R,
+			G: fp.kind.G,
+			B: fp.kind.B,
+			A: uint8(float64(fp.ticks) / 10 * 255),
+		}
+	}
+
+	fp.panel.Update(o)
+}
+
+func (fp *FeedbackPopup) Draw(o *render.Options) {
+	if fp.ticks > 0 {
+		fp.panel.Draw(o)
+	}
+}
+
+func (fp *FeedbackPopup) Msg(kind FeedbackKind, text string) {
+	fp.kind = kind
+	fp.text.textOptions.Color = color.NRGBA(kind)
+	fp.text.SetText(text)
+	fp.ticks = len(text) * 5
+}
+
+type FeedbackKind color.NRGBA
+
+var (
+	FeedbackGeneric = FeedbackKind{255, 255, 255, 255}
+	FeedbackGood    = FeedbackKind{0, 255, 0, 255}
+	FeedbackBad     = FeedbackKind{255, 0, 0, 255}
+)

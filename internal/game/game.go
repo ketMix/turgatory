@@ -118,21 +118,6 @@ func (g *Game) Update() error {
 
 	g.ui.Update(&g.uiOptions)
 
-	mx, my := IntToFloat2(ebiten.CursorPosition())
-	if g.ui.Check(mx, my, UICheckHover) {
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-			if !g.ui.Check(mx, my, UICheckClick) {
-				g.selectedDude = nil
-				g.ui.roomInfoPanel.hidden = true
-			}
-		}
-	} else {
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-			g.selectedDude = nil
-			g.ui.roomInfoPanel.hidden = true
-		}
-	}
-
 	if nextState := g.state.Update(g); nextState != nil {
 		g.state.End(g)
 		g.state = nextState
@@ -190,6 +175,22 @@ func (g *Game) DrawTower(screen *ebiten.Image) {
 	for _, r := range g.renderables {
 		r.Draw(&options)
 	}
+}
+
+func (g *Game) CheckUI() (bool, UICheckKind) {
+	mx, my := IntToFloat2(ebiten.CursorPosition())
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		if g.ui.Check(mx, my, UICheckClick) {
+			return true, UICheckClick
+		}
+		return false, UICheckClick
+	} else {
+		if g.ui.Check(mx, my, UICheckHover) {
+			return true, UICheckHover
+		}
+		return false, UICheckHover
+	}
+	return false, UICheckNone
 }
 
 func (g *Game) UpdateInfo() {

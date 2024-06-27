@@ -169,6 +169,7 @@ type Room struct {
 	dudesInCenter  []*Dude
 	dudesInWaiting []*Dude
 	dudes          []*Dude
+	highlight      bool
 }
 
 func NewRoom(size RoomSize, kind RoomKind) *Room {
@@ -304,8 +305,12 @@ func (r *Room) getPanVol(rads float64, multiplier float64) (float64, float64) {
 
 // Draw our room bits and bobs.
 func (r *Room) Draw(o *render.Options) {
+	if r.highlight {
+		o.DrawImageOptions.ColorScale.Scale(2, 2, 2, 1)
+	}
 	r.stacks.Draw(o)
 	r.walls.Draw(o)
+	o.DrawImageOptions.ColorScale.Reset()
 
 	if r.boss != nil {
 		r.boss.Draw(*o)

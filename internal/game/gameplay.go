@@ -66,6 +66,12 @@ func (s *GameStatePlay) End(g *Game) {
 func (s *GameStatePlay) Update(g *Game) GameState {
 	s.titleTimer++
 
+	if handled, kind := g.CheckUI(); !handled {
+		if kind == UICheckClick {
+			g.selectedDude = nil
+		}
+	}
+
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		g.TogglePause()
 	}

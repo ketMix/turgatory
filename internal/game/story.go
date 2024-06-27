@@ -410,6 +410,7 @@ func (s *Story) RemoveRoom(index int) error {
 	// Clear out the room references.
 	for i := 0; i < int(room.size); i++ {
 		s.rooms[index+i] = nil
+		s.PlaceRoom(NewRoom(Small, Empty), index+i)
 	}
 	room.story = nil
 	room.index = -1

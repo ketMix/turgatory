@@ -100,20 +100,20 @@ func (r *RoomDef) GetDescription() string {
 
 // Cost of the room scales with the story level
 // With each level, the cost of the room increases by 25%
-func (r *RoomDef) GetCost(level int) int {
+func GetRoomCost(kind RoomKind, size RoomSize, level int) int {
 	cost := 0
 	perLevelMultiplier := 0.25
 
-	switch r.kind {
+	switch kind {
 	case Armory:
-		switch r.size {
+		switch size {
 		case Medium:
 			cost = 100
 		case Large:
 			cost = 500
 		}
 	case HealingShrine:
-		switch r.size {
+		switch size {
 		case Small:
 			cost = 50
 		case Medium:
@@ -124,7 +124,7 @@ func (r *RoomDef) GetCost(level int) int {
 	case Well:
 		cost = 250
 	case Treasure:
-		switch r.size {
+		switch size {
 		case Small:
 			cost = 100
 		case Medium:
