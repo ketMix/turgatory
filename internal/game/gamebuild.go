@@ -69,7 +69,7 @@ func (s *GameStateBuild) Begin(g *Game) {
 				emptyRooms++
 			}
 		}
-		if emptyRooms > 0 {
+		if emptyRooms > 0 && len(s.availableRooms) > 0 {
 			if s.readyAttempts > 0 {
 				g.ui.feedback.Msg(FeedbackBad, "...so be it")
 				s.readyAttempts = 2
@@ -157,19 +157,6 @@ func (s *GameStateBuild) Update(g *Game) GameState {
 			room.highlight = false
 		}
 		s.highlightedRooms = nil
-	}
-
-	// Who cares if this is a lil expensive.
-	ready := true
-	for _, room := range s.nextStory.rooms {
-		if room.kind == Empty {
-			ready = false
-			break
-		}
-	}
-	if ready {
-		// TODO: Show a READY button instead!!!
-		return &GameStatePlay{}
 	}
 
 	return nil
