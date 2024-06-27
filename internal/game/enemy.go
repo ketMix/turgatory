@@ -12,6 +12,7 @@ type EnemyKind int
 const (
 	EnemyRat EnemyKind = iota
 	EnemySlime
+	EnemySkelly
 	EnemyBossRat
 	EnemyUnknown
 )
@@ -22,6 +23,8 @@ func (e EnemyKind) String() string {
 		return "Rat"
 	case EnemySlime:
 		return "Slime"
+	case EnemySkelly:
+		return "Skelly"
 	case EnemyBossRat:
 		return "Boss Rat"
 	default:
@@ -43,9 +46,11 @@ func (e EnemyKind) Stats() *Stats {
 	case EnemyRat:
 		return &Stats{strength: 3, defense: 3, totalHp: 15, luck: 1}
 	case EnemySlime:
-		return &Stats{strength: 5, defense: 5, totalHp: 30, luck: 2}
+		return &Stats{strength: 6, defense: 6, totalHp: 30, luck: 2}
+	case EnemySkelly:
+		return &Stats{strength: 12, defense: 12, totalHp: 60, luck: 3}
 	case EnemyBossRat:
-		return &Stats{strength: 15, defense: 15, totalHp: 350, luck: 5}
+		return &Stats{strength: 15, defense: 15, totalHp: 250, luck: 5}
 	default:
 		return &Stats{strength: 1, defense: 0, totalHp: 1, luck: 1}
 	}
@@ -103,11 +108,11 @@ func (e *Enemy) RoomUpdate(r *Room) {
 		return
 	}
 
-	rX, rY := r.stacks[0].Position()
-	rotation := r.stacks[0].Rotation()
+	roomStack := r.stacks[0]
 
-	e.stack.SetPosition(rX, rY)
-	e.stack.SetRotation(rotation - math.Pi)
+	e.stack.SetPosition(roomStack.Position())
+	e.stack.SetOrigin(roomStack.Origin())
+	e.stack.SetRotation(roomStack.Rotation())
 	e.stack.Update()
 }
 

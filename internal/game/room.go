@@ -88,6 +88,8 @@ func (r *RoomKind) GetRoomEnemy(roomSize RoomSize, storyLevel int) EnemyKind {
 			return EnemyRat
 		case Medium:
 			return EnemySlime
+		case Large:
+			return EnemySkelly
 		}
 	case Boss:
 		// Every 3 levels, boss is upgraded
@@ -146,24 +148,6 @@ const (
 	// Marker for the end... allows for iteration
 	RoomKindEnd
 )
-
-// The set of BAD rooms (those that are not good for the dudes)
-// Will be used to determine the REQUIRED rooms you have to place
-var badRooms = []RoomKind{
-	Combat,
-	Curse,
-	Trap,
-}
-
-// The set of GOOD rooms (those that are good for the dudes)
-// Will be used to determine the OPTIONAL rooms you can place (for $$$)
-var goodRooms = []RoomKind{
-	Armory,
-	HealingShrine,
-	Well,
-	Treasure,
-	Library,
-}
 
 type RoomTemplate struct {
 	kind RoomKind
@@ -447,7 +431,9 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 		case Combat:
 			// Add enemy based on room size
 			enemyName := r.kind.GetRoomEnemy(r.size, r.story.level)
-			enemyStack, err := render.NewStack("enemies/"+r.size.String(), strings.ToLower(enemyName.String()), "")
+			enemyStack, err := render.NewStack("enemies/"+r.size.String(), "", "")
+			// Randomize which enemy flavor it is
+			enemyStack.SetStack(enemyStack.Stacks()[rand.Intn(len(enemyStack.Stacks()))])
 			if err != nil {
 				fmt.Println("Error creating enemy stack", err)
 			} else {
