@@ -517,3 +517,28 @@ func GetRandomBadRoom() RoomKind {
 	// Roll for room
 	return badRooms[rand.Intn(len(badRooms))]
 }
+
+// For populating the required rooms to place
+// Number of bad rooms based on story level?
+// Stories 3, 6, 9, and 12 (?) are boss rooms
+// TODO: make sure you can actually fit all required rooms
+func GetRequiredRooms(storyLevel int) []RoomKind {
+	if storyLevel%2 == 0 {
+		return []RoomKind{Boss}
+	}
+
+	rooms := []RoomKind{}
+	for i := 0; i < 2; i++ {
+		rooms = append(rooms, GetRandomBadRoom())
+	}
+	return rooms
+}
+
+// 3 rooms to buy
+func GetOptionalRooms(storyLevel int) []RoomKind {
+	rooms := []RoomKind{}
+	for i := 0; i < 3; i++ {
+		rooms = append(rooms, GetRandomGoodRoom())
+	}
+	return rooms
+}
