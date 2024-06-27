@@ -95,7 +95,7 @@ func (s *GameStateBuild) Draw(g *Game, screen *ebiten.Image) {
 		opts := render.TextOptions{
 			Screen: screen,
 			Font:   assets.DisplayFont,
-			Color:  color.NRGBA{184, 152, 93, 200},
+			Color:  assets.ColorState,
 		}
 		opts.GeoM.Scale(4, 4)
 
@@ -207,7 +207,7 @@ func (s *GameStatePlay) Draw(g *Game, screen *ebiten.Image) {
 		opts := render.TextOptions{
 			Screen: screen,
 			Font:   assets.DisplayFont,
-			Color:  color.NRGBA{184, 152, 93, 200},
+			Color:  assets.ColorState,
 		}
 		opts.GeoM.Scale(4, 4)
 
@@ -248,7 +248,7 @@ func (s *GameStatePlay) Draw(g *Game, screen *ebiten.Image) {
 		render.DrawText(opts, "PAUSED")
 		opts.GeoM.Translate(20, 20)
 		render.DrawText(opts, "PAUSED")
-		opts.Color = color.NRGBA{184, 152, 93, 200}
+		opts.Color = assets.ColorHeading
 		opts.GeoM.Translate(-10, -10)
 		render.DrawText(opts, "PAUSED")
 	}
@@ -297,7 +297,7 @@ func (s *GameStateLose) Draw(g *Game, screen *ebiten.Image) {
 	opts.GeoM.Translate(20, 20)
 	opts.GeoM.Translate(0, math.Cos(s.wobbler)*2)
 	render.DrawText(opts, "GAME OVER")
-	opts.Color = color.NRGBA{255, 52, 33, 200}
+	opts.Color = assets.ColorGameOver
 	opts.GeoM.Translate(-10, -10)
 	opts.GeoM.Translate(0, math.Cos(s.wobbler)*2)
 	render.DrawText(opts, "GAME OVER")
