@@ -383,24 +383,46 @@ type UIPanel struct {
 	center         *render.Sprite
 }
 
-func NewUIPanel(altStyle bool) *UIPanel {
+type PanelStyle int
+
+const (
+	PanelStyleNormal PanelStyle = iota
+	PanelStyleInteractive
+	PanelStyleButton
+	PanelStyleButtonDisabled
+)
+
+func NewUIPanel(style PanelStyle) *UIPanel {
+	p := &UIPanel{}
+	p.SetStyle(style)
+	return p
+}
+
+func (p *UIPanel) SetStyle(style PanelStyle) {
 	var sp *render.Sprite
-	if altStyle {
-		sp = Must(render.NewSprite("ui/altPanels"))
-	} else {
+	var size int
+	if style == PanelStyleInteractive {
 		sp = Must(render.NewSprite("ui/panels"))
+		size = 16
+	} else if style == PanelStyleButton {
+		sp = Must(render.NewSprite("ui/buttonPanels"))
+		size = 8
+	} else if style == PanelStyleButtonDisabled {
+		sp = Must(render.NewSprite("ui/buttonPanelsDisabled"))
+		size = 8
+	} else {
+		sp = Must(render.NewSprite("ui/altPanels"))
+		size = 16
 	}
-	return &UIPanel{
-		topleft:     Must(render.NewSubSprite(sp, 0, 0, 16, 16)),
-		top:         Must(render.NewSubSprite(sp, 16, 0, 16, 16)),
-		topright:    Must(render.NewSubSprite(sp, 32, 0, 16, 16)),
-		left:        Must(render.NewSubSprite(sp, 0, 16, 16, 16)),
-		center:      Must(render.NewSubSprite(sp, 16, 16, 16, 16)),
-		right:       Must(render.NewSubSprite(sp, 32, 16, 16, 16)),
-		bottomleft:  Must(render.NewSubSprite(sp, 0, 32, 16, 16)),
-		bottom:      Must(render.NewSubSprite(sp, 16, 32, 16, 16)),
-		bottomright: Must(render.NewSubSprite(sp, 32, 32, 16, 16)),
-	}
+	p.topleft = Must(render.NewSubSprite(sp, 0, 0, size, size))
+	p.top = Must(render.NewSubSprite(sp, size, 0, size, size))
+	p.topright = Must(render.NewSubSprite(sp, size*2, 0, size, size))
+	p.left = Must(render.NewSubSprite(sp, 0, size, size, size))
+	p.center = Must(render.NewSubSprite(sp, size, size, size, size))
+	p.right = Must(render.NewSubSprite(sp, size*2, size, size, size))
+	p.bottomleft = Must(render.NewSubSprite(sp, 0, size*2, size, size))
+	p.bottom = Must(render.NewSubSprite(sp, size, size*2, size, size))
+	p.bottomright = Must(render.NewSubSprite(sp, size*2, size*2, size, size))
 }
 
 func (p *UIPanel) Layout(parent UIElement, o *UIOptions) {
@@ -471,6 +493,7 @@ func (p *UIPanel) Draw(o *render.Options) {
 		Screen: o.Screen,
 	}
 	op.DrawImageOptions.GeoM.Concat(o.DrawImageOptions.GeoM)
+	op.DrawImageOptions.ColorScale.ScaleWithColorScale(o.DrawImageOptions.ColorScale)
 
 	op.DrawImageOptions.GeoM.Translate(x, y)
 

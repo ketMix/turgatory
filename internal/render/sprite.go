@@ -139,6 +139,7 @@ func (s *Sprite) Draw(o *Options) {
 
 	opts.GeoM.Concat(o.DrawImageOptions.GeoM)
 
+	opts.ColorScale.ScaleWithColorScale(o.DrawImageOptions.ColorScale)
 	if s.Transparency != 0 {
 		opts.ColorScale.ScaleAlpha(1.0 - s.Transparency)
 	}

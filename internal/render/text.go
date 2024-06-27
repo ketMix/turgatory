@@ -9,15 +9,17 @@ import (
 )
 
 type TextOptions struct {
-	Screen *ebiten.Image
-	Font   assets.Font
-	Color  color.Color
-	GeoM   ebiten.GeoM
+	Screen     *ebiten.Image
+	Font       assets.Font
+	Color      color.Color
+	GeoM       ebiten.GeoM
+	ColorScale ebiten.ColorScale
 }
 
 func DrawText(o *TextOptions, txt string) {
 	op := &text.DrawOptions{}
 	op.ColorScale.ScaleWithColor(o.Color)
+	op.ColorScale.ScaleWithColorScale(o.ColorScale)
 	op.LineSpacing = o.Font.LineHeight
 	op.GeoM.Concat(o.GeoM)
 	text.Draw(o.Screen, txt, o.Font.Face, op)

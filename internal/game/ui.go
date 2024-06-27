@@ -38,6 +38,7 @@ type UI struct {
 	roomInfoPanel  RoomInfoPanel
 	options        *UIOptions
 	feedback       FeedbackPopup
+	buttonPanel    ButtonPanel
 }
 
 func NewUI() *UI {
@@ -84,6 +85,8 @@ func NewUI() *UI {
 	ui.roomPanel = MakeRoomPanel()
 	ui.roomInfoPanel = MakeRoomInfoPanel()
 	ui.feedback = MakeFeedbackPopup()
+	ui.buttonPanel = MakeButtonPanel()
+	ui.buttonPanel.Disable()
 
 	return ui
 }
@@ -172,6 +175,13 @@ func (ui *UI) Layout(o *UIOptions) {
 		float64(o.Height)/2-ui.feedback.panel.Height()/2,
 	)
 	ui.feedback.Layout(o)
+
+	ui.buttonPanel.panel.SetPosition(
+		float64(o.Width)/2-ui.buttonPanel.panel.Width()/2,
+		float64(o.Height)/2-ui.buttonPanel.panel.Height()/2+float64(o.Height)/4,
+	)
+	ui.buttonPanel.Layout(o)
+
 }
 
 func (ui *UI) Update(o *UIOptions) {
@@ -182,6 +192,7 @@ func (ui *UI) Update(o *UIOptions) {
 	ui.speedPanel.Update(o)
 	ui.messagePanel.Update(o)
 	ui.feedback.Update(o)
+	ui.buttonPanel.Update(o)
 }
 
 func (ui *UI) Check(mx, my float64, kind UICheckKind) bool {
@@ -198,10 +209,16 @@ func (ui *UI) Check(mx, my float64, kind UICheckKind) bool {
 	if ui.speedPanel.Check(mx, my, kind) {
 		return true
 	}
+
+	if ui.buttonPanel.Check(mx, my, kind) {
+		return true
+	}
 	return false
 }
 
 func (ui *UI) Draw(o *render.Options) {
+	ui.buttonPanel.Draw(o)
+
 	ui.dudePanel.Draw(o)
 	o.DrawImageOptions.GeoM.Reset()
 	ui.equipmentPanel.Draw(o)
@@ -1007,7 +1024,7 @@ type RoomPanel struct {
 
 func MakeRoomPanel() RoomPanel {
 	rp := RoomPanel{
-		panel: NewUIPanel(false),
+		panel: NewUIPanel(PanelStyleInteractive),
 		title: NewUIText("Rooms", assets.DisplayFont, assets.ColorHeading),
 		count: NewUIText("0", assets.BodyFont, assets.ColorHeading),
 		list:  NewUIItemList(DirectionVertical),
@@ -1073,7 +1090,7 @@ type RoomInfoPanel struct {
 
 func MakeRoomInfoPanel() RoomInfoPanel {
 	rip := RoomInfoPanel{
-		panel:       NewUIPanel(true),
+		panel:       NewUIPanel(PanelStyleNormal),
 		title:       NewUIText("Room Info", assets.DisplayFont, assets.ColorHeading),
 		description: NewUIText("Description", assets.BodyFont, assets.ColorRoomDescription),
 		cost:        NewUIText("Cost: 0", assets.BodyFont, assets.ColorRoomCost),
@@ -1122,10 +1139,10 @@ type GameInfoPanel struct {
 
 func MakeGameInfoPanel() GameInfoPanel {
 	gip := GameInfoPanel{
-		panel:      NewUIPanel(true),
-		storyPanel: NewUIPanel(true),
-		dudePanel:  NewUIPanel(true),
-		goldPanel:  NewUIPanel(true),
+		panel:      NewUIPanel(PanelStyleNormal),
+		storyPanel: NewUIPanel(PanelStyleNormal),
+		dudePanel:  NewUIPanel(PanelStyleNormal),
+		goldPanel:  NewUIPanel(PanelStyleNormal),
 	}
 
 	gip.storyText = NewUIText("Story 0/0", assets.BodyFont, assets.ColorStory)
@@ -1174,7 +1191,7 @@ type DudePanel2 struct {
 
 func MakeDudePanel2() DudePanel2 {
 	dp := DudePanel2{
-		panel: NewUIPanel(false),
+		panel: NewUIPanel(PanelStyleInteractive),
 		title: NewUIText("Dudes", assets.DisplayFont, assets.ColorHeading),
 		list:  NewUIItemList(DirectionVertical),
 	}
@@ -1222,7 +1239,7 @@ type EquipmentPanel struct {
 
 func MakeEquipmentPanel() EquipmentPanel {
 	ep := EquipmentPanel{
-		panel: NewUIPanel(false),
+		panel: NewUIPanel(PanelStyleInteractive),
 		title: NewUIText("Loot", assets.DisplayFont, assets.ColorHeading),
 		list:  NewUIItemList(DirectionVertical),
 	}
@@ -1262,8 +1279,8 @@ type FeedbackPopup struct {
 
 func MakeFeedbackPopup() FeedbackPopup {
 	fp := FeedbackPopup{
-		panel: NewUIPanel(true),
-		text:  NewUIText("Henlo???", assets.BodyFont, assets.ColorHeading),
+		panel: NewUIPanel(PanelStyleInteractive),
+		text:  NewUIText("", assets.BodyFont, assets.ColorHeading),
 	}
 	fp.text.center = true
 	fp.panel.AddChild(fp.text)
@@ -1310,4 +1327,85 @@ var (
 	FeedbackGeneric = FeedbackKind{255, 255, 255, 255}
 	FeedbackGood    = FeedbackKind{0, 255, 0, 255}
 	FeedbackBad     = FeedbackKind{255, 0, 0, 255}
+	FeedbackWarning = FeedbackKind{255, 255, 0, 255}
 )
+
+type ButtonPanel struct {
+	panel    *UIPanel
+	text     *UIText
+	hidden   bool
+	disabled bool
+	onClick  func()
+}
+
+func MakeButtonPanel() ButtonPanel {
+	bp := ButtonPanel{
+		panel: NewUIPanel(PanelStyleButton),
+		text:  NewUIText("arghh", assets.DisplayFont, assets.ColorHeading),
+	}
+	bp.panel.AddChild(bp.text)
+	bp.panel.sizeChildren = false
+	bp.panel.centerChildren = true
+	return bp
+}
+
+func (bp *ButtonPanel) Layout(o *UIOptions) {
+	bp.panel.padding = 1 * o.Scale
+	bp.text.Layout(nil, o)
+	bp.panel.Layout(nil, o)
+}
+
+func (bp *ButtonPanel) doSize(o *UIOptions) {
+	// lol size according to highest divisible
+	width := math.Ceil(bp.text.Width()/bp.panel.left.Width())*bp.panel.left.Width() + bp.panel.left.Width() + bp.panel.right.Width()
+	height := math.Ceil(bp.text.Height()/bp.panel.top.Height()) * bp.panel.top.Height()
+	bp.panel.SetSize(width, height)
+
+	bp.panel.Layout(nil, o)
+}
+
+func (bp *ButtonPanel) Update(o *UIOptions) {
+	if bp.hidden {
+		return
+	}
+	// eh...
+	bp.doSize(o)
+	bp.panel.Update(o)
+}
+
+func (bp *ButtonPanel) Check(mx, my float64, kind UICheckKind) bool {
+	if bp.hidden || bp.disabled {
+		return false
+	}
+	if InBounds(bp.panel.X(), bp.panel.Y(), bp.panel.Width(), bp.panel.Height(), mx, my) {
+		if kind == UICheckClick {
+			if bp.onClick != nil {
+				bp.onClick()
+				return true
+			}
+		}
+		if kind == UICheckHover {
+			return true
+		}
+	}
+	return false
+}
+
+func (bp *ButtonPanel) Draw(o *render.Options) {
+	if bp.hidden || bp.disabled {
+		return
+	}
+	bp.panel.Draw(o)
+}
+
+func (bp *ButtonPanel) Disable() {
+	bp.panel.SetStyle(PanelStyleButtonDisabled)
+	bp.disabled = true
+	bp.text.textOptions.ColorScale.ScaleAlpha(0.5)
+}
+
+func (bp *ButtonPanel) Enable() {
+	bp.panel.SetStyle(PanelStyleButton)
+	bp.disabled = false
+	bp.text.textOptions.ColorScale.ScaleAlpha(1.0)
+}

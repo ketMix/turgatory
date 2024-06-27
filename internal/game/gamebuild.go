@@ -19,6 +19,7 @@ type GameStateBuild struct {
 	highlightedRooms []*Room
 	placingRoom      *RoomDef
 	placingIndex     int
+	readyAttempts    int
 }
 
 func (s *GameStateBuild) Begin(g *Game) {
@@ -58,6 +59,32 @@ func (s *GameStateBuild) Begin(g *Game) {
 		g.ui.roomInfoPanel.cost.SetText(fmt.Sprintf("Cost: %d", GetRoomCost(selected.kind, selected.size, s.nextStory.level)))
 	}
 
+	// I guess we can allow the player to yeet whenever.
+	g.ui.buttonPanel.Enable()
+	g.ui.buttonPanel.onClick = func() {
+		emptyRooms := 0
+		for _, room := range s.nextStory.rooms {
+			if room.kind == Empty {
+				emptyRooms++
+			}
+		}
+		if emptyRooms > 0 {
+			if s.readyAttempts > 0 {
+				g.ui.feedback.Msg(FeedbackBad, "...so be it")
+				s.readyAttempts = 2
+				return
+			} else {
+				g.ui.feedback.Msg(FeedbackWarning, fmt.Sprintf("%d empty rooms remain, are you sure you want to proceed?", emptyRooms))
+				s.readyAttempts++
+				return
+			}
+		} else {
+			s.readyAttempts = 2
+		}
+	}
+	g.ui.buttonPanel.text.SetText("adventure forth!")
+	g.ui.buttonPanel.hidden = false
+
 	// Update info.
 	g.UpdateInfo()
 }
@@ -68,8 +95,13 @@ func (s *GameStateBuild) End(g *Game) {
 	for _, room := range s.nextStory.rooms {
 		room.highlight = false
 	}
+	g.ui.buttonPanel.hidden = true
 }
 func (s *GameStateBuild) Update(g *Game) GameState {
+	if s.readyAttempts >= 2 {
+		return &GameStatePlay{}
+	}
+
 	s.wobbler += 0.05
 	s.titleTimer++
 
@@ -107,6 +139,7 @@ func (s *GameStateBuild) Update(g *Game) GameState {
 
 		} else if kind == UICheckClick {
 			s.TryPlaceRoom(g)
+			s.readyAttempts = 0
 		}
 	} else {
 		if s.focusedRoom != nil {
