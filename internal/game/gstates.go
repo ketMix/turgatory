@@ -201,12 +201,6 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 	return nil
 }
 func (s *GameStatePlay) Draw(g *Game, screen *ebiten.Image) {
-	options := render.Options{Screen: screen, Overlay: g.overlay, Camera: &g.camera}
-
-	// Draw UI
-	options.DrawImageOptions.GeoM.Reset()
-	options.DrawImageOptions.ColorScale.Reset()
-	g.ui.Draw(&options)
 
 	if s.titleTimer < 240 {
 		opts := render.TextOptions{

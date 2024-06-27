@@ -106,8 +106,11 @@ func (g *Game) Update() error {
 		g.camera.ZoomOut()
 	}
 
+	mx, my := IntToFloat2(ebiten.CursorPosition())
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		g.selectedDude = nil
+		if !g.ui.Check(mx, my) {
+			g.selectedDude = nil
+		}
 	}
 
 	if nextState := g.state.Update(g); nextState != nil {
@@ -143,6 +146,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// Draw overlay.
 	screen.DrawImage(g.overlay, nil)
+
+	options := render.Options{Screen: screen, Overlay: g.overlay, Camera: &g.camera}
+
+	// Draw UI
+	options.DrawImageOptions.GeoM.Reset()
+	options.DrawImageOptions.ColorScale.Reset()
+	g.ui.Draw(&options)
 
 	// Print fps
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%0.2f", ebiten.CurrentFPS()), 0, 0)

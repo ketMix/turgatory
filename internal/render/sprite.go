@@ -19,6 +19,14 @@ func (s *Sprite) Size() (float64, float64) {
 	return float64(s.image.Bounds().Dx()) * s.Scale, float64(s.image.Bounds().Dy()) * s.Scale
 }
 
+func (s *Sprite) Width() float64 {
+	return float64(s.image.Bounds().Dx()) * s.Scale
+}
+
+func (s *Sprite) Height() float64 {
+	return float64(s.image.Bounds().Dy()) * s.Scale
+}
+
 func (s *Sprite) SetStaxie(name, stackName string) error {
 	staxie, err := assets.LoadStaxie(name)
 	if err != nil {

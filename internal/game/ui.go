@@ -32,6 +32,7 @@ type UI struct {
 	roomPanel    RoomPanel
 	speedPanel   SpeedPanel
 	messagePanel MessagePanel
+	panel        *UIPanel
 	options      *UIOptions
 }
 
@@ -83,15 +84,10 @@ func NewUI() *UI {
 			right:    Must(render.NewSubSprite(panelSprite, 32, 16, 16, 32)),
 		}
 	}
-	{
-		ui.speedPanel = SpeedPanel{
-			musicButton:  NewButton("music", "music on"),
-			soundButton:  NewButton("sound", "sound on"),
-			pauseButton:  NewButton("play", "playing"),
-			speedButton:  NewButton("fast", "fast"),
-			cameraButton: NewButton("story", "camera: story"),
-		}
-	}
+	ui.speedPanel = MakeSpeedPanel()
+	ui.panel = NewUIPanel()
+	ui.panel.children = append(ui.panel.children, NewUIText("Hello, world!", assets.DisplayFont, color.White))
+	ui.panel.children = append(ui.panel.children, NewUIText("Hello, world 2!", assets.DisplayFont, color.White))
 	return ui
 }
 
@@ -99,8 +95,19 @@ func (ui *UI) Layout(o *UIOptions) {
 	ui.options = o
 	ui.dudePanel.Layout(o)
 	ui.roomPanel.Layout(o)
-	ui.speedPanel.Layout(o)
+	ui.speedPanel.Layout(nil, o)
 	ui.messagePanel.Layout(o)
+
+	ui.panel.padding = 6 * o.Scale
+	ui.panel.SetSize(
+		128*o.Scale,
+		float64(o.Height)/2-float64(o.Height)/16,
+	)
+	ui.panel.SetPosition(
+		128,
+		float64(o.Height)/2-ui.panel.Height()/2,
+	)
+	ui.panel.Layout(nil, o)
 }
 
 func (ui *UI) Update(o *UIOptions) {
@@ -108,6 +115,15 @@ func (ui *UI) Update(o *UIOptions) {
 	ui.roomPanel.Update(o)
 	ui.speedPanel.Update(o)
 	ui.messagePanel.Update(o)
+
+	ui.panel.Update(o)
+}
+
+func (ui *UI) Check(mx, my float64) bool {
+	if ui.speedPanel.Check(mx, my) {
+		return true
+	}
+	return false
 }
 
 func (ui *UI) Draw(o *render.Options) {
@@ -118,6 +134,9 @@ func (ui *UI) Draw(o *render.Options) {
 	ui.speedPanel.Draw(o)
 	o.DrawImageOptions.GeoM.Reset()
 	ui.messagePanel.Draw(o)
+
+	o.DrawImageOptions.GeoM.Reset()
+	ui.panel.Draw(o)
 }
 
 type DudeDetails struct {
@@ -791,150 +810,77 @@ func (rp *RoomPanel) Draw(o *render.Options) {
 	o.Screen.DrawImage(rd.image, &o.DrawImageOptions)
 }
 
-// ===============================================
-type Button struct {
-	baseSprite  *render.Sprite
-	sprite      *render.Sprite
-	onClick     func()
-	wobbler     float64
-	tooltip     string
-	showTooltip bool
-}
-
-func NewButton(name string, tooltip string) *Button {
-	return &Button{
-		baseSprite: Must(render.NewSpriteFromStaxie("ui/button", "base")),
-		sprite:     Must(render.NewSpriteFromStaxie("ui/button", name)),
-		tooltip:    tooltip,
-	}
-}
-
-func (b *Button) Layout(o *UIOptions) {
-	b.baseSprite.Scale = o.Scale
-	b.sprite.Scale = o.Scale
-}
-
-func (b *Button) Update() {
-	x, y := b.Position()
-	w, h := b.sprite.Size()
-	mx, my := IntToFloat2(ebiten.CursorPosition())
-	if InBounds(x, y, w, h, mx, my) {
-		b.showTooltip = true
-		b.wobbler += 0.1
-	} else {
-		b.showTooltip = false
-		b.wobbler = 0
-	}
-	b.sprite.SetRotation(math.Sin(b.wobbler) * 0.05)
-	b.baseSprite.SetRotation(math.Sin(b.wobbler) * 0.05)
-}
-
-func (b *Button) Check(mx, my float64) {
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		x, y := b.Position()
-		w, h := b.sprite.Size()
-		if mx > x && mx < x+w && my > y && my < y+h {
-			if b.onClick != nil {
-				b.onClick()
-			}
-		}
-	}
-}
-
-func (b *Button) SetPosition(x, y float64) {
-	b.baseSprite.SetPosition(x, y)
-	b.sprite.SetPosition(x, y)
-}
-
-func (b *Button) Position() (float64, float64) {
-	return b.baseSprite.Position()
-}
-
-func (b *Button) SetImage(name string) {
-	b.sprite.SetStaxie("ui/button", name)
-}
-
-func (b *Button) Draw(o *render.Options) {
-	b.baseSprite.Draw(o)
-	b.sprite.Draw(o)
-	o.DrawImageOptions.GeoM.Reset()
-	if b.tooltip != "" && b.showTooltip {
-		op := &render.TextOptions{
-			Screen: o.Screen,
-			Font:   assets.DisplayFont,
-			Color:  color.NRGBA{184, 152, 93, 200},
-		}
-		width, _ := text.Measure(b.tooltip, assets.DisplayFont.Face, assets.BodyFont.LineHeight)
-		x, y := b.Position()
-		w, h := b.sprite.Size()
-		x += w
-		op.GeoM.Translate(x-width, y+h)
-		render.DrawText(op, b.tooltip)
-	}
-}
-
 type SpeedPanel struct {
 	render.Positionable
-	width        float64
-	height       float64
-	cameraButton *Button
-	pauseButton  *Button
-	speedButton  *Button
-	musicButton  *Button
-	soundButton  *Button
+	render.Sizeable
+	cameraButton *UIButton
+	pauseButton  *UIButton
+	speedButton  *UIButton
+	musicButton  *UIButton
+	soundButton  *UIButton
+	buttons      []UIElement
 }
 
-func (sp *SpeedPanel) Layout(o *UIOptions) {
-	sp.cameraButton.Layout(o)
-	sp.pauseButton.Layout(o)
-	sp.speedButton.Layout(o)
-	sp.musicButton.Layout(o)
-	sp.soundButton.Layout(o)
+func MakeSpeedPanel() SpeedPanel {
+	sp := SpeedPanel{}
+	sp.musicButton = NewUIButton("music", "music on")
+	sp.soundButton = NewUIButton("sound", "sound on")
+	sp.pauseButton = NewUIButton("play", "playing")
+	sp.speedButton = NewUIButton("fast", "fast")
+	sp.cameraButton = NewUIButton("story", "camera: story")
+	sp.buttons = append(sp.buttons, sp.musicButton)
+	sp.buttons = append(sp.buttons, sp.soundButton)
+	sp.buttons = append(sp.buttons, sp.cameraButton)
+	sp.buttons = append(sp.buttons, sp.pauseButton)
+	sp.buttons = append(sp.buttons, sp.speedButton)
+	return sp
+}
+
+func (sp *SpeedPanel) Layout(parent UIElement, o *UIOptions) {
+	for _, b := range sp.buttons {
+		b.Layout(sp, o)
+	}
 
 	bw, bh := sp.pauseButton.sprite.Size()
 
-	sp.width = bw*5 + 4*5
-	sp.height = bh + bh/4
+	sp.SetSize(
+		bw*float64(len(sp.buttons))+4*float64(len(sp.buttons)),
+		bh+bh/4,
+	)
 
-	x := float64(o.Width) - sp.width
+	x := float64(o.Width) - sp.Width()
 	y := 4.0
 
 	sp.SetPosition(x, y)
 
-	sp.musicButton.SetPosition(x, y)
-	x += bw + 4
-	sp.soundButton.SetPosition(x, y)
-	x += bw + 4
-	sp.cameraButton.SetPosition(x, y)
-	x += bw + 4
-	sp.pauseButton.SetPosition(x, y)
-	x += bw + 4
-	sp.speedButton.SetPosition(x, y)
-}
-
-func (sp *SpeedPanel) Update(o *UIOptions) {
-	mx, my := IntToFloat2(ebiten.CursorPosition())
-	x, y := sp.Position()
-	if InBounds(x, y, sp.width, sp.height, mx, my) {
-		sp.musicButton.Update()
-		sp.soundButton.Update()
-		sp.cameraButton.Update()
-		sp.pauseButton.Update()
-		sp.speedButton.Update()
-		sp.musicButton.Check(mx, my)
-		sp.soundButton.Check(mx, my)
-		sp.cameraButton.Check(mx, my)
-		sp.pauseButton.Check(mx, my)
-		sp.speedButton.Check(mx, my)
+	for _, b := range sp.buttons {
+		b.SetPosition(x, y)
+		x += bw + 4
 	}
 }
 
+func (sp *SpeedPanel) Update(o *UIOptions) {
+	for _, b := range sp.buttons {
+		b.Update(o)
+	}
+}
+
+func (sp *SpeedPanel) Check(mx, my float64) bool {
+	if !InBounds(sp.X(), sp.Y(), sp.Width(), sp.Height(), mx, my) {
+		return false
+	}
+	for _, b := range sp.buttons {
+		if b.Check(mx, my) {
+			return true
+		}
+	}
+	return false
+}
+
 func (sp *SpeedPanel) Draw(o *render.Options) {
-	sp.musicButton.Draw(o)
-	sp.soundButton.Draw(o)
-	sp.cameraButton.Draw(o)
-	sp.pauseButton.Draw(o)
-	sp.speedButton.Draw(o)
+	for _, b := range sp.buttons {
+		b.Draw(o)
+	}
 }
 
 type MessagePanel struct {
