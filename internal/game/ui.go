@@ -33,6 +33,7 @@ type UI struct {
 	speedPanel   SpeedPanel
 	messagePanel MessagePanel
 	panel        *UIPanel
+	itemList     *UIItemList
 	options      *UIOptions
 }
 
@@ -85,9 +86,25 @@ func NewUI() *UI {
 		}
 	}
 	ui.speedPanel = MakeSpeedPanel()
+
 	ui.panel = NewUIPanel()
-	ui.panel.children = append(ui.panel.children, NewUIText("Hello, world!", assets.DisplayFont, color.White))
-	ui.panel.children = append(ui.panel.children, NewUIText("Hello, world 2!", assets.DisplayFont, color.White))
+	ui.itemList = NewUIItemList(DirectionVertical)
+	ui.itemList.AddItem(NewUIText("1", assets.DisplayFont, color.White))
+	ui.itemList.AddItem(NewUIText("2", assets.DisplayFont, color.White))
+	ui.itemList.AddItem(NewUIText("3", assets.DisplayFont, color.White))
+	ui.itemList.AddItem(NewUIText("4", assets.DisplayFont, color.White))
+	ui.itemList.AddItem(NewUIText("5", assets.DisplayFont, color.White))
+	ui.itemList.AddItem(NewUIText("6", assets.DisplayFont, color.White))
+	rp := GetRoomDef(Combat, Small)
+	img := NewUIImage(rp.image)
+	img.ignoreScale = true
+	ui.itemList.AddItem(img)
+	ui.itemList.AddItem(NewUIText("7", assets.DisplayFont, color.White))
+	ui.itemList.AddItem(NewUIText("8", assets.DisplayFont, color.White))
+
+	ui.panel.children = append(ui.panel.children, ui.itemList)
+	ui.panel.sizeChildren = true
+
 	return ui
 }
 
@@ -100,14 +117,17 @@ func (ui *UI) Layout(o *UIOptions) {
 
 	ui.panel.padding = 6 * o.Scale
 	ui.panel.SetSize(
-		128*o.Scale,
-		float64(o.Height)/2-float64(o.Height)/16,
+		64*o.Scale,
+		float64(o.Height)/2,
 	)
 	ui.panel.SetPosition(
-		128,
+		28,
 		float64(o.Height)/2-ui.panel.Height()/2,
 	)
 	ui.panel.Layout(nil, o)
+
+	ui.itemList.SetSize(ui.panel.Width(), ui.panel.Height()-ui.panel.padding*2)
+	ui.itemList.Layout(nil, o)
 }
 
 func (ui *UI) Update(o *UIOptions) {
@@ -120,6 +140,10 @@ func (ui *UI) Update(o *UIOptions) {
 }
 
 func (ui *UI) Check(mx, my float64) bool {
+	if ui.panel.Check(mx, my) {
+		return true
+	}
+
 	if ui.speedPanel.Check(mx, my) {
 		return true
 	}
