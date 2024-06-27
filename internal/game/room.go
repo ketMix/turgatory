@@ -165,6 +165,11 @@ var goodRooms = []RoomKind{
 	Library,
 }
 
+type RoomTemplate struct {
+	kind RoomKind
+	size RoomSize
+}
+
 // Room is a room within a story of za toweru.
 type Room struct {
 	story          *Story
@@ -506,39 +511,104 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 	return nil
 }
 
-// For populating the optional rooms to place
-func GetRandomGoodRoom() RoomKind {
-	// Roll for room
-	return goodRooms[rand.Intn(len(goodRooms))]
-}
-
 // For populating the required rooms to place
-func GetRandomBadRoom() RoomKind {
-	// Roll for room
-	return badRooms[rand.Intn(len(badRooms))]
-}
-
-// For populating the required rooms to place
-// Number of bad rooms based on story level?
+// Number of bad rooms based on story level? (2 rooms right now, maybe thats ok)
 // Stories 3, 6, 9, and 12 (?) are boss rooms
 // TODO: make sure you can actually fit all required rooms
-func GetRequiredRooms(storyLevel int) []RoomKind {
-	if storyLevel%2 == 0 {
-		return []RoomKind{Boss}
+func GetRequiredRooms(storyLevel int) []*RoomDef {
+	level := storyLevel + 1
+
+	if level%3 == 0 {
+		roomDef := GetRoomDef(Boss, Huge)
+		return []*RoomDef{roomDef}
 	}
 
-	rooms := []RoomKind{}
+	potentialRooms := []RoomTemplate{}
+	if level < 3 {
+		potentialRooms = append(
+			potentialRooms,
+			RoomTemplate{kind: Combat, size: Small},
+			RoomTemplate{kind: Trap, size: Small},
+		)
+	} else if level < 6 {
+		potentialRooms = append(
+			potentialRooms,
+			RoomTemplate{kind: Combat, size: Small},
+			RoomTemplate{kind: Trap, size: Small},
+			RoomTemplate{kind: Combat, size: Medium},
+			RoomTemplate{kind: Trap, size: Medium},
+		)
+	} else if level < 9 {
+		potentialRooms = append(
+			potentialRooms,
+			RoomTemplate{kind: Curse, size: Medium},
+			RoomTemplate{kind: Combat, size: Small},
+			RoomTemplate{kind: Trap, size: Small},
+			RoomTemplate{kind: Combat, size: Medium},
+			RoomTemplate{kind: Trap, size: Medium},
+			RoomTemplate{kind: Combat, size: Large},
+			RoomTemplate{kind: Trap, size: Large},
+		)
+	} else {
+		potentialRooms = append(
+			potentialRooms,
+			RoomTemplate{kind: Curse, size: Medium},
+			RoomTemplate{kind: Combat, size: Small},
+			RoomTemplate{kind: Trap, size: Small},
+			RoomTemplate{kind: Combat, size: Medium},
+			RoomTemplate{kind: Trap, size: Medium},
+			RoomTemplate{kind: Combat, size: Large},
+			RoomTemplate{kind: Trap, size: Large},
+			RoomTemplate{kind: Combat, size: Huge},
+			RoomTemplate{kind: Trap, size: Huge},
+		)
+	}
+	rooms := make([]*RoomDef, 0)
 	for i := 0; i < 2; i++ {
-		rooms = append(rooms, GetRandomBadRoom())
+		room := potentialRooms[rand.Intn(len(potentialRooms))]
+		roomDef := GetRoomDef(room.kind, room.size)
+		rooms = append(rooms, roomDef)
 	}
 	return rooms
 }
 
 // 3 rooms to buy
-func GetOptionalRooms(storyLevel int) []RoomKind {
-	rooms := []RoomKind{}
+func GetOptionalRooms(storyLevel int) []*RoomDef {
+	level := storyLevel + 1
+
+	// if we are at boss level, no optional rooms
+	if level%3 == 0 {
+		return nil
+	}
+	potentialRooms := []RoomTemplate{}
+	potentialRooms = append(
+		potentialRooms,
+		RoomTemplate{kind: Armory, size: Medium},
+		RoomTemplate{kind: HealingShrine, size: Small},
+		RoomTemplate{kind: Well, size: Small},
+		RoomTemplate{kind: Treasure, size: Small},
+		RoomTemplate{kind: Library, size: Medium},
+	)
+	if level > 3 {
+		potentialRooms = append(
+			potentialRooms,
+			RoomTemplate{kind: HealingShrine, size: Medium},
+			RoomTemplate{kind: Treasure, size: Medium},
+		)
+	}
+	if level > 6 {
+		potentialRooms = append(
+			potentialRooms,
+			RoomTemplate{kind: HealingShrine, size: Large},
+			RoomTemplate{kind: Treasure, size: Large},
+		)
+	}
+
+	rooms := make([]*RoomDef, 0)
 	for i := 0; i < 3; i++ {
-		rooms = append(rooms, GetRandomGoodRoom())
+		room := potentialRooms[rand.Intn(len(potentialRooms))]
+		roomDef := GetRoomDef(room.kind, room.size)
+		rooms = append(rooms, roomDef)
 	}
 	return rooms
 }
