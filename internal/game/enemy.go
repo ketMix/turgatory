@@ -12,6 +12,7 @@ type EnemyKind int
 const (
 	EnemyRat EnemyKind = iota
 	EnemySlime
+	EnemyBossRat
 	EnemyUnknown
 )
 
@@ -21,8 +22,19 @@ func (e EnemyKind) String() string {
 		return "Rat"
 	case EnemySlime:
 		return "Slime"
+	case EnemyBossRat:
+		return "Boss Rat"
 	default:
 		return "Unknown"
+	}
+}
+
+func (e EnemyKind) BossStack() string {
+	switch e {
+	case EnemyBossRat:
+		return "bossrat"
+	default:
+		return ""
 	}
 }
 
@@ -32,6 +44,8 @@ func (e EnemyKind) Stats() *Stats {
 		return &Stats{strength: 3, defense: 3, totalHp: 15, luck: 1}
 	case EnemySlime:
 		return &Stats{strength: 5, defense: 5, totalHp: 30, luck: 2}
+	case EnemyBossRat:
+		return &Stats{strength: 15, defense: 15, totalHp: 350, luck: 5}
 	default:
 		return &Stats{strength: 1, defense: 0, totalHp: 1, luck: 1}
 	}
@@ -62,6 +76,10 @@ func (e *Enemy) Update(d *Dude) {
 	if e.stack == nil {
 		return
 	}
+	if d == nil {
+		e.stack.Update()
+		return
+	}
 	// Face the enemy towards the dude
 	e.stack.SetRotation(d.stack.Rotation() + math.Pi)
 
@@ -76,13 +94,34 @@ func (e *Enemy) Update(d *Dude) {
 	e.stack.Update()
 }
 
+func (e *Enemy) RoomUpdate(r *Room) {
+	// Position enemy in the 3/4 of the room
+	if e.stack == nil {
+		return
+	}
+	if r == nil || len(r.stacks) == 0 || r.stacks[0] == nil {
+		return
+	}
+
+	rX, rY := r.stacks[0].Position()
+	rotation := r.stacks[0].Rotation()
+
+	e.stack.SetPosition(rX, rY)
+	e.stack.SetRotation(rotation - math.Pi)
+	e.stack.Update()
+}
+
 func (e *Enemy) Draw(o render.Options) {
 	e.stack.Draw(&o)
 }
 
 // Damage deals damage to the enemy, returns true if the enemy is dead.
 func (e *Enemy) Damage(amount int) bool {
-	e.stats.currentHp -= amount - e.stats.defense
+
+	// Apply defense reduction
+	reducedDamage := e.stats.ApplyDefense(amount)
+
+	e.stats.currentHp -= reducedDamage
 	return e.stats.currentHp <= 0
 }
 
@@ -101,4 +140,26 @@ func (e *Enemy) XP() int {
 func (e *Enemy) Gold() float64 {
 	randMultiplier := 0.5 + rand.Float64()
 	return float64(e.stats.totalHp*e.stats.level) * randMultiplier
+}
+
+func (e *Enemy) IsDead() bool {
+	return e.stats.currentHp <= 0
+}
+
+// Hit target with lowest cowardice
+func (e *Enemy) GetTarget(dudes []*Dude) *Dude {
+	if len(dudes) == 0 {
+		return nil
+	}
+
+	lowestCowardice := math.MaxInt32
+	var target *Dude
+	for _, d := range dudes {
+		stats := d.GetCalculatedStats()
+		if stats.cowardice < lowestCowardice && !d.IsDead() {
+			lowestCowardice = d.stats.cowardice
+			target = d
+		}
+	}
+	return target
 }

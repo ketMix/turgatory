@@ -70,7 +70,7 @@ func (r *RoomKind) String() string {
 	case Library:
 		return "library"
 	case Empty:
-		return "empty"
+		return "template"
 	case Trap:
 		return "trap"
 	case Boss:
@@ -80,8 +80,7 @@ func (r *RoomKind) String() string {
 	}
 }
 
-func (r *RoomKind) GetRoomEnemy(roomSize RoomSize) EnemyKind {
-	// Roll for enemy
+func (r *RoomKind) GetRoomEnemy(roomSize RoomSize, storyLevel int) EnemyKind {
 	switch *r {
 	case Combat:
 		switch roomSize {
@@ -89,6 +88,18 @@ func (r *RoomKind) GetRoomEnemy(roomSize RoomSize) EnemyKind {
 			return EnemyRat
 		case Medium:
 			return EnemySlime
+		}
+	case Boss:
+		// Every 3 levels, boss is upgraded
+		if storyLevel <= 3 {
+			return EnemyBossRat
+		} else if storyLevel <= 6 {
+			return EnemyBossRat
+		} else if storyLevel <= 9 {
+			return EnemyBossRat
+		} else if storyLevel <= 12 {
+			// Last level?
+			return EnemyBossRat
 		}
 	}
 	return EnemyUnknown
@@ -156,23 +167,26 @@ var goodRooms = []RoomKind{
 
 // Room is a room within a story of za toweru.
 type Room struct {
-	story       *Story
-	index       int // Reference to the index within the story.
-	kind        RoomKind
-	size        RoomSize
-	power       int // ???
-	combatTicks int
-
-	stacks        render.Stacks
-	walls         render.Stacks
-	dudesInCenter []*Dude
-	dudes         []*Dude
+	story          *Story
+	index          int // Reference to the index within the story.
+	kind           RoomKind
+	size           RoomSize
+	power          int // ???
+	combatTicks    int
+	boss           *Enemy
+	killedBoss     bool
+	stacks         render.Stacks
+	walls          render.Stacks
+	dudesInCenter  []*Dude
+	dudesInWaiting []*Dude
+	dudes          []*Dude
 }
 
 func NewRoom(size RoomSize, kind RoomKind) *Room {
 	r := &Room{
-		size: size,
-		kind: kind,
+		size:       size,
+		kind:       kind,
+		killedBoss: false,
 	}
 
 	stack, err := render.NewStack(fmt.Sprintf("rooms/%s", size.String()), kind.String(), "")
@@ -202,6 +216,9 @@ func NewRoom(size RoomSize, kind RoomKind) *Room {
 // Update updates the stuff in the room.
 func (r *Room) Update(req *ActivityRequests) {
 	r.stacks.Update()
+	if r.boss != nil {
+		r.boss.RoomUpdate(r)
+	}
 	if r.kind == Combat || r.kind == Trap {
 		r.combatTicks++
 		if r.combatTicks >= CombatTickrate {
@@ -211,6 +228,67 @@ func (r *Room) Update(req *ActivityRequests) {
 			}
 		}
 	}
+	if r.kind == Boss {
+		if r.boss != nil {
+			if r.boss.IsDead() {
+				r.boss = nil
+				r.killedBoss = true
+				for _, d := range r.dudes {
+					req.Add(RoomEndBossActivity{room: r, dude: d})
+				}
+			} else {
+				// Boss combat
+				r.combatTicks++
+				if r.combatTicks >= CombatTickrate {
+					r.combatTicks = 0
+					bossTarget := r.boss.GetTarget(r.dudes)
+					if bossTarget != nil {
+						bossTarget.ApplyDamage(r.boss.Hit())
+						bossTarget.stats.ModifyStat(StatCowardice, r.boss.stats.strength)
+					}
+					for _, d := range r.dudes {
+						if !d.IsDead() && !r.boss.IsDead() {
+							dmg, _ := d.GetDamage()
+							if dmg > 0 {
+								r.boss.Damage(dmg)
+							}
+						}
+					}
+				}
+			}
+
+		} else {
+			// If all dudes are waiting, trigger boss fight
+			aliveDudes := 0
+			for _, d := range r.story.dudes {
+				if !d.IsDead() {
+					aliveDudes++
+				}
+			}
+			if aliveDudes > 0 && r.AreAllDudesWaiting(aliveDudes) {
+				r.RemoveDudesFromWaiting()
+				for _, d := range r.dudes {
+					req.Add(RoomStartBossActivity{room: r, dude: d})
+				}
+				bossEnemy := r.kind.GetRoomEnemy(Huge, r.story.level)
+				bossStack, err := render.NewStack("enemies/"+r.size.String(), strings.ToLower(bossEnemy.BossStack()), "")
+				if err != nil {
+					fmt.Println("Error creating boss stack for", bossEnemy.String(), err)
+				}
+				r.boss = NewEnemy(bossEnemy, r.story.level+1, bossStack)
+			}
+		}
+	}
+
+}
+
+func (r *Room) Reset() {
+	r.dudes = nil
+	r.dudesInCenter = nil
+	r.dudesInWaiting = nil
+	r.boss = nil
+	r.killedBoss = false
+	r.combatTicks = 0
 }
 
 // Determins pan and vol of room track based on camera position
@@ -235,6 +313,10 @@ func (r *Room) getPanVol(rads float64, multiplier float64) (float64, float64) {
 func (r *Room) Draw(o *render.Options) {
 	r.stacks.Draw(o)
 	r.walls.Draw(o)
+
+	if r.boss != nil {
+		r.boss.Draw(*o)
+	}
 }
 
 func (r *Room) AddDude(d *Dude) {
@@ -250,10 +332,27 @@ func (r *Room) RemoveDude(d *Dude) {
 	}
 }
 
+func (r *Room) AddDudeToWaiting(a *Dude) {
+	r.dudesInWaiting = append(r.dudesInWaiting, a)
+}
+func (r *Room) IsDudeWaiting(a *Dude) bool {
+	for _, dude := range r.dudesInWaiting {
+		if dude == a {
+			return true
+		}
+	}
+	return false
+}
+func (r *Room) AreAllDudesWaiting(n int) bool {
+	return len(r.dudesInWaiting) == n
+}
+func (r *Room) RemoveDudesFromWaiting() {
+	r.dudesInWaiting = nil
+}
+
 func (r *Room) AddDudeToCenter(a *Dude) {
 	r.dudesInCenter = append(r.dudesInCenter, a)
 }
-
 func (r *Room) RemoveDudeFromCenter(a *Dude) {
 	for i, dude := range r.dudesInCenter {
 		if dude == a {
@@ -262,7 +361,6 @@ func (r *Room) RemoveDudeFromCenter(a *Dude) {
 		}
 	}
 }
-
 func (r *Room) IsDudeInCenter(a *Dude) bool {
 	for _, dude := range r.dudesInCenter {
 		if dude == a {
@@ -343,7 +441,7 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 		switch r.kind {
 		case Combat:
 			// Add enemy based on room size
-			enemyName := r.kind.GetRoomEnemy(r.size)
+			enemyName := r.kind.GetRoomEnemy(r.size, r.story.level)
 			enemyStack, err := render.NewStack("enemies/"+r.size.String(), strings.ToLower(enemyName.String()), "")
 			if err != nil {
 				fmt.Println("Error creating enemy stack", err)
@@ -418,4 +516,29 @@ func GetRandomGoodRoom() RoomKind {
 func GetRandomBadRoom() RoomKind {
 	// Roll for room
 	return badRooms[rand.Intn(len(badRooms))]
+}
+
+// For populating the required rooms to place
+// Number of bad rooms based on story level?
+// Stories 3, 6, 9, and 12 (?) are boss rooms
+// TODO: make sure you can actually fit all required rooms
+func GetRequiredRooms(storyLevel int) []RoomKind {
+	if storyLevel%2 == 0 {
+		return []RoomKind{Boss}
+	}
+
+	rooms := []RoomKind{}
+	for i := 0; i < 2; i++ {
+		rooms = append(rooms, GetRandomBadRoom())
+	}
+	return rooms
+}
+
+// 3 rooms to buy
+func GetOptionalRooms(storyLevel int) []RoomKind {
+	rooms := []RoomKind{}
+	for i := 0; i < 3; i++ {
+		rooms = append(rooms, GetRandomGoodRoom())
+	}
+	return rooms
 }

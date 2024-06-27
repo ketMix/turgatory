@@ -52,6 +52,33 @@ func (e EventCenterRoom) String() string {
 	return "Center of Room"
 }
 
+type EventWaitRoom struct {
+	room *Room
+	dude *Dude
+}
+
+func (e EventWaitRoom) String() string {
+	return "Wait in Room"
+}
+
+type EventStartBoss struct {
+	room *Room
+	dude *Dude
+}
+
+func (e EventStartBoss) String() string {
+	return "Start Boss"
+}
+
+type EventEndBoss struct {
+	room *Room
+	dude *Dude
+}
+
+func (e EventEndBoss) String() string {
+	return "End Boss"
+}
+
 // EventEndRoom is triggered when a dude is near the end part of a room.
 type EventEndRoom struct {
 	room *Room
