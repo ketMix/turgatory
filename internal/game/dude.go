@@ -696,8 +696,8 @@ func (d *Dude) Heal(amount int) int {
 		d.stats.currentHp = stats.totalHp
 	}
 	amount = d.stats.currentHp - initialHP
-	//fmt.Println(d.name, "healed", amount, "HP", " and went from ", initialHP, " to ", d.stats.currentHp)
-	if d.story != nil {
+
+	if amount > 0 && d.story != nil {
 		t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%d", amount), color.NRGBA{0, 255, 0, 255}, 40, 0.5)
 		d.story.AddText(t)
 	}
@@ -714,14 +714,16 @@ func (d *Dude) FullHeal() {
 }
 
 func (d *Dude) RestoreUses() {
+	restored := false
 	for _, eq := range d.equipped {
 		if eq != nil {
-			eq.RestoreUses()
+			restored = eq.RestoreUses() || restored
 		}
 	}
-	//fmt.Println(d.name, "restored equipment uses by", amount)
-	t := MakeFloatingTextFromDude(d, "+eq restore", color.NRGBA{0, 128, 255, 200}, 40, 0.5)
-	d.story.AddText(t)
+	if restored || d.story != nil {
+		t := MakeFloatingTextFromDude(d, "+eq restore", color.NRGBA{0, 128, 255, 200}, 40, 0.5)
+		d.story.AddText(t)
+	}
 }
 
 func (d *Dude) RandomEquippedItem() *Equipment {
