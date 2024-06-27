@@ -30,8 +30,15 @@ type Game struct {
 	equipment             []*Equipment
 }
 
+type GameState interface {
+	Begin(g *Game)
+	End(g *Game)
+	Update(g *Game) GameState
+	Draw(g *Game, screen *ebiten.Image)
+}
+
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	if outsideWidth != g.lastWidth || outsideHeight == g.lastHeight {
+	if outsideWidth != g.lastWidth && outsideHeight != g.lastHeight {
 		// Always set the camera's origin to be half the size of the screen.
 		g.camera.SetOrigin(float64(outsideWidth/2), float64(outsideHeight/2))
 		g.lastWidth, g.lastHeight = outsideWidth, outsideHeight
@@ -105,6 +112,9 @@ func (g *Game) Update() error {
 	} else if ebiten.IsKeyPressed(ebiten.KeyX) {
 		g.camera.ZoomOut()
 	}
+
+	// FIXME: For some reason Layout doesn't position the UI properly...
+	g.ui.Layout(&g.uiOptions)
 
 	g.ui.Update(&g.uiOptions)
 
@@ -182,76 +192,21 @@ func (g *Game) DrawTower(screen *ebiten.Image) {
 	}
 }
 
-// For all dudes, remove their gold and add it to the player's gold.
-func (g *Game) CollectGold() {
-	gold := 0.0
-	for _, dude := range g.dudes {
-		gold += dude.gold
-		dude.gold = 0
-	}
-	g.gold += int(gold)
-	AddMessage(MessageInfo, fmt.Sprintf("Collected %d gold from dudes.", int(gold)))
-}
-
-// For all dudes, remove their inventory and add it to player's inventory
-func (g *Game) CollectInventory() {
-	count := 0
-	for _, dude := range g.dudes {
-		count += len(dude.inventory)
-		g.equipment = append(g.equipment, dude.inventory...)
-		dude.inventory = make([]*Equipment, 0)
-	}
-	AddMessage(MessageInfo, fmt.Sprintf("Collected %d items from dudes.", count))
-}
-
-func (g *Game) BuyDude() {
-	// COST?
-	cost := 100
-	if g.gold < cost {
-		AddMessage(MessageError, "Not enough gold to buy a dude.")
-		return
-	}
-	g.gold -= cost
-	level := len(g.tower.Stories) / 2
-	if level < 1 {
-		level = 1
-	}
-
-	// Random profession ??
-	profession := RandomProfessionKind()
-	dude := NewDude(profession, level)
-	g.tower.AddDude(dude)
-}
-
-func (g *Game) BuyEquipment() {
-	// COST?
-	cost := 50
-	if g.gold < cost {
-		AddMessage(MessageError, "Not enough gold to buy equipment.")
-		return
-	}
-	g.gold -= cost
-
-	level := len(g.tower.Stories) / 2
-	e := GetRandomEquipment(level)
-	g.equipment = append(g.equipment, e)
-}
-
-func (g *Game) SellEquipment(e *Equipment) {
-	if e == nil {
-		return
-	}
-	g.gold += int(e.GoldValue())
-	for i, eq := range g.equipment {
-		if eq == e {
-			g.equipment = append(g.equipment[:i], g.equipment[i+1:]...)
+func (g *Game) UpdateInfo() {
+	var currentStory *Story
+	for _, story := range g.tower.Stories {
+		if story.open {
+			currentStory = story
 			break
 		}
 	}
-
-	// Trigger on sell event
-	e.Activate(EventSell{equipment: e})
+	if currentStory != nil {
+		g.ui.gameInfoPanel.storyText.SetText(fmt.Sprintf("Stories: %d/%d", currentStory.level, len(g.tower.Stories)))
+	}
+	g.ui.gameInfoPanel.goldText.SetText(fmt.Sprintf("Gold: %d", g.gold))
+	g.ui.gameInfoPanel.dudeText.SetText(fmt.Sprintf("Dudes: %d", len(g.dudes)))
 }
+
 func (g *Game) Init() {
 	// Init the equipment
 	assets.LoadEquipment()
@@ -323,7 +278,7 @@ func (g *Game) Init() {
 	g.gold = 0
 	g.equipment = make([]*Equipment, 0)
 	// g.audioController.PlayRoomTracks()
-	g.state = &GameStatePreBuild{}
+	g.state = &GameStateStart{}
 	g.state.Begin(g)
 }
 

@@ -28,6 +28,7 @@ func (o UIOptions) ScreenToCoords(x, y float64) (float64, float64) {
 }
 
 type UI struct {
+	gameInfoPanel  GameInfoPanel
 	dudePanel      DudePanel
 	dudePanel2     DudePanel2
 	equipmentPanel EquipmentPanel
@@ -75,6 +76,7 @@ func NewUI() *UI {
 			midright: Must(render.NewSubSprite(panelSprite, 32, 16, 16, 16)),
 		}
 	}
+	ui.gameInfoPanel = MakeGameInfoPanel()
 	ui.speedPanel = MakeSpeedPanel()
 	ui.dudePanel2 = MakeDudePanel2()
 	ui.equipmentPanel = MakeEquipmentPanel()
@@ -89,6 +91,31 @@ func (ui *UI) Layout(o *UIOptions) {
 	ui.dudePanel.Layout(o)
 	ui.speedPanel.Layout(nil, o)
 	ui.messagePanel.Layout(o)
+
+	// Position info.
+	ui.gameInfoPanel.dudePanel.SetSize(
+		96*o.Scale,
+		8*o.Scale,
+	)
+	ui.gameInfoPanel.storyPanel.SetSize(
+		96*o.Scale,
+		8*o.Scale,
+	)
+	ui.gameInfoPanel.goldPanel.SetSize(
+		96*o.Scale,
+		8*o.Scale,
+	)
+
+	ui.gameInfoPanel.panel.SetSize(
+		ui.gameInfoPanel.dudePanel.Width()+ui.gameInfoPanel.storyPanel.Width()+ui.gameInfoPanel.goldPanel.Width(),
+		32*o.Scale,
+	)
+	ui.gameInfoPanel.panel.SetPosition(
+		float64(o.Width/2)-ui.gameInfoPanel.panel.Width()/2,
+		-ui.gameInfoPanel.panel.Height()/3,
+	)
+
+	ui.gameInfoPanel.Layout(o)
 
 	// Manually position dude panel and equipment panel
 	h := float64(o.Height)/2 - float64(o.Height)/10
@@ -178,6 +205,8 @@ func (ui *UI) Draw(o *render.Options) {
 
 	o.DrawImageOptions.GeoM.Reset()
 	ui.dudePanel2.Draw(o)
+
+	ui.gameInfoPanel.Draw(o)
 }
 
 type DudeDetails struct {
@@ -964,7 +993,7 @@ type RoomPanel struct {
 
 func MakeRoomPanel() RoomPanel {
 	rp := RoomPanel{
-		panel: NewUIPanel(),
+		panel: NewUIPanel(false),
 		title: NewUIText("Rooms", assets.DisplayFont, assets.ColorHeading),
 		count: NewUIText("0", assets.BodyFont, assets.ColorHeading),
 		list:  NewUIItemList(DirectionVertical),
@@ -1030,7 +1059,7 @@ type RoomInfoPanel struct {
 
 func MakeRoomInfoPanel() RoomInfoPanel {
 	rip := RoomInfoPanel{
-		panel:       NewUIPanel(),
+		panel:       NewUIPanel(true),
 		title:       NewUIText("Room Info", assets.DisplayFont, assets.ColorHeading),
 		description: NewUIText("Description", assets.BodyFont, assets.ColorRoomDescription),
 		cost:        NewUIText("Cost: 0", assets.BodyFont, assets.ColorRoomCost),
@@ -1067,6 +1096,61 @@ func (rip *RoomInfoPanel) Draw(o *render.Options) {
 	rip.panel.Draw(o)
 }
 
+type GameInfoPanel struct {
+	panel      *UIPanel
+	storyPanel *UIPanel
+	storyText  *UIText
+	dudePanel  *UIPanel
+	dudeText   *UIText
+	goldPanel  *UIPanel
+	goldText   *UIText
+}
+
+func MakeGameInfoPanel() GameInfoPanel {
+	gip := GameInfoPanel{
+		panel:      NewUIPanel(true),
+		storyPanel: NewUIPanel(true),
+		dudePanel:  NewUIPanel(true),
+		goldPanel:  NewUIPanel(true),
+	}
+
+	gip.storyText = NewUIText("Story 0/0", assets.BodyFont, assets.ColorStory)
+	gip.storyPanel.AddChild(gip.storyText)
+	gip.storyPanel.flowDirection = DirectionHorizontal
+	gip.storyPanel.hideBackground = true
+
+	gip.dudeText = NewUIText("Dudes 0", assets.BodyFont, assets.ColorDude)
+	gip.dudePanel.AddChild(gip.dudeText)
+	gip.dudePanel.flowDirection = DirectionHorizontal
+	gip.dudePanel.hideBackground = true
+
+	gip.goldText = NewUIText("Gold 0", assets.BodyFont, assets.ColorGold)
+	gip.goldPanel.AddChild(gip.goldText)
+	gip.goldPanel.flowDirection = DirectionHorizontal
+	gip.goldPanel.hideBackground = true
+
+	gip.panel.AddChild(gip.storyPanel)
+	gip.panel.AddChild(gip.dudePanel)
+	gip.panel.AddChild(gip.goldPanel)
+	gip.panel.flowDirection = DirectionHorizontal
+	gip.panel.sizeChildren = true
+	gip.panel.centerChildren = true
+
+	return gip
+}
+
+func (gip *GameInfoPanel) Layout(o *UIOptions) {
+	gip.panel.padding = 6 * o.Scale
+	gip.storyPanel.padding = 6 * o.Scale
+	gip.dudePanel.padding = 6 * o.Scale
+	gip.goldPanel.padding = 6 * o.Scale
+	gip.panel.Layout(nil, o)
+}
+
+func (gip *GameInfoPanel) Draw(o *render.Options) {
+	gip.panel.Draw(o)
+}
+
 type DudePanel2 struct {
 	panel *UIPanel
 	list  *UIItemList
@@ -1076,7 +1160,7 @@ type DudePanel2 struct {
 
 func MakeDudePanel2() DudePanel2 {
 	dp := DudePanel2{
-		panel: NewUIPanel(),
+		panel: NewUIPanel(false),
 		title: NewUIText("Dudes", assets.DisplayFont, assets.ColorHeading),
 		list:  NewUIItemList(DirectionVertical),
 	}
@@ -1124,7 +1208,7 @@ type EquipmentPanel struct {
 
 func MakeEquipmentPanel() EquipmentPanel {
 	ep := EquipmentPanel{
-		panel: NewUIPanel(),
+		panel: NewUIPanel(false),
 		title: NewUIText("Loot", assets.DisplayFont, assets.ColorHeading),
 		list:  NewUIItemList(DirectionVertical),
 	}

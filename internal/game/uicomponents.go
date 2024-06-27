@@ -239,9 +239,9 @@ func (l *UIItemList) Update(o *UIOptions) {
 		maxSize := 0.0
 		itemsSize := 0.0
 		if l.direction == DirectionVertical {
-			maxSize = l.Height() - l.decrementUIButton.Height()/2
+			maxSize = l.Height() - l.decrementUIButton.Height()
 		} else {
-			maxSize = l.Width() - l.decrementUIButton.Width()/2
+			maxSize = l.Width() - l.decrementUIButton.Width()
 		}
 		l.lastVisibleIndex = len(l.items)
 		for i := l.itemOffset; i < len(l.items); i++ {
@@ -353,19 +353,25 @@ type UIPanel struct {
 	sizeChildren   bool
 	centerChildren bool
 
-	top         *render.Sprite
-	bottom      *render.Sprite
-	left        *render.Sprite
-	right       *render.Sprite
-	topleft     *render.Sprite
-	topright    *render.Sprite
-	bottomleft  *render.Sprite
-	bottomright *render.Sprite
-	center      *render.Sprite
+	hideBackground bool
+	top            *render.Sprite
+	bottom         *render.Sprite
+	left           *render.Sprite
+	right          *render.Sprite
+	topleft        *render.Sprite
+	topright       *render.Sprite
+	bottomleft     *render.Sprite
+	bottomright    *render.Sprite
+	center         *render.Sprite
 }
 
-func NewUIPanel() *UIPanel {
-	sp := Must(render.NewSprite("ui/panels"))
+func NewUIPanel(altStyle bool) *UIPanel {
+	var sp *render.Sprite
+	if altStyle {
+		sp = Must(render.NewSprite("ui/altPanels"))
+	} else {
+		sp = Must(render.NewSprite("ui/panels"))
+	}
 	return &UIPanel{
 		topleft:     Must(render.NewSubSprite(sp, 0, 0, 16, 16)),
 		top:         Must(render.NewSubSprite(sp, 16, 0, 16, 16)),
@@ -453,54 +459,56 @@ func (p *UIPanel) Draw(o *render.Options) {
 	geom := ebiten.GeoM{}
 	geom.Concat(op.DrawImageOptions.GeoM)
 
-	// Draw corners
-	p.topleft.Draw(op)
-	op.DrawImageOptions.GeoM.Translate(w-p.topright.Width(), 0)
-	p.topright.Draw(op)
-	op.DrawImageOptions.GeoM.Translate(0, h-p.bottomright.Height())
-	p.bottomright.Draw(op)
-	op.DrawImageOptions.GeoM.Translate(-(w - p.bottomleft.Width()), 0)
-	p.bottomleft.Draw(op)
+	if !p.hideBackground {
+		// Draw corners
+		p.topleft.Draw(op)
+		op.DrawImageOptions.GeoM.Translate(w-p.topright.Width(), 0)
+		p.topright.Draw(op)
+		op.DrawImageOptions.GeoM.Translate(0, h-p.bottomright.Height())
+		p.bottomright.Draw(op)
+		op.DrawImageOptions.GeoM.Translate(-(w - p.bottomleft.Width()), 0)
+		p.bottomleft.Draw(op)
 
-	op.DrawImageOptions.GeoM.Reset()
-	op.DrawImageOptions.GeoM.Concat(geom)
-	// Draw sides
-	op.DrawImageOptions.GeoM.Translate(p.topleft.Width(), 0)
-	for i := 0; i < int(w-p.topleft.Width()-p.topright.Width()); i += int(p.top.Width()) {
-		p.top.Draw(op)
-		op.DrawImageOptions.GeoM.Translate(p.top.Width(), 0)
-	}
-	op.DrawImageOptions.GeoM.Translate(0, p.topright.Height())
-	for i := 0; i < int(h-p.topright.Height()-p.bottomright.Height()); i += int(p.right.Height()) {
-		p.right.Draw(op)
-		op.DrawImageOptions.GeoM.Translate(0, p.right.Height())
-	}
-	op.DrawImageOptions.GeoM.Reset()
-	op.DrawImageOptions.GeoM.Concat(geom)
-	for i := 0; i < int(h-p.bottomleft.Height()-p.topleft.Height()); i += int(p.left.Height()) {
-		op.DrawImageOptions.GeoM.Translate(0, p.left.Height())
-		p.left.Draw(op)
-	}
-	op.DrawImageOptions.GeoM.Reset()
-	op.DrawImageOptions.GeoM.Concat(geom)
-	op.DrawImageOptions.GeoM.Translate(p.bottomleft.Width(), h-p.bottomleft.Height())
-	for i := 0; i < int(w-p.bottomright.Width()-p.bottomleft.Width()); i += int(p.bottom.Width()) {
-		p.bottom.Draw(op)
-		op.DrawImageOptions.GeoM.Translate(p.bottom.Width(), 0)
-	}
-
-	// Draw center.
-	op.DrawImageOptions.GeoM.Reset()
-	op.DrawImageOptions.GeoM.Concat(geom)
-	op.DrawImageOptions.GeoM.Translate(p.topleft.Width(), p.topleft.Height())
-	maxWidth := w - p.topleft.Width() - p.topright.Width()
-	maxHeight := h - p.topleft.Height() - p.bottomleft.Height()
-	for y := 0; y < int(maxHeight); y += int(p.center.Height()) {
-		for x := 0; x < int(maxWidth); x += int(p.center.Width()) {
-			p.center.Draw(op)
-			op.DrawImageOptions.GeoM.Translate(p.center.Width(), 0)
+		op.DrawImageOptions.GeoM.Reset()
+		op.DrawImageOptions.GeoM.Concat(geom)
+		// Draw sides
+		op.DrawImageOptions.GeoM.Translate(p.topleft.Width(), 0)
+		for i := 0; i < int(w-p.topleft.Width()-p.topright.Width()); i += int(p.top.Width()) {
+			p.top.Draw(op)
+			op.DrawImageOptions.GeoM.Translate(p.top.Width(), 0)
 		}
-		op.DrawImageOptions.GeoM.Translate(-maxWidth, p.center.Height())
+		op.DrawImageOptions.GeoM.Translate(0, p.topright.Height())
+		for i := 0; i < int(h-p.topright.Height()-p.bottomright.Height()); i += int(p.right.Height()) {
+			p.right.Draw(op)
+			op.DrawImageOptions.GeoM.Translate(0, p.right.Height())
+		}
+		op.DrawImageOptions.GeoM.Reset()
+		op.DrawImageOptions.GeoM.Concat(geom)
+		for i := 0; i < int(h-p.bottomleft.Height()-p.topleft.Height()); i += int(p.left.Height()) {
+			op.DrawImageOptions.GeoM.Translate(0, p.left.Height())
+			p.left.Draw(op)
+		}
+		op.DrawImageOptions.GeoM.Reset()
+		op.DrawImageOptions.GeoM.Concat(geom)
+		op.DrawImageOptions.GeoM.Translate(p.bottomleft.Width(), h-p.bottomleft.Height())
+		for i := 0; i < int(w-p.bottomright.Width()-p.bottomleft.Width()); i += int(p.bottom.Width()) {
+			p.bottom.Draw(op)
+			op.DrawImageOptions.GeoM.Translate(p.bottom.Width(), 0)
+		}
+
+		// Draw center.
+		op.DrawImageOptions.GeoM.Reset()
+		op.DrawImageOptions.GeoM.Concat(geom)
+		op.DrawImageOptions.GeoM.Translate(p.topleft.Width(), p.topleft.Height())
+		maxWidth := w - p.topleft.Width() - p.topright.Width()
+		maxHeight := h - p.topleft.Height() - p.bottomleft.Height()
+		for y := 0; y < int(maxHeight); y += int(p.center.Height()) {
+			for x := 0; x < int(maxWidth); x += int(p.center.Width()) {
+				p.center.Draw(op)
+				op.DrawImageOptions.GeoM.Translate(p.center.Width(), 0)
+			}
+			op.DrawImageOptions.GeoM.Translate(-maxWidth, p.center.Height())
+		}
 	}
 
 	op.DrawImageOptions.GeoM.Reset()
