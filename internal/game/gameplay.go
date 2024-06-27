@@ -168,6 +168,8 @@ func (s *GameStatePlay) CollectGold(g *Game) {
 		dude.gold = 0
 	}
 	g.gold += int(gold)
+
+	g.ui.feedback.Msg(FeedbackGood, fmt.Sprintf("%d gold snarfed from yer dudes", int(gold)))
 	AddMessage(MessageInfo, fmt.Sprintf("Collected %d gold from dudes.", int(gold)))
 	g.UpdateInfo()
 }

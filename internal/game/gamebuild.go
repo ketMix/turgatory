@@ -64,13 +64,14 @@ func (s *GameStateBuild) Begin(g *Game) {
 func (s *GameStateBuild) End(g *Game) {
 	g.ui.roomPanel.onItemClick = nil
 	g.ui.roomPanel.SetRoomDefs(nil)
+	// Make sure rooms ain't highlighted
+	for _, room := range s.nextStory.rooms {
+		room.highlight = false
+	}
 }
 func (s *GameStateBuild) Update(g *Game) GameState {
 	s.wobbler += 0.05
 	s.titleTimer++
-	/*if s.titleTimer > 120 {
-		return &GameStatePlay{}
-	}*/
 
 	if handled, kind := g.CheckUI(); !handled {
 		if kind == UICheckHover {
@@ -78,6 +79,9 @@ func (s *GameStateBuild) Update(g *Game) GameState {
 
 			cx := float64(g.lastWidth) / 2
 			cy := float64(g.lastHeight) / 2
+
+			// FIXME: This ain't right.
+			cy -= float64(s.nextStory.level) * 20 * g.camera.Zoom()
 
 			r := math.Atan2(my-cy, mx-cx) - g.camera.Rotation()
 			roomIndex := s.nextStory.RoomIndexFromAngle(r)
@@ -113,6 +117,19 @@ func (s *GameStateBuild) Update(g *Game) GameState {
 			room.highlight = false
 		}
 		s.highlightedRooms = nil
+	}
+
+	// Who cares if this is a lil expensive.
+	ready := true
+	for _, room := range s.nextStory.rooms {
+		if room.kind == Empty {
+			ready = false
+			break
+		}
+	}
+	if ready {
+		// TODO: Show a READY button instead!!!
+		return &GameStatePlay{}
 	}
 
 	return nil
