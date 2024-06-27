@@ -145,6 +145,9 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	// Clear overlay.
+	g.overlay.Clear()
+
 	g.DrawTower(screen)
 
 	g.state.Draw(g, screen)
