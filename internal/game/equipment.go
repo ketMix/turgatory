@@ -177,7 +177,7 @@ func NewEquipment(name string, level int, quality EquipmentQuality, perk IPerk) 
 	}
 
 	for i := 0; i < level; i++ {
-		equipment.LevelUp()
+		equipment.LevelUp(EquipmentQualityLegendary)
 	}
 
 	equipment.Draw = func(o *render.Options) {
@@ -267,13 +267,16 @@ func (e *Equipment) ChangeQuality(delta int) {
 
 // Levels up the weapon.
 // If it hits 5 we can upgrade the quality
-func (e *Equipment) LevelUp() {
+func (e *Equipment) LevelUp(maxQuality EquipmentQuality) bool {
 	// If we have stats we can level this item up
 	if e.stats == nil {
 		fmt.Println("No stats for equipment", e.name)
-		return
+		return false
 	}
 
+	if (e.stats.level+1) > 5 && e.quality >= maxQuality {
+		return false
+	}
 	e.stats.LevelUp()
 
 	// If we hit level 5 we can upgrade the quality
@@ -281,6 +284,7 @@ func (e *Equipment) LevelUp() {
 		e.ChangeQuality(1)
 		e.stats.level = 1
 	}
+	return true
 }
 
 // Levels down weapon
@@ -392,11 +396,8 @@ func (e *Equipment) GoldValue() float32 {
 	return float32(e.stats.level * (1 + int(e.quality)))
 }
 
-func (e *Equipment) RestoreUses(i int) {
-	e.uses += i
-	if e.uses > e.totalUses {
-		e.uses = e.totalUses
-	}
+func (e *Equipment) RestoreUses() {
+	e.uses = e.totalUses
 }
 
 func GetEquipmentNamesWithTypes(equipmentTypes []EquipmentType) []*string {

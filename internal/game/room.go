@@ -406,7 +406,7 @@ func (r *Room) RollLoot(luck int) *Equipment {
 
 	// Level up the equipment based on floor level
 	for i := 0; i < r.story.level; i++ {
-		equipment.LevelUp()
+		equipment.LevelUp(EquipmentQualityLegendary)
 	}
 
 	return equipment
@@ -465,20 +465,35 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 		switch r.kind {
 		case Armory:
 			// Level up equipment
+			maxQuality := EquipmentQuality(r.story.level/2 + 1)
+			if maxQuality > EquipmentQualityLegendary {
+				maxQuality = EquipmentQualityLegendary
+			}
 			if r.size == Large {
-				e.dude.LevelUpEquipment(5)
+				e.dude.LevelUpEquipment(5, maxQuality)
 			} else {
-				e.dude.LevelUpEquipment(1)
+				e.dude.LevelUpEquipment(1, maxQuality)
 			}
 		case HealingShrine:
 			// Heal
-			e.dude.Heal((r.story.level + 1) * 5)
+			stats := e.dude.GetCalculatedStats()
+			switch r.size {
+			case Small:
+				// Heal 25% of max hp
+				e.dude.Heal(stats.totalHp / 4)
+			case Medium:
+				// Heal 75% of max hp
+				e.dude.Heal(stats.totalHp * 3 / 4)
+			case Large:
+				// Heal 100% of max hp
+				e.dude.Heal(stats.totalHp)
+			}
 		case Curse:
 			// Curse
 			e.dude.Cursify(r.story.level + 1)
 		case Well:
-			// Restore equipment uses
-			e.dude.RestoreUses(r.story.level + 1)
+			// Restore all equipment uses
+			e.dude.RestoreUses()
 		case Combat:
 			// He be in combat on entering room
 		case Treasure:
@@ -487,7 +502,7 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 			e.dude.Trigger(EventGoldGain{dude: e.dude, amount: float64(goldAmount)})
 		case Library:
 			// Level up a random equipment perk or add one
-			maxQuality := PerkQuality(r.story.level + 1)
+			maxQuality := PerkQuality(r.story.level/2 + 1)
 			if maxQuality > PerkQualityGodly {
 				maxQuality = PerkQualityGodly
 			}

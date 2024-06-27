@@ -713,24 +713,17 @@ func (d *Dude) FullHeal() {
 	}
 }
 
-func (d *Dude) RestoreUses(amount int) {
+func (d *Dude) RestoreUses() {
 	for _, eq := range d.equipped {
 		if eq != nil {
-			eq.RestoreUses(amount)
+			eq.RestoreUses()
 		}
 	}
 	//fmt.Println(d.name, "restored equipment uses by", amount)
-	t := MakeFloatingTextFromDude(d, fmt.Sprintf("+eq restore %d", amount), color.NRGBA{0, 128, 255, 200}, 40, 0.5)
+	t := MakeFloatingTextFromDude(d, "+eq restore", color.NRGBA{0, 128, 255, 200}, 40, 0.5)
 	d.story.AddText(t)
 }
 
-func (d *Dude) FullUseRestore() {
-	for _, eq := range d.equipped {
-		if eq != nil {
-			eq.RestoreUses(100)
-		}
-	}
-}
 func (d *Dude) RandomEquippedItem() *Equipment {
 	equippedTypes := []EquipmentType{}
 	for t, eq := range d.equipped {
@@ -747,16 +740,22 @@ func (d *Dude) RandomEquippedItem() *Equipment {
 	return d.equipped[et]
 }
 
-func (d *Dude) LevelUpEquipment(amount int) {
+func (d *Dude) LevelUpEquipment(amount int, maxQuality EquipmentQuality) {
 	// Random equipped item
 	eq := d.RandomEquippedItem()
 	if eq == nil {
 		return
 	}
 
+	leveled := false
 	for i := 0; i < amount; i++ {
-		eq.LevelUp()
+		leveled = eq.LevelUp(maxQuality) || leveled
 	}
+
+	if !leveled {
+		return
+	}
+
 	//fmt.Println(d.name, "leveled up equipment by", amount)
 	t := MakeFloatingTextFromDude(d, fmt.Sprintf("+eq up %d", amount), color.NRGBA{128, 128, 255, 255}, 50, 0.5)
 	d.story.AddText(t)

@@ -77,7 +77,7 @@ func (s *GameStateBuild) Begin(g *Game) {
 	// On build phase, full heal all dudes and restore uses
 	for _, d := range g.dudes {
 		d.FullHeal()
-		d.FullUseRestore()
+		d.RestoreUses()
 	}
 }
 func (s *GameStateBuild) End(g *Game) {
