@@ -31,7 +31,7 @@ func GetRoomDef(kind RoomKind, size RoomSize) *RoomDef {
 	stack.SetPosition(10, 4)*/
 	stack.SetPosition(0, float64(stack.Height()/4))
 
-	img := ebiten.NewImage(stack.Width() /*+4*/, stack.Height()*2)
+	img := ebiten.NewImage(stack.Width() /*+4*/, int(float64(stack.Height())*1.25))
 	img.Clear() // Just in case...
 
 	o := render.Options{
