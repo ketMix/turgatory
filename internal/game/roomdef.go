@@ -100,6 +100,8 @@ func (r *RoomDef) GetDescription() string {
 // With each level, the cost of the room increases by 25%
 func (r *RoomDef) GetCost(level int) int {
 	cost := 0
+	perLevelMultiplier := 0.25
+
 	switch r.kind {
 	case Armory:
 		switch r.size {
@@ -134,5 +136,5 @@ func (r *RoomDef) GetCost(level int) int {
 		cost = 250
 	}
 
-	return cost + (cost * level / 4)
+	return cost + int(float64(cost)*float64(level)*perLevelMultiplier)
 }
