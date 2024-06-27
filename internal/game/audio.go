@@ -41,11 +41,12 @@ func (t *Track) SetPan(pan float64) {
 }
 
 type AudioController struct {
-	audioContext *audio.Context
-	tracks       map[RoomKind]*Track
-	sfx          map[string]*Track
-	tracksPaused bool
-	sfxPaused    bool
+	audioContext    *audio.Context
+	tracks          map[RoomKind]*Track
+	backgroundTrack *Track
+	sfx             map[string]*Track
+	tracksPaused    bool
+	sfxPaused       bool
 }
 
 func NewAudioController() *AudioController {
@@ -80,40 +81,58 @@ func NewAudioController() *AudioController {
 				pan:       0,
 			}
 		}
+	}
 
+	// Add background track
+	stream, err := assets.LoadSound("room", "background")
+	if err != nil {
+		fmt.Println("Error loading background track ", err)
+	}
+
+	panstream := NewStereoPanStream(audio.NewInfiniteLoop(stream, stream.Length()))
+	panstream.SetPan(0.0)
+	player, err := audioContext.NewPlayer(panstream)
+	player.SetVolume(1)
+	if err != nil {
+		fmt.Println("Error creating player for background track ", err)
+	}
+
+	backgroundTrack := &Track{
+		player:    player,
+		panstream: panstream,
+		volume:    0,
+		pan:       0,
 	}
 
 	return &AudioController{
-		audioContext: audioContext,
-		tracks:       tracks,
-		sfx:          make(map[string]*Track),
-		tracksPaused: true,
-		sfxPaused:    false,
+		audioContext:    audioContext,
+		tracks:          tracks,
+		backgroundTrack: backgroundTrack,
+		sfx:             make(map[string]*Track),
+		tracksPaused:    true,
+		sfxPaused:       false,
 	}
 }
 
 func (a *AudioController) PlayRoomTracks() {
 	a.tracksPaused = false
-	for name, track := range a.tracks {
-		fmt.Println("Playing track")
+	for _, track := range a.tracks {
 		track.Play()
-
-		if name == Empty {
-			track.SetVolume(0.5)
-		}
 	}
+	a.backgroundTrack.Play()
 }
 
 func (a *AudioController) PauseRoomTracks() {
 	for _, track := range a.tracks {
 		track.Pause()
 	}
+	a.backgroundTrack.Pause()
 	a.tracksPaused = true
 }
 
 func (a *AudioController) SetVol(roomKind RoomKind, volume float64) {
 	if track, ok := a.tracks[roomKind]; ok {
-		track.SetVolume(volume)
+		track.SetVolume(volume * 2)
 	}
 }
 
