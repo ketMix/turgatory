@@ -1,6 +1,6 @@
 module github.com/kettek/ebijam24
 
-go 1.21.6
+go 1.22.3
 
 require (
 	github.com/hajimehoshi/ebiten/v2 v2.7.5
