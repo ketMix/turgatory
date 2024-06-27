@@ -720,7 +720,7 @@ func (d *Dude) RestoreUses() {
 			restored = eq.RestoreUses() || restored
 		}
 	}
-	if restored || d.story != nil {
+	if restored && d.story != nil {
 		t := MakeFloatingTextFromDude(d, "+eq restore", color.NRGBA{0, 128, 255, 200}, 40, 0.5)
 		d.story.AddText(t)
 	}
