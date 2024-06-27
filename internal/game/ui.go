@@ -28,13 +28,13 @@ func (o UIOptions) ScreenToCoords(x, y float64) (float64, float64) {
 }
 
 type UI struct {
-	dudePanel    DudePanel
-	roomPanel    RoomPanel
-	speedPanel   SpeedPanel
-	messagePanel MessagePanel
-	panel        *UIPanel
-	itemList     *UIItemList
-	options      *UIOptions
+	dudePanel      DudePanel
+	dudePanel2     DudePanel2
+	equipmentPanel EquipmentPanel
+	speedPanel     SpeedPanel
+	messagePanel   MessagePanel
+	roomPanel      RoomPanel
+	options        *UIOptions
 }
 
 func NewUI() *UI {
@@ -74,36 +74,10 @@ func NewUI() *UI {
 			midright: Must(render.NewSubSprite(panelSprite, 32, 16, 16, 16)),
 		}
 	}
-	{
-		panelSprite := Must(render.NewSprite("ui/botPanel"))
-		ui.roomPanel = RoomPanel{
-			topleft:  Must(render.NewSubSprite(panelSprite, 0, 0, 16, 32)),
-			left:     Must(render.NewSubSprite(panelSprite, 0, 16, 16, 32)),
-			topmid:   Must(render.NewSubSprite(panelSprite, 16, 0, 16, 32)),
-			mid:      Must(render.NewSubSprite(panelSprite, 16, 16, 16, 32)),
-			topright: Must(render.NewSubSprite(panelSprite, 32, 0, 16, 32)),
-			right:    Must(render.NewSubSprite(panelSprite, 32, 16, 16, 32)),
-		}
-	}
 	ui.speedPanel = MakeSpeedPanel()
-
-	ui.panel = NewUIPanel()
-	ui.itemList = NewUIItemList(DirectionVertical)
-	ui.itemList.AddItem(NewUIText("1", assets.DisplayFont, color.White))
-	ui.itemList.AddItem(NewUIText("2", assets.DisplayFont, color.White))
-	ui.itemList.AddItem(NewUIText("3", assets.DisplayFont, color.White))
-	ui.itemList.AddItem(NewUIText("4", assets.DisplayFont, color.White))
-	ui.itemList.AddItem(NewUIText("5", assets.DisplayFont, color.White))
-	ui.itemList.AddItem(NewUIText("6", assets.DisplayFont, color.White))
-	rp := GetRoomDef(Combat, Small)
-	img := NewUIImage(rp.image)
-	img.ignoreScale = true
-	ui.itemList.AddItem(img)
-	ui.itemList.AddItem(NewUIText("7", assets.DisplayFont, color.White))
-	ui.itemList.AddItem(NewUIText("8", assets.DisplayFont, color.White))
-
-	ui.panel.children = append(ui.panel.children, ui.itemList)
-	ui.panel.sizeChildren = true
+	ui.dudePanel2 = MakeDudePanel2()
+	ui.equipmentPanel = MakeEquipmentPanel()
+	ui.roomPanel = MakeRoomPanel()
 
 	return ui
 }
@@ -111,36 +85,61 @@ func NewUI() *UI {
 func (ui *UI) Layout(o *UIOptions) {
 	ui.options = o
 	ui.dudePanel.Layout(o)
-	ui.roomPanel.Layout(o)
 	ui.speedPanel.Layout(nil, o)
 	ui.messagePanel.Layout(o)
 
-	ui.panel.padding = 6 * o.Scale
-	ui.panel.SetSize(
+	// Manually position dude panel and equipment panel
+	h := float64(o.Height)/2 - float64(o.Height)/10
+	ui.dudePanel2.panel.SetSize(
 		64*o.Scale,
-		float64(o.Height)/2,
+		h,
 	)
-	ui.panel.SetPosition(
-		28,
-		float64(o.Height)/2-ui.panel.Height()/2,
+	ui.dudePanel2.panel.SetPosition(
+		8,
+		float64(o.Height)/2-h-8,
 	)
-	ui.panel.Layout(nil, o)
 
-	ui.itemList.SetSize(ui.panel.Width(), ui.panel.Height()-ui.panel.padding*2)
-	ui.itemList.Layout(nil, o)
+	ui.equipmentPanel.panel.SetSize(
+		64*o.Scale,
+		h,
+	)
+	ui.equipmentPanel.panel.SetPosition(
+		8,
+		float64(o.Height)/2+8,
+	)
+
+	ui.dudePanel2.Layout(o)
+	ui.equipmentPanel.Layout(o)
+
+	// Manually position roomPanel
+	ui.roomPanel.panel.SetSize(
+		64*o.Scale,
+		float64(o.Height)-float64(o.Height)/3,
+	)
+	ui.roomPanel.panel.SetPosition(
+		float64(o.Width)-ui.roomPanel.panel.Width()-8,
+		float64(o.Height)/2-ui.roomPanel.panel.Height()/2,
+	)
+	ui.roomPanel.Layout(o)
 }
 
 func (ui *UI) Update(o *UIOptions) {
 	ui.dudePanel.Update(o)
+	ui.dudePanel2.Update(o)
+	ui.equipmentPanel.Update(o)
 	ui.roomPanel.Update(o)
 	ui.speedPanel.Update(o)
 	ui.messagePanel.Update(o)
-
-	ui.panel.Update(o)
 }
 
 func (ui *UI) Check(mx, my float64) bool {
-	if ui.panel.Check(mx, my) {
+	if ui.dudePanel2.Check(mx, my) {
+		return true
+	}
+	if ui.equipmentPanel.Check(mx, my) {
+		return true
+	}
+	if ui.roomPanel.Check(mx, my) {
 		return true
 	}
 
@@ -152,15 +151,18 @@ func (ui *UI) Check(mx, my float64) bool {
 
 func (ui *UI) Draw(o *render.Options) {
 	ui.dudePanel.Draw(o)
-	// o.DrawImageOptions.GeoM.Reset()
-	// ui.roomPanel.Draw(o)
+	o.DrawImageOptions.GeoM.Reset()
+	ui.equipmentPanel.Draw(o)
 	o.DrawImageOptions.GeoM.Reset()
 	ui.speedPanel.Draw(o)
 	o.DrawImageOptions.GeoM.Reset()
 	ui.messagePanel.Draw(o)
 
 	o.DrawImageOptions.GeoM.Reset()
-	ui.panel.Draw(o)
+	ui.roomPanel.Draw(o)
+
+	o.DrawImageOptions.GeoM.Reset()
+	ui.dudePanel2.Draw(o)
 }
 
 type DudeDetails struct {
@@ -734,106 +736,6 @@ func (dp *DudePanel) SyncDudes(dudes []*Dude) {
 	}
 }
 
-type RoomPanel struct {
-	render.Originable
-	render.Positionable
-	drawered     bool
-	drawerInterp render.InterpNumber
-	width        float64
-	height       float64
-	left         *render.Sprite
-	topleft      *render.Sprite
-	mid          *render.Sprite
-	topmid       *render.Sprite
-	right        *render.Sprite
-	topright     *render.Sprite
-}
-
-func (rp *RoomPanel) Layout(o *UIOptions) {
-	rp.left.Scale = o.Scale
-	rp.topleft.Scale = o.Scale
-	rp.mid.Scale = o.Scale
-	rp.topmid.Scale = o.Scale
-	rp.right.Scale = o.Scale
-	rp.topright.Scale = o.Scale
-
-	_, ph := rp.topleft.Size()
-
-	rp.width = float64(o.Width - o.Width/3)
-	rp.height = ph * 2
-	rp.SetPosition(float64(o.Width/2)-float64(rp.width)/2, float64(o.Height)-96)
-}
-
-func (rp *RoomPanel) Update(o *UIOptions) {
-	rp.drawerInterp.Update()
-
-	rpx, rpy := rp.Position()
-	mx, my := IntToFloat2(ebiten.CursorPosition())
-
-	maxX := rpx + float64(rp.width)
-	maxY := rpy + rp.height
-
-	_, ph := rp.topleft.Size()
-
-	if mx > rpx && mx < maxX && my > rpy && my < maxY {
-		if rp.drawered {
-			rp.drawered = false
-			rp.drawerInterp.Set(0, 3.5)
-		}
-	} else {
-		if !rp.drawered {
-			rp.drawered = true
-			rp.drawerInterp.Set(ph, 3.5)
-		}
-	}
-}
-
-func (rp *RoomPanel) Draw(o *render.Options) {
-	pw, ph := rp.topleft.Size()
-	o.DrawImageOptions.GeoM.Translate(0, rp.drawerInterp.Current)
-	o.DrawImageOptions.GeoM.Translate(rp.Position())
-	// topleft
-	rp.topleft.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(0, ph)
-	// left
-	rp.left.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(pw, -ph)
-	// mid
-	parts := int(math.Floor(float64(rp.width)/float64(pw))) - 2
-	for i := 0; i < parts; i++ {
-		rp.topmid.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(0, ph)
-		rp.mid.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(0, -ph)
-		o.DrawImageOptions.GeoM.Translate(pw, 0)
-	}
-	// topright
-	rp.topright.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(0, ph)
-	// right
-	rp.right.Draw(o)
-
-	o.DrawImageOptions.GeoM.Reset()
-	o.DrawImageOptions.GeoM.Translate(0, rp.drawerInterp.Current)
-	o.DrawImageOptions.GeoM.Translate(rp.Position())
-	o.DrawImageOptions.GeoM.Translate(pw/2, 8)
-	// Quick hacky test.
-	rd := GetRoomDef(HealingShrine, Small)
-	o.Screen.DrawImage(rd.image, &o.DrawImageOptions)
-	o.DrawImageOptions.GeoM.Translate(float64(rd.image.Bounds().Dx())+8, 0)
-	rd = GetRoomDef(Library, Medium)
-	o.Screen.DrawImage(rd.image, &o.DrawImageOptions)
-	o.DrawImageOptions.GeoM.Translate(float64(rd.image.Bounds().Dx())+8, 0)
-	rd = GetRoomDef(Armory, Medium)
-	o.Screen.DrawImage(rd.image, &o.DrawImageOptions)
-	o.DrawImageOptions.GeoM.Translate(float64(rd.image.Bounds().Dx())+8, 0)
-	rd = GetRoomDef(Treasure, Small)
-	o.Screen.DrawImage(rd.image, &o.DrawImageOptions)
-	o.DrawImageOptions.GeoM.Translate(float64(rd.image.Bounds().Dx())+8, 0)
-	rd = GetRoomDef(Combat, Small)
-	o.Screen.DrawImage(rd.image, &o.DrawImageOptions)
-}
-
 type SpeedPanel struct {
 	render.Positionable
 	render.Sizeable
@@ -1033,4 +935,142 @@ func (mp *MessagePanel) Draw(o *render.Options) {
 		tOp.GeoM.Translate(posX, posY)
 		render.DrawText(tOp, message.text)
 	}
+}
+
+type RoomPanel struct {
+	panel    *UIPanel
+	list     *UIItemList
+	title    *UIText
+	roomDefs []*RoomDef
+}
+
+func MakeRoomPanel() RoomPanel {
+	rp := RoomPanel{
+		panel: NewUIPanel(),
+		title: NewUIText("Rooms", assets.DisplayFont, assets.ColorHeading),
+		list:  NewUIItemList(DirectionVertical),
+	}
+	rp.panel.AddChild(rp.title)
+	rp.panel.AddChild(rp.list)
+	rp.panel.sizeChildren = true
+	rp.panel.centerChildren = true
+
+	return rp
+}
+
+func (rp *RoomPanel) SetRoomDefs(roomDefs []*RoomDef) {
+	rp.roomDefs = roomDefs
+	rp.list.Clear()
+	for _, rd := range roomDefs {
+		img := NewUIImage(rd.image)
+		img.ignoreScale = true
+		rp.list.AddItem(img)
+	}
+}
+
+func (rp *RoomPanel) Layout(o *UIOptions) {
+	rp.panel.padding = 6 * o.Scale
+	rp.list.SetSize(rp.panel.Width(), rp.panel.Height()-rp.panel.padding*2-rp.title.Height())
+
+	rp.panel.Layout(nil, o)
+}
+
+func (rp *RoomPanel) Update(o *UIOptions) {
+	rp.panel.Update(o)
+}
+
+func (rp *RoomPanel) Check(mx, my float64) bool {
+	return rp.panel.Check(mx, my)
+}
+
+func (rp *RoomPanel) Draw(o *render.Options) {
+	rp.panel.Draw(o)
+}
+
+type DudePanel2 struct {
+	panel *UIPanel
+	list  *UIItemList
+	title *UIText
+	//dudeDefs []*DudeDef
+}
+
+func MakeDudePanel2() DudePanel2 {
+	dp := DudePanel2{
+		panel: NewUIPanel(),
+		title: NewUIText("Dudes", assets.DisplayFont, assets.ColorHeading),
+		list:  NewUIItemList(DirectionVertical),
+	}
+	dp.panel.AddChild(dp.title)
+	dp.panel.AddChild(dp.list)
+	dp.panel.sizeChildren = true
+	dp.panel.centerChildren = true
+
+	return dp
+}
+
+/*func (dp *DudePanel2) SetDudeDefs(dudeDefs []*DudeDef) {
+	dp.list.Clear()
+	for _, dd := range dudeDefs {
+		img := NewUIImage(dd.image)
+		img.ignoreScale = true
+		dp.list.AddItem(img)
+	}
+}*/
+
+func (dp *DudePanel2) Layout(o *UIOptions) {
+	dp.panel.padding = 6 * o.Scale
+	dp.list.SetSize(dp.panel.Width(), dp.panel.Height()-dp.panel.padding*2-dp.title.Height())
+
+	dp.panel.Layout(nil, o)
+}
+
+func (dp *DudePanel2) Update(o *UIOptions) {
+	dp.panel.Update(o)
+}
+
+func (dp *DudePanel2) Check(mx, my float64) bool {
+	return dp.panel.Check(mx, my)
+}
+
+func (dp *DudePanel2) Draw(o *render.Options) {
+	dp.panel.Draw(o)
+}
+
+type EquipmentPanel struct {
+	panel *UIPanel
+	list  *UIItemList
+	title *UIText
+}
+
+func MakeEquipmentPanel() EquipmentPanel {
+	ep := EquipmentPanel{
+		panel: NewUIPanel(),
+		title: NewUIText("Loot", assets.DisplayFont, assets.ColorHeading),
+		list:  NewUIItemList(DirectionVertical),
+	}
+	ep.panel.AddChild(ep.title)
+	ep.panel.AddChild(ep.list)
+	ep.panel.sizeChildren = true
+	ep.panel.centerChildren = true
+
+	return ep
+}
+
+func (ep *EquipmentPanel) Layout(o *UIOptions) {
+	ep.panel.padding = 6 * o.Scale
+	ep.list.SetSize(ep.panel.Width(), ep.panel.Height()-ep.panel.padding*2-ep.title.Height())
+
+	ep.panel.Layout(nil, o)
+}
+
+func (ep *EquipmentPanel) Update(o *UIOptions) {
+	ep.panel.Update(o)
+}
+
+func (ep *EquipmentPanel) Check(mx, my float64) bool {
+	return ep.panel.Check(mx, my)
+}
+
+func (ep *EquipmentPanel) Draw(o *render.Options) {
+	ep.panel.Draw(o)
 }

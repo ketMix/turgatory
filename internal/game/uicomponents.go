@@ -309,6 +309,9 @@ func (l *UIItemList) AddItem(item UIElement) {
 	l.items = append(l.items, item)
 	l.changed = true
 }
+func (l *UIItemList) Clear() {
+	l.items = nil
+}
 
 // ======== UIPanel ========
 type UIPanel struct {
@@ -317,9 +320,10 @@ type UIPanel struct {
 
 	children []UIElement
 
-	padding       float64
-	flowDirection int
-	sizeChildren  bool
+	padding        float64
+	flowDirection  int
+	sizeChildren   bool
+	centerChildren bool
 
 	top         *render.Sprite
 	bottom      *render.Sprite
@@ -369,6 +373,14 @@ func (p *UIPanel) Layout(parent UIElement, o *UIOptions) {
 				child.SetSize(p.Width()-p.padding*2, child.Height())
 			} else {
 				child.SetSize(child.Width(), p.Height()-p.padding*2)
+			}
+		}
+
+		if p.centerChildren {
+			if p.flowDirection == DirectionVertical {
+				child.SetPosition(child.X()+(p.Width()-child.Width())/2-p.padding, child.Y())
+			} else {
+				child.SetPosition(child.X(), child.Y()+(p.Height()-child.Height())/2-p.padding)
 			}
 		}
 
@@ -470,6 +482,10 @@ func (p *UIPanel) Draw(o *render.Options) {
 	}
 }
 
+func (p *UIPanel) AddChild(child UIElement) {
+	p.children = append(p.children, child)
+}
+
 // ======== UIText ========
 type UIText struct {
 	render.Positionable
@@ -502,7 +518,7 @@ func NewUIText(txt string, font assets.Font, color color.Color) *UIText {
 
 func (t *UIText) Layout(parent UIElement, o *UIOptions) {
 	t.scale = o.Scale * t.textScale
-	t.SetSize(t.textWidth*t.scale, t.textHeight*t.scale)
+	t.Sizeable.SetSize(t.textWidth*t.scale, t.textHeight*t.scale)
 }
 
 func (t *UIText) Update(o *UIOptions) {
@@ -522,6 +538,10 @@ func (t *UIText) Draw(o *render.Options) {
 
 func (t *UIText) SetScale(scale float64) {
 	t.textScale = scale
+}
+
+func (t *UIText) SetSize(w, h float64) {
+	// TOO BAD, NO TEXT SIZING FOR YOU
 }
 
 type UIImage struct {
