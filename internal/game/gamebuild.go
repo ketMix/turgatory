@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
@@ -96,10 +97,16 @@ func (s *GameStateBuild) End(g *Game) {
 		room.highlight = false
 	}
 	g.ui.buttonPanel.hidden = true
+	g.ui.roomInfoPanel.hidden = true
 }
 func (s *GameStateBuild) Update(g *Game) GameState {
 	if s.readyAttempts >= 2 {
 		return &GameStatePlay{}
+	}
+
+	// Some cancel garbo.
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		g.ui.roomInfoPanel.hidden = true
 	}
 
 	s.wobbler += 0.05
