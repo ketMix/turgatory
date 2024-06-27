@@ -106,6 +106,8 @@ func (g *Game) Update() error {
 		g.camera.ZoomOut()
 	}
 
+	g.ui.Update(&g.uiOptions)
+
 	mx, my := IntToFloat2(ebiten.CursorPosition())
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		if !g.ui.Check(mx, my) {

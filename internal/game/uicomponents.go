@@ -30,6 +30,7 @@ type UIElement interface {
 type UIButton struct {
 	render.Positionable
 	render.Sizeable
+	noBackdrop  bool
 	baseSprite  *render.Sprite
 	sprite      *render.Sprite
 	onClick     func()
@@ -105,7 +106,9 @@ func (b *UIButton) SetImage(name string) {
 }
 
 func (b *UIButton) Draw(o *render.Options) {
-	b.baseSprite.Draw(o)
+	if !b.noBackdrop {
+		b.baseSprite.Draw(o)
+	}
 	b.sprite.Draw(o)
 	o.DrawImageOptions.GeoM.Reset()
 	if b.tooltip != "" && b.showTooltip {
@@ -136,15 +139,175 @@ type UIItemList struct {
 	selected          int
 	itemOffset        int
 	direction         int
-	maxSize           float64 // maxSize in respect to direction
+	lastVisibleIndex  int
+	itemsAllVisible   bool
+	changed           bool
+	centerItems       bool // Center items on the opposite axis to direction
+	centerList        bool // Center the items to be visually centered
 	decrementUIButton *UIButton
 	incrementUIButton *UIButton
 }
 
 func NewUIItemList(direction int) *UIItemList {
-	return &UIItemList{
-		direction: direction,
+	l := &UIItemList{
+		direction:   direction,
+		centerItems: true,
 	}
+
+	l.decrementUIButton = NewUIButton("arrow", "")
+	l.decrementUIButton.noBackdrop = true
+	l.incrementUIButton = NewUIButton("arrow", "")
+	l.incrementUIButton.noBackdrop = true
+
+	if direction == DirectionVertical {
+		l.decrementUIButton.sprite.SetStaxieAnimation("ui/button", "arrow", "up")
+		l.incrementUIButton.sprite.SetStaxieAnimation("ui/button", "arrow", "down")
+	} else {
+		l.decrementUIButton.sprite.SetStaxieAnimation("ui/button", "arrow", "left")
+		l.incrementUIButton.sprite.SetStaxieAnimation("ui/button", "arrow", "right")
+	}
+
+	l.decrementUIButton.onClick = func() {
+		if l.itemOffset > 0 {
+			l.itemOffset--
+		}
+		l.changed = true
+	}
+	l.incrementUIButton.onClick = func() {
+		if l.itemsAllVisible {
+			return
+		}
+		if l.itemOffset < len(l.items)-1 {
+			l.itemOffset++
+		}
+		l.changed = true
+	}
+
+	return l
+}
+func (l *UIItemList) adjustButtons() {
+	if l.itemOffset == 0 {
+		l.decrementUIButton.sprite.Transparency = 0.25
+	} else {
+		l.decrementUIButton.sprite.Transparency = 0
+	}
+	if l.itemsAllVisible {
+		l.incrementUIButton.sprite.Transparency = 0.25
+	} else {
+		l.incrementUIButton.sprite.Transparency = 0
+	}
+}
+func (l *UIItemList) Layout(parent UIElement, o *UIOptions) {
+	l.decrementUIButton.Layout(l, o)
+	l.incrementUIButton.Layout(l, o)
+
+	l.changed = true
+
+	w, h := l.Size()
+	bw, bh := l.decrementUIButton.Size()
+	if l.direction == DirectionVertical {
+		l.decrementUIButton.SetPosition(l.X()+w/2-bw/2, l.Y()-bw/2+4)
+		l.incrementUIButton.SetPosition(l.X()+w/2-bw/2, l.Y()+l.Height()-bh/2-4)
+	} else {
+		l.decrementUIButton.SetPosition(l.X()-bw/2+4, l.Y()+h/2-bh/2)
+		l.incrementUIButton.SetPosition(l.X()+l.Width()-bw/2-4, l.Y()+h/2-bh/2)
+	}
+}
+func (l *UIItemList) Update(o *UIOptions) {
+	l.decrementUIButton.Update(o)
+	l.incrementUIButton.Update(o)
+
+	if l.changed {
+		v := 0.0
+		maxSize := 0.0
+		itemsSize := 0.0
+		if l.direction == DirectionVertical {
+			maxSize = l.Height() - l.decrementUIButton.Height()/2
+		} else {
+			maxSize = l.Width() - l.decrementUIButton.Width()/2
+		}
+		l.lastVisibleIndex = len(l.items)
+		for i := l.itemOffset; i < len(l.items); i++ {
+			if l.direction == DirectionVertical {
+				cs := 0.0
+				if l.centerItems {
+					cs = l.Width()/2 - l.items[i].Width()/2
+				}
+				l.items[i].SetPosition(l.X()+cs, l.Y()+float64(v))
+			} else {
+				cs := 0.0
+				if l.centerItems {
+					cs = l.Height()/2 - l.items[i].Height()/2
+				}
+				l.items[i].SetPosition(l.X()+float64(v), l.Y()+cs)
+			}
+			l.items[i].Layout(l, o)
+			itemsSize = v
+
+			if l.direction == DirectionVertical {
+				v += l.items[i].Height()
+			} else {
+				v += l.items[i].Width()
+			}
+
+			if v >= maxSize {
+				l.lastVisibleIndex = i
+				break
+			}
+		}
+		if l.lastVisibleIndex == len(l.items) {
+			l.itemsAllVisible = true
+		} else {
+			l.itemsAllVisible = false
+		}
+
+		// Yeah, this isn't great, but I want items centered.
+		for i := l.itemOffset; i < l.lastVisibleIndex; i++ {
+			if l.centerList {
+				if l.direction == DirectionVertical {
+					offset := maxSize - itemsSize
+					l.items[i].SetPosition(l.items[i].X(), l.items[i].Y()+offset/2)
+				} else {
+					offset := maxSize - itemsSize
+					l.items[i].SetPosition(l.items[i].X()+offset/2, l.items[i].Y())
+				}
+			}
+		}
+
+		l.adjustButtons()
+
+		l.changed = false
+	}
+
+	for i := l.itemOffset; i < l.lastVisibleIndex; i++ {
+		l.items[i].Update(o)
+	}
+}
+func (l *UIItemList) Check(mx, my float64) bool {
+	if l.decrementUIButton.Check(mx, my) {
+		return true
+	}
+	if l.incrementUIButton.Check(mx, my) {
+		return true
+	}
+	for i := l.itemOffset; i < l.lastVisibleIndex; i++ {
+		if l.items[i].Check(mx, my) {
+			return true
+		}
+	}
+	return false
+}
+func (l *UIItemList) Draw(o *render.Options) {
+	l.decrementUIButton.Draw(o)
+	l.incrementUIButton.Draw(o)
+	o.DrawImageOptions.GeoM.Reset()
+	for i := l.itemOffset; i < l.lastVisibleIndex; i++ {
+		l.items[i].Draw(o)
+	}
+}
+func (l *UIItemList) AddItem(item UIElement) {
+	l.items = append(l.items, item)
+	l.changed = true
 }
 
 // ======== UIPanel ========
@@ -156,6 +319,7 @@ type UIPanel struct {
 
 	padding       float64
 	flowDirection int
+	sizeChildren  bool
 
 	top         *render.Sprite
 	bottom      *render.Sprite
@@ -199,6 +363,15 @@ func (p *UIPanel) Layout(parent UIElement, o *UIOptions) {
 	y := p.Y() + p.padding
 	for _, child := range p.children {
 		child.SetPosition(x, y)
+
+		if p.sizeChildren {
+			if p.flowDirection == DirectionVertical {
+				child.SetSize(p.Width()-p.padding*2, child.Height())
+			} else {
+				child.SetSize(child.Width(), p.Height()-p.padding*2)
+			}
+		}
+
 		child.Layout(p, o)
 		if p.flowDirection == DirectionVertical {
 			y += child.Height()
@@ -349,4 +522,51 @@ func (t *UIText) Draw(o *render.Options) {
 
 func (t *UIText) SetScale(scale float64) {
 	t.textScale = scale
+}
+
+type UIImage struct {
+	render.Positionable
+	render.Sizeable
+
+	scale       float64
+	finalScale  float64
+	image       *ebiten.Image
+	ignoreScale bool
+	onClick     func()
+}
+
+func NewUIImage(img *ebiten.Image) *UIImage {
+	return &UIImage{
+		image: img,
+		scale: 1,
+	}
+}
+
+func (i *UIImage) Layout(parent UIElement, o *UIOptions) {
+	if i.ignoreScale {
+		i.finalScale = 1
+	} else {
+		i.finalScale = o.Scale * i.scale
+	}
+	i.SetSize(float64(i.image.Bounds().Dx())*i.finalScale, float64(i.image.Bounds().Dy())*i.finalScale)
+}
+
+func (i *UIImage) Update(o *UIOptions) {
+}
+
+func (i *UIImage) Check(mx, my float64) bool {
+	if i.onClick != nil {
+		if InBounds(i.X(), i.Y(), i.Width(), i.Height(), mx, my) {
+			i.onClick()
+			return true
+		}
+	}
+	return false
+}
+
+func (i *UIImage) Draw(o *render.Options) {
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(i.finalScale, i.finalScale)
+	op.GeoM.Translate(i.X(), i.Y())
+	o.Screen.DrawImage(i.image, op)
 }
