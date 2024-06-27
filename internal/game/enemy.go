@@ -46,11 +46,11 @@ func (e EnemyKind) Stats() *Stats {
 	case EnemyRat:
 		return &Stats{strength: 3, defense: 3, totalHp: 15, luck: 1}
 	case EnemySlime:
-		return &Stats{strength: 6, defense: 6, totalHp: 30, luck: 2}
+		return &Stats{strength: 6, defense: 6, totalHp: 30, luck: 3}
 	case EnemySkelly:
-		return &Stats{strength: 12, defense: 12, totalHp: 60, luck: 3}
+		return &Stats{strength: 12, defense: 12, totalHp: 60, luck: 6}
 	case EnemyBossRat:
-		return &Stats{strength: 15, defense: 15, totalHp: 250, luck: 5}
+		return &Stats{strength: 15, defense: 10, totalHp: 250, luck: 5}
 	default:
 		return &Stats{strength: 1, defense: 0, totalHp: 1, luck: 1}
 	}
@@ -100,19 +100,27 @@ func (e *Enemy) Update(d *Dude) {
 }
 
 func (e *Enemy) RoomUpdate(r *Room) {
-	// Position enemy in the 3/4 of the room
 	if e.stack == nil {
 		return
 	}
-	if r == nil || len(r.stacks) == 0 || r.stacks[0] == nil {
+	if r == nil || len(r.dudes) == 0 {
+		e.stack.Update()
+		return
+	}
+	d := e.GetTarget(r.dudes)
+	if d == nil {
+		e.stack.Update()
 		return
 	}
 
-	roomStack := r.stacks[0]
+	// Face the enemy towards the dude
+	cx, cy := d.stack.Position()
+	distance := d.story.DistanceFromCenter(cx, cy)
+	rot := d.story.AngleFromCenter(cx, cy)
+	nx, ny := d.story.PositionFromCenter(rot, distance-15)
 
-	e.stack.SetPosition(roomStack.Position())
-	e.stack.SetOrigin(roomStack.Origin())
-	e.stack.SetRotation(roomStack.Rotation())
+	e.stack.SetRotation(rot + math.Pi)
+	e.stack.SetPosition(nx, ny)
 	e.stack.Update()
 }
 
@@ -139,7 +147,7 @@ func (e *Enemy) Name() string {
 }
 
 func (e *Enemy) XP() int {
-	return e.stats.level * 10
+	return e.stats.totalHp
 }
 
 func (e *Enemy) Gold() float64 {
