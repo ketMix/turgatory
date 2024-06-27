@@ -161,6 +161,18 @@ func (s *Stats) ModifyStat(stat Stat, amount int) {
 	}
 }
 
+func (s *Stats) ApplyDefense(damage int) int {
+	// Apply defense stat using a logarithmic function
+	// for diminishing returns
+	defenseReduction := 1 - 1/(1+math.Log1p(float64(s.defense)/100))
+
+	// Apply defense reduction
+	reducedDamage := float64(damage) * (1 - defenseReduction)
+
+	// Round the result and convert back to int
+	return int(math.Round(reducedDamage))
+}
+
 func NewStats(levelUpChange *Stats, isEnemy bool) *Stats {
 	// start the stats at a negative level
 	// then level up a few times in order to set the starting stats

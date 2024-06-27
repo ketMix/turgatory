@@ -106,6 +106,19 @@ func (r RoomCenterActivity) Cb() func(success bool) {
 	return r.cb
 }
 
+type RoomWaitActivity struct {
+	dude *Dude
+	room *Room
+	cb   func(success bool)
+}
+
+func (r RoomWaitActivity) Apply() {
+}
+
+func (r RoomWaitActivity) Cb() func(success bool) {
+	return r.cb
+}
+
 type RoomEndActivity struct {
 	dude     *Dude
 	room     *Room
@@ -129,6 +142,43 @@ func (r RoomCombatActivity) Apply() {
 }
 
 func (r RoomCombatActivity) Cb() func(success bool) {
+	return nil
+}
+
+type RoomStartBossActivity struct {
+	room *Room
+	dude *Dude
+}
+
+func (r RoomStartBossActivity) Apply() {
+}
+
+func (r RoomStartBossActivity) Cb() func(success bool) {
+	return nil
+}
+
+type RoomBossCombatActivity struct {
+	room *Room
+	dude *Dude
+	boss *Enemy
+}
+
+func (r RoomBossCombatActivity) Apply() {
+}
+
+func (r RoomBossCombatActivity) Cb() func(success bool) {
+	return nil
+}
+
+type RoomEndBossActivity struct {
+	room *Room
+	dude *Dude
+}
+
+func (r RoomEndBossActivity) Apply() {
+}
+
+func (r RoomEndBossActivity) Cb() func(success bool) {
 	return nil
 }
 

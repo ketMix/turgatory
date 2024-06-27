@@ -130,10 +130,14 @@ func (s *GameStatePlay) Begin(g *Game) {
 
 	// Add our dudes to the tower!
 	g.tower.AddDudes(g.dudes...)
+
 	// TODO: Set up dude state to spawn outside first story?
 	g.ui.dudePanel.SyncDudes(g.dudes)
 }
 func (s *GameStatePlay) End(g *Game) {
+	// Reset tower
+	g.tower.Reset()
+
 	// Replace our current dudes!
 	g.dudes = nil
 	g.dudes = append(g.dudes, s.returningDudes...)

@@ -72,6 +72,29 @@ func (t *Tower) Update(req *ActivityRequests) {
 			if act := u.dude.Trigger(EventCenterRoom{room: u.room, dude: u.dude}); act != nil {
 				req.Add(act)
 			}
+		case RoomWaitActivity:
+			if act := u.dude.Trigger(EventWaitRoom{room: u.room, dude: u.dude}); act != nil {
+				req.Add(act)
+			}
+			if u.dude != nil {
+				u.dude.SetActivity(Idle)
+			}
+		case RoomStartBossActivity:
+			if act := u.dude.Trigger(EventStartBoss{room: u.room, dude: u.dude}); act != nil {
+				req.Add(act)
+			}
+			if u.dude != nil {
+				u.dude.SetActivity(FightBoss)
+			}
+		case RoomEndBossActivity:
+			if act := u.dude.Trigger(EventEndBoss{room: u.room, dude: u.dude}); act != nil {
+				req.Add(act)
+			}
+			if u.dude != nil {
+				// Keep it movin bub
+				u.dude.SetActivity(Centering)
+			}
+
 		case RoomEndActivity:
 			if act := u.dude.Trigger(EventEndRoom{room: u.room, dude: u.dude}); act != nil {
 				req.Add(act)
@@ -186,5 +209,11 @@ func (t *Tower) ClearBodies() {
 func (t *Tower) ClearTexts() {
 	for _, s := range t.Stories {
 		s.texts = nil
+	}
+}
+
+func (t *Tower) Reset() {
+	for _, s := range t.Stories {
+		s.Reset()
 	}
 }

@@ -39,6 +39,10 @@ func NewStoryWithSize(size int) *Story {
 	story := &Story{}
 	story.rooms = make([]*Room, size)
 
+	// Fill with template rooms
+	for i := 0; i < size; i++ {
+		story.PlaceRoom(NewRoom(Small, Empty), i)
+	}
 	for i := 0; i < 4; i++ {
 		stack := Must(render.NewStack("walls/pie", "template", ""))
 		stack.SetRotation(float64(i) * (math.Pi / 2))
@@ -77,17 +81,20 @@ func NewStoryWithSize(size int) *Story {
 	room := NewRoom(Medium, Armory)
 	PanicIfErr(story.PlaceRoom(room, 0))
 
-	room2 := NewRoom(Medium, Combat)
+	// room1 := NewRoom(Medium, Armory)
+	// PanicIfErr(story.PlaceRoom(room1, 2))
+
+	room2 := NewRoom(Huge, Boss)
 	PanicIfErr(story.PlaceRoom(room2, 2))
 
 	// room3 := NewRoom(Small, Treasure)
 	// PanicIfErr(story.PlaceRoom(room3, 3))
 
-	room4 := NewRoom(Small, HealingShrine)
-	PanicIfErr(story.PlaceRoom(room4, 4))
+	// room4 := NewRoom(Small, HealingShrine)
+	// PanicIfErr(story.PlaceRoom(room4, 4))
 
-	room5 := NewRoom(Medium, Library)
-	PanicIfErr(story.PlaceRoom(room5, 5))
+	// room5 := NewRoom(Medium, Library)
+	// PanicIfErr(story.PlaceRoom(room5, 5))
 
 	room7 := NewRoom(Small, Stairs)
 	PanicIfErr(story.PlaceRoom(room7, 7))
@@ -162,14 +169,25 @@ func (s *Story) Update(req *ActivityRequests) {
 			}
 			// Check if the dude is in the center of the room and update as appropriate.
 			if room != nil {
-				if s.IsInCenterOfRoom(s.AngleFromCenter(u.x, u.y), roomIndex) {
-					if !room.IsDudeInCenter(u.dude) {
-						room.AddDudeToCenter(u.dude)
-						req.Add(RoomCenterActivity{dude: u.dude, room: room})
+				// Special case for boss room
+				if room.kind == Boss && !room.killedBoss {
+					// If dude is in first fourth of boss room, add it to the waiting list
+					if s.IsInCenterOfRoom(s.AngleFromCenter(u.x, u.y)-math.Pi/4, roomIndex) {
+						if !room.IsDudeWaiting(u.dude) {
+							room.AddDudeToWaiting(u.dude)
+							req.Add(RoomWaitActivity{dude: u.dude, room: room})
+						}
 					}
-				} else if room.IsDudeInCenter(u.dude) {
-					room.RemoveDudeFromCenter(u.dude)
-					req.Add(RoomEndActivity{dude: u.dude, room: room})
+				} else {
+					if s.IsInCenterOfRoom(s.AngleFromCenter(u.x, u.y), roomIndex) {
+						if !room.IsDudeInCenter(u.dude) {
+							room.AddDudeToCenter(u.dude)
+							req.Add(RoomCenterActivity{dude: u.dude, room: room})
+						}
+					} else if room.IsDudeInCenter(u.dude) {
+						room.RemoveDudeFromCenter(u.dude)
+						req.Add(RoomEndActivity{dude: u.dude, room: room})
+					}
 				}
 			}
 		case StoryEnterNextActivity:
@@ -329,6 +347,14 @@ func (s *Story) RemovePortal() {
 	s.portalStack = nil
 }
 
+func (s *Story) Reset() {
+	for _, room := range s.rooms {
+		if room != nil {
+			room.Reset()
+		}
+	}
+}
+
 // PlaceRoom places a room in the story, populating the rooms slice's pointer references accordingly.
 func (s *Story) PlaceRoom(r *Room, index int) error {
 	if index < 0 || index >= len(s.rooms) {
@@ -338,7 +364,8 @@ func (s *Story) PlaceRoom(r *Room, index int) error {
 		return ErrRoomTooLarge
 	}
 	for i := 0; i < int(r.size); i++ {
-		if s.rooms[index+i] != nil {
+		existingRoom := s.rooms[index+i]
+		if existingRoom != nil && existingRoom.kind != Empty {
 			return ErrRoomNoSpace
 		}
 	}

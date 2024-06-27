@@ -25,6 +25,8 @@ const (
 	EnterPortal
 	Ded
 	BornAgain
+	Waiting // maybe some random shufflin about
+	FightBoss
 )
 
 type Dude struct {
@@ -565,14 +567,7 @@ func (d *Dude) ApplyDamage(amount int) (int, bool) {
 	}
 
 	// Apply defense stat
-	// Higher defense means less damage taken with diminishing returns
-	// 1 defense = 1% damage reduction
-	// 100 defense = 50% damage reduction
-	amount = int(float64(amount) * (1.0 - float64(stats.defense)/200.0))
-	if amount < 0 {
-		amount = 1
-	}
-
+	amount = stats.ApplyDefense(amount)
 	d.stats.currentHp -= amount
 
 	if d.stats.currentHp < 0 {
