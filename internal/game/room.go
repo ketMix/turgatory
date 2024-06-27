@@ -221,10 +221,11 @@ func (r *Room) Update(req *ActivityRequests) {
 		if r.boss != nil {
 			if r.boss.IsDead() {
 				goldPerDude := r.boss.Gold() / float64(len(r.dudes))
+				xp := r.boss.XP() * 2
 				r.boss = nil
 				r.killedBoss = true
 				for _, d := range r.dudes {
-					d.stats.LevelUp()
+					d.AddXP(xp)
 					d.UpdateGold(goldPerDude)
 					req.Add(RoomEndBossActivity{room: r, dude: d})
 				}
