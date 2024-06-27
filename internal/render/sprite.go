@@ -11,8 +11,9 @@ type Sprite struct {
 	Positionable
 	Originable
 	Rotateable
-	image *ebiten.Image
-	Scale float64
+	image        *ebiten.Image
+	Scale        float64
+	Transparency float32
 }
 
 func (s *Sprite) Size() (float64, float64) {
@@ -52,12 +53,50 @@ func (s *Sprite) SetStaxie(name, stackName string) error {
 	return nil
 }
 
+func (s *Sprite) SetStaxieAnimation(name, stackName, animName string) error {
+	staxie, err := assets.LoadStaxie(name)
+	if err != nil {
+		return err
+	}
+	stack, ok := staxie.GetStack(stackName)
+	if !ok {
+		return assets.ErrStackNotFound
+	}
+	anim, ok := stack.GetAnimation(animName)
+	if !ok {
+		return assets.ErrAnimationNotFound
+	}
+	frame, ok := anim.GetFrame(0)
+	if !ok {
+		return assets.ErrFrameNotFound
+	}
+	slice, ok := frame.GetSlice(0)
+	if !ok {
+		return assets.ErrSliceNotFound
+	}
+	s.image = slice.Image
+	return nil
+}
+
 func NewSpriteFromStaxie(name string, stackName string) (*Sprite, error) {
 	sprite := &Sprite{
 		Scale: 1,
 	}
 
 	err := sprite.SetStaxie(name, stackName)
+	if err != nil {
+		return nil, err
+	}
+
+	return sprite, nil
+}
+
+func NewSpriteFromStaxieAnimation(name string, stackName string, animName string) (*Sprite, error) {
+	sprite := &Sprite{
+		Scale: 1,
+	}
+
+	err := sprite.SetStaxieAnimation(name, stackName, animName)
 	if err != nil {
 		return nil, err
 	}
@@ -99,6 +138,10 @@ func (s *Sprite) Draw(o *Options) {
 	opts.GeoM.Translate(s.Position())
 
 	opts.GeoM.Concat(o.DrawImageOptions.GeoM)
+
+	if s.Transparency != 0 {
+		opts.ColorScale.ScaleAlpha(1.0 - s.Transparency)
+	}
 
 	o.Screen.DrawImage(s.image, opts)
 }
