@@ -34,6 +34,7 @@ type UI struct {
 	speedPanel     SpeedPanel
 	messagePanel   MessagePanel
 	roomPanel      RoomPanel
+	roomInfoPanel  RoomInfoPanel
 	options        *UIOptions
 }
 
@@ -78,6 +79,7 @@ func NewUI() *UI {
 	ui.dudePanel2 = MakeDudePanel2()
 	ui.equipmentPanel = MakeEquipmentPanel()
 	ui.roomPanel = MakeRoomPanel()
+	ui.roomInfoPanel = MakeRoomInfoPanel()
 
 	return ui
 }
@@ -121,6 +123,17 @@ func (ui *UI) Layout(o *UIOptions) {
 		float64(o.Height)/2-ui.roomPanel.panel.Height()/2,
 	)
 	ui.roomPanel.Layout(o)
+
+	ui.roomInfoPanel.panel.SetSize(
+		224*o.Scale,
+		64*o.Scale,
+	)
+	ui.roomInfoPanel.panel.SetPosition(
+		ui.roomPanel.panel.X()-ui.roomInfoPanel.panel.Width()-8,
+		ui.roomPanel.panel.Y()+(ui.roomPanel.panel.Height()-ui.roomInfoPanel.panel.Height()),
+	)
+	ui.roomInfoPanel.Layout(o)
+
 }
 
 func (ui *UI) Update(o *UIOptions) {
@@ -132,18 +145,18 @@ func (ui *UI) Update(o *UIOptions) {
 	ui.messagePanel.Update(o)
 }
 
-func (ui *UI) Check(mx, my float64) bool {
-	if ui.dudePanel2.Check(mx, my) {
+func (ui *UI) Check(mx, my float64, kind UICheckKind) bool {
+	if ui.dudePanel2.Check(mx, my, kind) {
 		return true
 	}
-	if ui.equipmentPanel.Check(mx, my) {
+	if ui.equipmentPanel.Check(mx, my, kind) {
 		return true
 	}
-	if ui.roomPanel.Check(mx, my) {
+	if ui.roomPanel.Check(mx, my, kind) {
 		return true
 	}
 
-	if ui.speedPanel.Check(mx, my) {
+	if ui.speedPanel.Check(mx, my, kind) {
 		return true
 	}
 	return false
@@ -160,6 +173,8 @@ func (ui *UI) Draw(o *render.Options) {
 
 	o.DrawImageOptions.GeoM.Reset()
 	ui.roomPanel.Draw(o)
+
+	ui.roomInfoPanel.Draw(o)
 
 	o.DrawImageOptions.GeoM.Reset()
 	ui.dudePanel2.Draw(o)
@@ -791,12 +806,13 @@ func (sp *SpeedPanel) Update(o *UIOptions) {
 	}
 }
 
-func (sp *SpeedPanel) Check(mx, my float64) bool {
-	if !InBounds(sp.X(), sp.Y(), sp.Width(), sp.Height(), mx, my) {
+func (sp *SpeedPanel) Check(mx, my float64, kind UICheckKind) bool {
+	inBounds := InBounds(sp.X(), sp.Y(), sp.Width(), sp.Height(), mx, my)
+	if kind == UICheckHover && !inBounds {
 		return false
 	}
 	for _, b := range sp.buttons {
-		if b.Check(mx, my) {
+		if b.Check(mx, my, kind) {
 			return true
 		}
 	}
@@ -938,22 +954,27 @@ func (mp *MessagePanel) Draw(o *render.Options) {
 }
 
 type RoomPanel struct {
-	panel    *UIPanel
-	list     *UIItemList
-	title    *UIText
-	roomDefs []*RoomDef
+	panel       *UIPanel
+	list        *UIItemList
+	title       *UIText
+	count       *UIText
+	roomDefs    []*RoomDef
+	onItemClick func(index int)
 }
 
 func MakeRoomPanel() RoomPanel {
 	rp := RoomPanel{
 		panel: NewUIPanel(),
 		title: NewUIText("Rooms", assets.DisplayFont, assets.ColorHeading),
+		count: NewUIText("0", assets.BodyFont, assets.ColorHeading),
 		list:  NewUIItemList(DirectionVertical),
 	}
 	rp.panel.AddChild(rp.title)
 	rp.panel.AddChild(rp.list)
 	rp.panel.sizeChildren = true
 	rp.panel.centerChildren = true
+	rp.list.centerItems = true
+	rp.list.centerList = true
 
 	return rp
 }
@@ -961,11 +982,18 @@ func MakeRoomPanel() RoomPanel {
 func (rp *RoomPanel) SetRoomDefs(roomDefs []*RoomDef) {
 	rp.roomDefs = roomDefs
 	rp.list.Clear()
-	for _, rd := range roomDefs {
+	for index, rd := range roomDefs {
 		img := NewUIImage(rd.image)
 		img.ignoreScale = true
+		img.onCheck = func(kind UICheckKind) {
+			if kind == UICheckClick && rp.onItemClick != nil {
+				rp.onItemClick(index)
+				rp.list.selected = index
+			}
+		}
 		rp.list.AddItem(img)
 	}
+	rp.count.text = fmt.Sprintf("%d", len(rp.roomDefs))
 }
 
 func (rp *RoomPanel) Layout(o *UIOptions) {
@@ -973,18 +1001,70 @@ func (rp *RoomPanel) Layout(o *UIOptions) {
 	rp.list.SetSize(rp.panel.Width(), rp.panel.Height()-rp.panel.padding*2-rp.title.Height())
 
 	rp.panel.Layout(nil, o)
+
+	rp.count.Layout(nil, o)
+	rp.count.SetPosition(rp.list.X(), rp.list.Y()-rp.count.Height()/4)
 }
 
 func (rp *RoomPanel) Update(o *UIOptions) {
 	rp.panel.Update(o)
 }
 
-func (rp *RoomPanel) Check(mx, my float64) bool {
-	return rp.panel.Check(mx, my)
+func (rp *RoomPanel) Check(mx, my float64, kind UICheckKind) bool {
+	return rp.panel.Check(mx, my, kind)
 }
 
 func (rp *RoomPanel) Draw(o *render.Options) {
 	rp.panel.Draw(o)
+	rp.count.Draw(o)
+}
+
+type RoomInfoPanel struct {
+	panel       *UIPanel
+	title       *UIText
+	description *UIText
+	cost        *UIText
+
+	hidden bool
+}
+
+func MakeRoomInfoPanel() RoomInfoPanel {
+	rip := RoomInfoPanel{
+		panel:       NewUIPanel(),
+		title:       NewUIText("Room Info", assets.DisplayFont, assets.ColorHeading),
+		description: NewUIText("Description", assets.BodyFont, assets.ColorRoomDescription),
+		cost:        NewUIText("Cost: 0", assets.BodyFont, assets.ColorRoomCost),
+		hidden:      true,
+	}
+	rip.panel.AddChild(rip.title)
+	rip.panel.AddChild(rip.description)
+	rip.panel.AddChild(rip.cost)
+	rip.panel.sizeChildren = true
+	//rip.panel.centerChildren = true
+	return rip
+}
+
+func (rip *RoomInfoPanel) Layout(o *UIOptions) {
+	rip.panel.padding = 6 * o.Scale
+	rip.panel.Layout(nil, o)
+}
+
+func (rip *RoomInfoPanel) Update(o *UIOptions) {
+	rip.panel.Update(o)
+}
+
+func (rip *RoomInfoPanel) Check(mx, my float64, kind UICheckKind) bool {
+	if rip.hidden {
+		return false
+	}
+	return rip.panel.Check(mx, my, kind)
+}
+
+func (rip *RoomInfoPanel) Draw(o *render.Options) {
+	if rip.hidden {
+		return
+	}
+	rip.panel.Draw(o)
 }
 
 type DudePanel2 struct {
@@ -1028,8 +1108,8 @@ func (dp *DudePanel2) Update(o *UIOptions) {
 	dp.panel.Update(o)
 }
 
-func (dp *DudePanel2) Check(mx, my float64) bool {
-	return dp.panel.Check(mx, my)
+func (dp *DudePanel2) Check(mx, my float64, kind UICheckKind) bool {
+	return dp.panel.Check(mx, my, kind)
 }
 
 func (dp *DudePanel2) Draw(o *render.Options) {
@@ -1067,8 +1147,8 @@ func (ep *EquipmentPanel) Update(o *UIOptions) {
 	ep.panel.Update(o)
 }
 
-func (ep *EquipmentPanel) Check(mx, my float64) bool {
-	return ep.panel.Check(mx, my)
+func (ep *EquipmentPanel) Check(mx, my float64, kind UICheckKind) bool {
+	return ep.panel.Check(mx, my, kind)
 }
 
 func (ep *EquipmentPanel) Draw(o *render.Options) {

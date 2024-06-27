@@ -21,15 +21,16 @@ type Story struct {
 }
 
 // StoryHeight is the height of a story in da tower.
-const StoryHeight = 28                                // StoryHeight is used to space stories apart from each other vertically.
-const StorySlices = 28                                // The amount of slices used for the frame buffers, should be equal to maximum staxie slice count used in a story.
-const StoryWallHeight = 9                             // The height of the wall stack -- this is repeated 3 times to get the full height (roughly)
-const StoryVGroupWidth = 256                          // Framebuffer's maximum width for rendering.
-const StoryVGroupHeight = 256                         // Framebuffer's maximum height for rendering.
-const PortalDistance = 44                             // Distance from the center of the tower to the portal.
-const PortalRotation = 7.0*-(math.Pi/8) - math.Pi/3.5 // Rotation of the portal.
-const TowerCenterX = StoryVGroupWidth/2 - 5           // Center of the tower. Have to offset lightly for some dumb reason...
-const TowerCenterY = StoryVGroupHeight/2 - 5          // Center of the tower.
+const StoryHeight = 28                                      // StoryHeight is used to space stories apart from each other vertically.
+const StorySlices = 28                                      // The amount of slices used for the frame buffers, should be equal to maximum staxie slice count used in a story.
+const StoryWallHeight = 9                                   // The height of the wall stack -- this is repeated 3 times to get the full height (roughly)
+const StoryVGroupWidth = 256                                // Framebuffer's maximum width for rendering.
+const StoryVGroupHeight = 256                               // Framebuffer's maximum height for rendering.
+const PortalDistance = 44                                   // Distance from the center of the tower to the portal.
+const PortalRotationMedium = 7.0*-(math.Pi/8) - math.Pi/3.5 // Rotation of the portal.
+const PortalRotationSmall = 7.0*-(math.Pi/8) - math.Pi/2.5  // Rotation of the portal.
+const TowerCenterX = StoryVGroupWidth/2 - 5                 // Center of the tower. Have to offset lightly for some dumb reason...
+const TowerCenterY = StoryVGroupHeight/2 - 5                // Center of the tower.
 
 // NewStory creates a grand new spankin' story.
 func NewStory() *Story {
@@ -40,9 +41,13 @@ func NewStoryWithSize(size int) *Story {
 	story.rooms = make([]*Room, size)
 
 	// Fill with template rooms
-	for i := 0; i < size; i++ {
+	for i := 0; i < size-1; i++ {
 		story.PlaceRoom(NewRoom(Small, Empty), i)
 	}
+	// Place entrance/exit room
+	room := NewRoom(Small, Stairs)
+	PanicIfErr(story.PlaceRoom(room, 7))
+
 	for i := 0; i < 4; i++ {
 		stack := Must(render.NewStack("walls/pie", "template", ""))
 		stack.SetRotation(float64(i) * (math.Pi / 2))
@@ -78,27 +83,7 @@ func NewStoryWithSize(size int) *Story {
 		story.doorStack = stack
 	}
 
-	room := NewRoom(Medium, Armory)
-	PanicIfErr(story.PlaceRoom(room, 0))
-
-	// room1 := NewRoom(Medium, Armory)
-	// PanicIfErr(story.PlaceRoom(room1, 2))
-
-	room2 := NewRoom(Large, Combat)
-	PanicIfErr(story.PlaceRoom(room2, 2))
-
-	// room3 := NewRoom(Small, Treasure)
-	// PanicIfErr(story.PlaceRoom(room3, 3))
-
-	// room4 := NewRoom(Small, HealingShrine)
-	// PanicIfErr(story.PlaceRoom(room4, 4))
-
-	// room5 := NewRoom(Medium, Library)
-	// PanicIfErr(story.PlaceRoom(room5, 5))
-
-	room7 := NewRoom(Small, Stairs)
-	PanicIfErr(story.PlaceRoom(room7, 7))
-
+	// Add our center pillar
 	{
 		center := Must(render.NewStack("rooms/center", "", ""))
 		center.SetPosition(float64(StoryVGroupWidth)/2-16, float64(StoryVGroupHeight)/2-16)
@@ -334,7 +319,14 @@ func (s *Story) RemoveDoor() {
 
 func (s *Story) AddPortal() {
 	stack := Must(render.NewStack("walls/portal", "", ""))
-	x, y := s.PositionFromCenter(PortalRotation, PortalDistance)
+
+	r := PortalRotationMedium
+	switch s.rooms[6].size {
+	case Small:
+		r = PortalRotationSmall
+	}
+
+	x, y := s.PositionFromCenter(r, PortalDistance)
 
 	stack.SetRotation(math.Pi + math.Pi/2 - math.Pi/8)
 	stack.SetPosition(x, y)

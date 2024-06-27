@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"image/color"
 	"math"
 	"math/rand"
@@ -66,7 +67,7 @@ func (s *GameStatePreBuild) Draw(g *Game, screen *ebiten.Image) {
 }
 
 type GameStateBuild struct {
-	availableRooms []RoomDef
+	availableRooms []*RoomDef
 	wobbler        float64
 	titleTimer     int
 }
@@ -79,15 +80,44 @@ func (s *GameStateBuild) Begin(g *Game) {
 		d.FullHeal()
 		d.RestoreUses()
 	}
+
+	var nextStory *Story
+	for _, s := range g.tower.Stories {
+		if !s.open {
+			nextStory = s
+			break
+		}
+	}
+	// This shouldn't happen.
+	if nextStory == nil {
+		panic("No next story found!")
+	}
+	// Generate our new rooms.
+	required := GetRequiredRooms(nextStory.level, 2)
+	optional := GetOptionalRooms(nextStory.level, 9) // 6 is minimum, but let's given 3 more for fun.
+	s.availableRooms = append(s.availableRooms, required...)
+	s.availableRooms = append(s.availableRooms, optional...)
+	// Update room panel.
+	g.ui.roomPanel.SetRoomDefs(s.availableRooms)
+	// Add onClick handler.
+	g.ui.roomPanel.onItemClick = func(which int) {
+		g.ui.roomInfoPanel.hidden = false
+		selected := s.availableRooms[which]
+		g.ui.roomInfoPanel.title.SetText(fmt.Sprintf("%s %s room", selected.size.String(), selected.kind.String()))
+		g.ui.roomInfoPanel.description.SetText(selected.GetDescription())
+		g.ui.roomInfoPanel.cost.SetText(fmt.Sprintf("Cost: %d", selected.GetCost(nextStory.level)))
+	}
 }
 func (s *GameStateBuild) End(g *Game) {
+	g.ui.roomPanel.onItemClick = nil
+	g.ui.roomPanel.SetRoomDefs(nil)
 }
 func (s *GameStateBuild) Update(g *Game) GameState {
 	s.wobbler += 0.05
 	s.titleTimer++
-	if s.titleTimer > 120 {
+	/*if s.titleTimer > 120 {
 		return &GameStatePlay{}
-	}
+	}*/
 	return nil
 }
 func (s *GameStateBuild) Draw(g *Game, screen *ebiten.Image) {

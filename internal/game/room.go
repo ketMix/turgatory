@@ -517,10 +517,10 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 }
 
 // For populating the required rooms to place
-// Number of bad rooms based on story level? (2 rooms right now, maybe thats ok)
+// Number of bad rooms based on requested size count.
 // Stories 3, 6, 9, and 12 (?) are boss rooms
 // TODO: make sure you can actually fit all required rooms
-func GetRequiredRooms(storyLevel int) []*RoomDef {
+func GetRequiredRooms(storyLevel int, sizeCount int) []*RoomDef {
 	level := storyLevel + 1
 
 	if level%3 == 0 {
@@ -569,16 +569,20 @@ func GetRequiredRooms(storyLevel int) []*RoomDef {
 		)
 	}
 	rooms := make([]*RoomDef, 0)
-	for i := 0; i < 2; i++ {
+	for i := 0; i < sizeCount; {
 		room := potentialRooms[rand.Intn(len(potentialRooms))]
+		if i+int(room.size) > sizeCount {
+			continue
+		}
 		roomDef := GetRoomDef(room.kind, room.size)
 		rooms = append(rooms, roomDef)
+		i += int(room.size)
 	}
 	return rooms
 }
 
-// 3 rooms to buy
-func GetOptionalRooms(storyLevel int) []*RoomDef {
+// Returns an amount of rooms until the given size/space count is reached.
+func GetOptionalRooms(storyLevel int, sizeCount int) []*RoomDef {
 	level := storyLevel + 1
 
 	// if we are at boss level, no optional rooms
@@ -610,10 +614,15 @@ func GetOptionalRooms(storyLevel int) []*RoomDef {
 	}
 
 	rooms := make([]*RoomDef, 0)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < sizeCount; {
 		room := potentialRooms[rand.Intn(len(potentialRooms))]
+		if i+int(room.size) > sizeCount {
+			continue
+		}
+		//
 		roomDef := GetRoomDef(room.kind, room.size)
 		rooms = append(rooms, roomDef)
+		i += int(room.size)
 	}
 	return rooms
 }

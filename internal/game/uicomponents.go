@@ -5,8 +5,8 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
 )
@@ -23,8 +23,16 @@ type UIElement interface {
 	Layout(parent UIElement, o *UIOptions)
 	Draw(o *render.Options)
 	Update(o *UIOptions)
-	Check(float64, float64) bool
+	Check(float64, float64, UICheckKind) bool
 }
+
+type UICheckKind int
+
+const (
+	UICheckNone UICheckKind = iota
+	UICheckHover
+	UICheckClick
+)
 
 // ======== BUTTON ========
 type UIButton struct {
@@ -33,7 +41,7 @@ type UIButton struct {
 	noBackdrop  bool
 	baseSprite  *render.Sprite
 	sprite      *render.Sprite
-	onClick     func()
+	onCheck     func(kind UICheckKind)
 	wobbler     float64
 	tooltip     string
 	showTooltip bool
@@ -67,13 +75,16 @@ func (b *UIButton) Update(o *UIOptions) {
 	b.baseSprite.SetRotation(math.Sin(b.wobbler) * 0.05)
 }
 
-func (b *UIButton) Check(mx, my float64) bool {
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+func (b *UIButton) Check(mx, my float64, kind UICheckKind) bool {
+	if kind == UICheckHover {
+		return InBounds(b.X(), b.Y(), b.Width(), b.Height(), mx, my)
+	}
+	if kind == UICheckClick {
 		x, y := b.Position()
 		w, h := b.sprite.Size()
 		if mx > x && mx < x+w && my > y && my < y+h {
-			if b.onClick != nil {
-				b.onClick()
+			if b.onCheck != nil {
+				b.onCheck(kind)
 				return true
 			}
 		}
@@ -167,13 +178,19 @@ func NewUIItemList(direction int) *UIItemList {
 		l.incrementUIButton.sprite.SetStaxieAnimation("ui/button", "arrow", "right")
 	}
 
-	l.decrementUIButton.onClick = func() {
+	l.decrementUIButton.onCheck = func(kind UICheckKind) {
+		if kind != UICheckClick {
+			return
+		}
 		if l.itemOffset > 0 {
 			l.itemOffset--
 		}
 		l.changed = true
 	}
-	l.incrementUIButton.onClick = func() {
+	l.incrementUIButton.onCheck = func(kind UICheckKind) {
+		if kind != UICheckClick {
+			return
+		}
 		if l.itemsAllVisible {
 			return
 		}
@@ -187,12 +204,12 @@ func NewUIItemList(direction int) *UIItemList {
 }
 func (l *UIItemList) adjustButtons() {
 	if l.itemOffset == 0 {
-		l.decrementUIButton.sprite.Transparency = 0.25
+		l.decrementUIButton.sprite.Transparency = 0.75
 	} else {
 		l.decrementUIButton.sprite.Transparency = 0
 	}
 	if l.itemsAllVisible {
-		l.incrementUIButton.sprite.Transparency = 0.25
+		l.incrementUIButton.sprite.Transparency = 0.75
 	} else {
 		l.incrementUIButton.sprite.Transparency = 0
 	}
@@ -283,25 +300,36 @@ func (l *UIItemList) Update(o *UIOptions) {
 		l.items[i].Update(o)
 	}
 }
-func (l *UIItemList) Check(mx, my float64) bool {
-	if l.decrementUIButton.Check(mx, my) {
+func (l *UIItemList) Check(mx, my float64, kind UICheckKind) bool {
+	if !InBounds(l.X(), l.Y(), l.Width(), l.Height(), mx, my) {
+		return false
+	}
+
+	if l.decrementUIButton.Check(mx, my, kind) {
 		return true
 	}
-	if l.incrementUIButton.Check(mx, my) {
+	if l.incrementUIButton.Check(mx, my, kind) {
 		return true
 	}
 	for i := l.itemOffset; i < l.lastVisibleIndex; i++ {
-		if l.items[i].Check(mx, my) {
+		if l.items[i].Check(mx, my, kind) {
 			return true
 		}
 	}
-	return false
+	return kind == UICheckHover
 }
 func (l *UIItemList) Draw(o *render.Options) {
 	l.decrementUIButton.Draw(o)
 	l.incrementUIButton.Draw(o)
 	o.DrawImageOptions.GeoM.Reset()
 	for i := l.itemOffset; i < l.lastVisibleIndex; i++ {
+		if i == l.selected {
+			if l.direction == DirectionVertical {
+				vector.DrawFilledRect(o.Screen, float32(l.X()), float32(l.items[i].Y()), float32(l.Width()), float32(l.items[i].Height()), assets.ColorSelected, false)
+			} else {
+				vector.DrawFilledRect(o.Screen, float32(l.items[i].X()), float32(l.Y()), float32(l.items[i].Width()), float32(l.Height()), assets.ColorSelected, false)
+			}
+		}
 		l.items[i].Draw(o)
 	}
 }
@@ -399,12 +427,12 @@ func (p *UIPanel) Update(o *UIOptions) {
 	}
 }
 
-func (p *UIPanel) Check(mx, my float64) bool {
+func (p *UIPanel) Check(mx, my float64, kind UICheckKind) bool {
 	if !InBounds(p.X(), p.Y(), p.Width(), p.Height(), mx, my) {
 		return false
 	}
 	for _, child := range p.children {
-		if child.Check(mx, my) {
+		if child.Check(mx, my, kind) {
 			return true
 		}
 	}
@@ -524,7 +552,7 @@ func (t *UIText) Layout(parent UIElement, o *UIOptions) {
 func (t *UIText) Update(o *UIOptions) {
 }
 
-func (t *UIText) Check(mx, my float64) bool {
+func (t *UIText) Check(mx, my float64, kind UICheckKind) bool {
 	return false
 }
 
@@ -544,6 +572,14 @@ func (t *UIText) SetSize(w, h float64) {
 	// TOO BAD, NO TEXT SIZING FOR YOU
 }
 
+func (t *UIText) SetText(txt string) {
+	t.text = txt
+	w, h := text.Measure(txt, t.textOptions.Font.Face, t.textOptions.Font.LineHeight)
+	t.textWidth = float64(w)
+	t.textHeight = float64(h)
+	t.Sizeable.SetSize(t.textWidth*t.scale, t.textHeight*t.scale)
+}
+
 type UIImage struct {
 	render.Positionable
 	render.Sizeable
@@ -552,7 +588,7 @@ type UIImage struct {
 	finalScale  float64
 	image       *ebiten.Image
 	ignoreScale bool
-	onClick     func()
+	onCheck     func(kind UICheckKind)
 }
 
 func NewUIImage(img *ebiten.Image) *UIImage {
@@ -574,18 +610,17 @@ func (i *UIImage) Layout(parent UIElement, o *UIOptions) {
 func (i *UIImage) Update(o *UIOptions) {
 }
 
-func (i *UIImage) Check(mx, my float64) bool {
-	if i.onClick != nil {
-		if InBounds(i.X(), i.Y(), i.Width(), i.Height(), mx, my) {
-			i.onClick()
-			return true
-		}
+func (i *UIImage) Check(mx, my float64, kind UICheckKind) bool {
+	if InBounds(i.X(), i.Y(), i.Width(), i.Height(), mx, my) && i.onCheck != nil {
+		i.onCheck(kind)
+		return true
 	}
 	return false
 }
 
 func (i *UIImage) Draw(o *render.Options) {
 	op := &ebiten.DrawImageOptions{}
+	op.ColorScale.ScaleWithColorScale(o.DrawImageOptions.ColorScale)
 	op.GeoM.Scale(i.finalScale, i.finalScale)
 	op.GeoM.Translate(i.X(), i.Y())
 	o.Screen.DrawImage(i.image, op)

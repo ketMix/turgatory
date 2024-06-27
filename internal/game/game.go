@@ -109,9 +109,17 @@ func (g *Game) Update() error {
 	g.ui.Update(&g.uiOptions)
 
 	mx, my := IntToFloat2(ebiten.CursorPosition())
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		if !g.ui.Check(mx, my) {
+	if g.ui.Check(mx, my, UICheckHover) {
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+			if !g.ui.Check(mx, my, UICheckClick) {
+				g.selectedDude = nil
+				g.ui.roomInfoPanel.hidden = true
+			}
+		}
+	} else {
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 			g.selectedDude = nil
+			g.ui.roomInfoPanel.hidden = true
 		}
 	}
 
@@ -268,35 +276,45 @@ func (g *Game) Init() {
 		// select dat dude
 		g.selectedDude = d
 	}
-	g.ui.speedPanel.pauseButton.onClick = func() {
-		g.TogglePause()
-	}
-	g.ui.speedPanel.speedButton.onClick = func() {
-		g.AdjustSpeed()
-	}
-	g.ui.speedPanel.cameraButton.onClick = func() {
-		g.AdjustCamera()
-	}
-	g.ui.speedPanel.musicButton.onClick = func() {
-		if g.audioController.tracksPaused {
-			g.audioController.PlayRoomTracks()
-			g.ui.speedPanel.musicButton.SetImage("music")
-			g.ui.speedPanel.musicButton.tooltip = "music on"
-		} else {
-			g.audioController.PauseRoomTracks()
-			g.ui.speedPanel.musicButton.SetImage("music-mute")
-			g.ui.speedPanel.musicButton.tooltip = "music off"
+	g.ui.speedPanel.pauseButton.onCheck = func(kind UICheckKind) {
+		if kind == UICheckClick {
+			g.TogglePause()
 		}
 	}
-	g.ui.speedPanel.soundButton.onClick = func() {
-		if g.audioController.sfxPaused {
-			g.audioController.sfxPaused = false
-			g.ui.speedPanel.soundButton.SetImage("sound")
-			g.ui.speedPanel.soundButton.tooltip = "sound on"
-		} else {
-			g.audioController.sfxPaused = true
-			g.ui.speedPanel.soundButton.SetImage("sound-mute")
-			g.ui.speedPanel.soundButton.tooltip = "sound off"
+	g.ui.speedPanel.speedButton.onCheck = func(kind UICheckKind) {
+		if kind == UICheckClick {
+			g.AdjustSpeed()
+		}
+	}
+	g.ui.speedPanel.cameraButton.onCheck = func(kind UICheckKind) {
+		if kind == UICheckClick {
+			g.AdjustCamera()
+		}
+	}
+	g.ui.speedPanel.musicButton.onCheck = func(kind UICheckKind) {
+		if kind == UICheckClick {
+			if g.audioController.tracksPaused {
+				g.audioController.PlayRoomTracks()
+				g.ui.speedPanel.musicButton.SetImage("music")
+				g.ui.speedPanel.musicButton.tooltip = "music on"
+			} else {
+				g.audioController.PauseRoomTracks()
+				g.ui.speedPanel.musicButton.SetImage("music-mute")
+				g.ui.speedPanel.musicButton.tooltip = "music off"
+			}
+		}
+	}
+	g.ui.speedPanel.soundButton.onCheck = func(kind UICheckKind) {
+		if kind == UICheckClick {
+			if g.audioController.sfxPaused {
+				g.audioController.sfxPaused = false
+				g.ui.speedPanel.soundButton.SetImage("sound")
+				g.ui.speedPanel.soundButton.tooltip = "sound on"
+			} else {
+				g.audioController.sfxPaused = true
+				g.ui.speedPanel.soundButton.SetImage("sound-mute")
+				g.ui.speedPanel.soundButton.tooltip = "sound off"
+			}
 		}
 	}
 
