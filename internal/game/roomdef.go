@@ -53,6 +53,8 @@ func GetRoomDef(kind RoomKind, size RoomSize) *RoomDef {
 
 func (r *RoomDef) GetDescription() string {
 	switch r.kind {
+	case Boss:
+		return "Fight a tremendous enemy!"
 	case Stairs:
 		return "Stairs"
 	case Armory:
