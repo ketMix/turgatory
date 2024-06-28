@@ -27,7 +27,8 @@ const StoryWallHeight = 9                                   // The height of the
 const StoryVGroupWidth = 256                                // Framebuffer's maximum width for rendering.
 const StoryVGroupHeight = 256                               // Framebuffer's maximum height for rendering.
 const PortalDistance = 44                                   // Distance from the center of the tower to the portal.
-const PortalRotationLarge = 7.0*-(math.Pi/8) - math.Pi/5    // Rotation of the portal.
+const PortalRotationHuge = 7.0 * -(math.Pi / 8)             // Rotation of the portal.
+const PortalRotationLarge = 7.0*-(math.Pi/8) - math.Pi/4.5  // Rotation of the portal.
 const PortalRotationMedium = 7.0*-(math.Pi/8) - math.Pi/3.5 // Rotation of the portal.
 const PortalRotationSmall = 7.0*-(math.Pi/8) - math.Pi/2.5  // Rotation of the portal.
 const TowerCenterX = StoryVGroupWidth/2 - 5                 // Center of the tower. Have to offset lightly for some dumb reason...
@@ -327,6 +328,8 @@ func (s *Story) AddPortal() {
 		r = PortalRotationSmall
 	case Large:
 		r = PortalRotationLarge
+	case Huge:
+		r = PortalRotationHuge
 	}
 
 	x, y := s.PositionFromCenter(r, PortalDistance)
