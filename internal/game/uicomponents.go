@@ -274,6 +274,7 @@ func (l *UIItemList) Update(o *UIOptions) {
 			} else {
 				v += l.items[i].Width()
 			}
+			v += o.Scale
 
 			if v >= maxSize {
 				l.lastVisibleIndex = i
