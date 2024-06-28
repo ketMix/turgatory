@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"sort"
 	"strings"
 
 	"github.com/kettek/ebijam24/internal/render"
@@ -674,5 +675,18 @@ func GetOptionalRooms(storyLevel int, roomCount int) []*RoomDef {
 		roomDef := GetRoomDef(room.kind, room.size, false)
 		rooms = append(rooms, roomDef)
 	}
+	return rooms
+}
+
+func SortRooms(rooms []*RoomDef) []*RoomDef {
+	sort.SliceStable(rooms, func(i, j int) bool {
+		if rooms[i].required && !rooms[j].required {
+			return true
+		}
+		if !rooms[i].required && rooms[j].required {
+			return false
+		}
+		return rooms[i].kind*RoomKind(rooms[i].size) < rooms[j].kind*RoomKind(rooms[j].size)
+	})
 	return rooms
 }

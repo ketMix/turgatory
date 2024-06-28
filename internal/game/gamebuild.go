@@ -47,6 +47,7 @@ func (s *GameStateBuild) Begin(g *Game) {
 	optional := GetOptionalRooms(s.nextStory.level, 9) // 6 is minimum, but let's given 3 more for fun.
 	s.availableRooms = append(s.availableRooms, required...)
 	s.availableRooms = append(s.availableRooms, optional...)
+	s.availableRooms = SortRooms(s.availableRooms)
 	// Update room panel.
 	g.ui.roomPanel.SetRoomDefs(s.availableRooms)
 	// Add onClick handler.
@@ -207,6 +208,7 @@ func (s *GameStateBuild) TryPlaceRoom(g *Game) {
 			if s.focusedRoom.kind != Stairs && s.focusedRoom.kind != Empty {
 				g.gold += GetRoomCost(s.focusedRoom.kind, s.focusedRoom.size, s.nextStory.level)
 				s.availableRooms = append(s.availableRooms, GetRoomDef(s.focusedRoom.kind, s.focusedRoom.size, s.focusedRoom.required))
+				s.availableRooms = SortRooms(s.availableRooms)
 				g.ui.roomPanel.SetRoomDefs(s.availableRooms)
 				g.UpdateInfo()
 				g.ui.feedback.Msg(FeedbackGood, fmt.Sprintf("%s %s sold!", s.focusedRoom.size.String(), s.focusedRoom.kind.String()))
@@ -225,6 +227,7 @@ func (s *GameStateBuild) TryPlaceRoom(g *Game) {
 						g.ui.feedback.Msg(FeedbackGood, fmt.Sprintf("%s %s placed!", s.placingRoom.size.String(), s.placingRoom.kind.String()))
 						// Remove from rooms.
 						s.availableRooms = append(s.availableRooms[:s.placingIndex], s.availableRooms[s.placingIndex+1:]...)
+						s.availableRooms = SortRooms(s.availableRooms)
 						// Resync UI, I guess.
 						g.ui.roomPanel.SetRoomDefs(s.availableRooms)
 						g.ui.roomInfoPanel.hidden = true
