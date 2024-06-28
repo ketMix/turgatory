@@ -304,7 +304,7 @@ func (p PerkHealOnGoldGain) Name() string {
 }
 
 func (p PerkHealOnGoldGain) String() string {
-	return "Heal On Gold Gain"
+	return "Smell of Gold"
 }
 
 func (p PerkHealOnGoldGain) Description() string {
@@ -334,7 +334,7 @@ func (p PerkHealOnGoldLoss) Name() string {
 }
 
 func (p PerkHealOnGoldLoss) String() string {
-	return "Heal On Gold Loss"
+	return "Food Tax"
 }
 
 func (p PerkHealOnGoldLoss) Description() string {
@@ -355,8 +355,8 @@ type PerkStickyFingers struct {
 	*Perk
 }
 
-func (p PerkStickyFingers) amount() int {
-	return int(float64(p.quality+1) * 0.1)
+func (p PerkStickyFingers) amount() float64 {
+	return float64(p.quality+1) * 0.1
 }
 
 func (p PerkStickyFingers) Name() string {
@@ -373,8 +373,8 @@ func (p PerkStickyFingers) Description() string {
 
 func (p PerkStickyFingers) Check(e Event) bool {
 	switch e := e.(type) {
-	case EventGoldGain:
-		e.amount = e.amount * p.amount()
+	case EventGoldLoss:
+		e.dude.UpdateGold(int(float64(-e.amount) * p.amount()))
 		return true
 	}
 	return false
@@ -385,8 +385,8 @@ type PerkGoldBoost struct {
 	*Perk
 }
 
-func (p PerkGoldBoost) amount() int {
-	return int(float64(p.quality+1) * 0.1)
+func (p PerkGoldBoost) amount() float64 {
+	return float64(p.quality+1) * 0.1
 }
 
 func (p PerkGoldBoost) Name() string {
@@ -394,7 +394,7 @@ func (p PerkGoldBoost) Name() string {
 }
 
 func (p PerkGoldBoost) String() string {
-	return "Gold Boost"
+	return "Miser's Touch"
 }
 
 func (p PerkGoldBoost) Description() string {
@@ -404,7 +404,65 @@ func (p PerkGoldBoost) Description() string {
 func (p PerkGoldBoost) Check(e Event) bool {
 	switch e := e.(type) {
 	case EventGoldGain:
-		e.amount *= (1 + p.amount())
+		e.dude.UpdateGold(int(float64(e.amount) * p.amount()))
+		return true
+	}
+	return false
+}
+
+type PerkHealOnDodge struct {
+	*Perk
+}
+
+func (p PerkHealOnDodge) amount() int {
+	return int(p.quality+1) * 2
+}
+
+func (p PerkHealOnDodge) Name() string {
+	return constructName(p.String(), p.quality, nil)
+}
+
+func (p PerkHealOnDodge) String() string {
+	return "Narrow Recovery"
+}
+
+func (p PerkHealOnDodge) Description() string {
+	return fmt.Sprintf("Heals dude for %d when they dodge", p.amount())
+}
+
+func (p PerkHealOnDodge) Check(e Event) bool {
+	switch e := e.(type) {
+	case EventDudeDodge:
+		e.dude.Heal(p.amount())
+		return true
+	}
+	return false
+}
+
+type PerkHealOnCrit struct {
+	*Perk
+}
+
+func (p PerkHealOnCrit) amount() int {
+	return int(p.quality+1) * 4
+}
+
+func (p PerkHealOnCrit) Name() string {
+	return constructName(p.String(), p.quality, nil)
+}
+
+func (p PerkHealOnCrit) String() string {
+	return "Crit Heal"
+}
+
+func (p PerkHealOnCrit) Description() string {
+	return fmt.Sprintf("Heals dude for %d when they crit", p.amount())
+}
+
+func (p PerkHealOnCrit) Check(e Event) bool {
+	switch e := e.(type) {
+	case EventDudeCrit:
+		e.dude.Heal(p.amount())
 		return true
 	}
 	return false
@@ -430,6 +488,10 @@ func GetRandomPerk(quality PerkQuality) IPerk {
 		PerkHealOnSell{perk},
 		PerkHealOnGoldGain{perk},
 		PerkHealOnGoldLoss{perk},
+		PerkHealOnDodge{perk},
+		PerkHealOnCrit{perk},
+		PerkStickyFingers{perk},
+		PerkGoldBoost{perk},
 	}
 
 	// Randomly select a perk
