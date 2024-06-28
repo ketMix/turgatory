@@ -32,6 +32,7 @@ type UI struct {
 	gameInfoPanel  GameInfoPanel
 	dudePanel      DudePanel
 	dudePanel2     DudePanel2
+	dudeInfoPanel  DudeInfoPanel
 	equipmentPanel EquipmentPanel
 	speedPanel     SpeedPanel
 	messagePanel   MessagePanel
@@ -83,6 +84,7 @@ func NewUI() *UI {
 	ui.gameInfoPanel = MakeGameInfoPanel()
 	ui.speedPanel = MakeSpeedPanel()
 	ui.dudePanel2 = MakeDudePanel2()
+	ui.dudeInfoPanel = MakeDudeInfoPanel()
 	ui.equipmentPanel = MakeEquipmentPanel()
 	ui.roomPanel = MakeRoomPanel()
 	ui.roomInfoPanel = MakeRoomInfoPanel()
@@ -147,6 +149,22 @@ func (ui *UI) Layout(o *UIOptions) {
 	)
 
 	ui.dudePanel2.Layout(o)
+
+	ui.dudeInfoPanel.Layout(o)
+	ui.dudeInfoPanel.panel.SetSize(
+		96*o.Scale,
+		128*o.Scale,
+	)
+	ts := ui.dudeInfoPanel.title.Width() + 4*o.Scale
+	if ts > ui.dudeInfoPanel.panel.Width() {
+		ts = math.Ceil(ts/ui.dudeInfoPanel.panel.center.Width()) * ui.dudeInfoPanel.panel.center.Width()
+		ui.dudeInfoPanel.panel.SetSize(ts, ui.dudeInfoPanel.panel.Height())
+	}
+	ui.dudeInfoPanel.panel.SetPosition(
+		ui.dudePanel2.panel.X()+ui.dudePanel2.panel.Width()+4*o.Scale,
+		ui.dudePanel2.panel.Y(),
+	)
+
 	ui.equipmentPanel.Layout(o)
 
 	// Manually position roomPanel
@@ -165,7 +183,7 @@ func (ui *UI) Layout(o *UIOptions) {
 		64*o.Scale,
 	)
 	ui.roomInfoPanel.panel.SetPosition(
-		ui.roomPanel.panel.X()-ui.roomInfoPanel.panel.Width()-8,
+		ui.roomPanel.panel.X()-ui.roomInfoPanel.panel.Width()-4*o.Scale,
 		ui.roomPanel.panel.Y()+(ui.roomPanel.panel.Height()-ui.roomInfoPanel.panel.Height()),
 	)
 	ui.roomInfoPanel.Layout(o)
@@ -201,6 +219,7 @@ func (ui *UI) Layout(o *UIOptions) {
 func (ui *UI) Update(o *UIOptions) {
 	ui.dudePanel.Update(o)
 	ui.dudePanel2.Update(o)
+	ui.dudeInfoPanel.Update(o)
 	ui.equipmentPanel.Update(o)
 	ui.roomPanel.Update(o)
 	ui.speedPanel.Update(o)
@@ -248,6 +267,7 @@ func (ui *UI) Draw(o *render.Options) {
 
 	o.DrawImageOptions.GeoM.Reset()
 	ui.dudePanel2.Draw(o)
+	ui.dudeInfoPanel.Draw(o)
 
 	ui.gameInfoPanel.Draw(o)
 
@@ -1106,7 +1126,7 @@ type RoomInfoPanel struct {
 
 func MakeRoomInfoPanel() RoomInfoPanel {
 	rip := RoomInfoPanel{
-		panel:       NewUIPanel(PanelStyleNormal),
+		panel:       NewUIPanel(PanelStyleTransparent),
 		title:       NewUIText("Room Info", assets.DisplayFont, assets.ColorHeading),
 		description: NewUIText("Description", assets.BodyFont, assets.ColorRoomDescription),
 		cost:        NewUIText("Cost: 0", assets.BodyFont, assets.ColorRoomCost),
@@ -1201,9 +1221,11 @@ func (gip *GameInfoPanel) Draw(o *render.Options) {
 type DudePanel2 struct {
 	panel       *UIPanel
 	list        *UIItemList
+	count       *UIText
 	dudeSprites []*UIImage
 	title       *UIText
 	onItemClick func(index int)
+	onItemHover func(index int)
 }
 
 func MakeDudePanel2() DudePanel2 {
@@ -1211,6 +1233,7 @@ func MakeDudePanel2() DudePanel2 {
 		panel: NewUIPanel(PanelStyleInteractive),
 		title: NewUIText("Dudes", assets.DisplayFont, assets.ColorHeading),
 		list:  NewUIItemList(DirectionVertical),
+		count: NewUIText("0", assets.BodyFont, assets.ColorHeading),
 	}
 	dp.panel.AddChild(dp.title)
 	dp.panel.AddChild(dp.list)
@@ -1234,11 +1257,15 @@ func (dp *DudePanel2) SetDudes(dudes []*Dude) {
 				dp.onItemClick(index)
 				dp.list.selected = index
 			}
+			if kind == UICheckHover && dp.onItemHover != nil {
+				dp.onItemHover(index)
+			}
 		}
 
 		dp.list.AddItem(img)
 		dp.dudeSprites = append(dp.dudeSprites, img)
 	}
+	dp.count.text = fmt.Sprintf("%d", len(dudes))
 }
 
 func (dp *DudePanel2) DudeToImage(dude *Dude) *UIImage {
@@ -1289,6 +1316,9 @@ func (dp *DudePanel2) Layout(o *UIOptions) {
 	dp.list.Layout(nil, o)
 
 	dp.panel.Layout(nil, o)
+
+	dp.count.SetPosition(dp.list.X(), dp.list.Y()-dp.count.Height()/4)
+	dp.count.Layout(nil, o)
 }
 
 func (dp *DudePanel2) Update(o *UIOptions) {
@@ -1301,6 +1331,109 @@ func (dp *DudePanel2) Check(mx, my float64, kind UICheckKind) bool {
 
 func (dp *DudePanel2) Draw(o *render.Options) {
 	dp.panel.Draw(o)
+	dp.count.Draw(o)
+}
+
+type DudeInfoPanel struct {
+	panel       *UIPanel
+	title       *UIText
+	description *UIText
+	cost        *UIText
+
+	dude *Dude
+
+	level     *UIText
+	xp        *UIText
+	strength  *UIText
+	agility   *UIText
+	defense   *UIText
+	wisdom    *UIText
+	cowardice *UIText
+	luck      *UIText
+
+	hidden bool
+}
+
+func MakeDudeInfoPanel() DudeInfoPanel {
+	dip := DudeInfoPanel{
+		panel:     NewUIPanel(PanelStyleTransparent),
+		title:     NewUIText("Mah Dude", assets.DisplayFont, assets.ColorDudeTitle),
+		level:     NewUIText("Level 0 sucker", assets.BodyFont, assets.ColorDudeLevel),
+		xp:        NewUIText("0/0 xp", assets.BodyFont, assets.ColorDudeXP),
+		strength:  NewUIText("0 strength", assets.BodyFont, assets.ColorDudeStrength),
+		agility:   NewUIText("0 agility", assets.BodyFont, assets.ColorDudeAgility),
+		defense:   NewUIText("0 defense", assets.BodyFont, assets.ColorDudeDefense),
+		wisdom:    NewUIText("0 wisdom", assets.BodyFont, assets.ColorDudeWisdom),
+		cowardice: NewUIText("0 cowardice", assets.BodyFont, assets.ColorDudeCowardice),
+		luck:      NewUIText("0 luck", assets.BodyFont, assets.ColorDudeLuck),
+		hidden:    false,
+	}
+	dip.panel.AddChild(dip.title)
+	//dip.panel.AddChild(dip.description)
+
+	dip.panel.AddChild(dip.level)
+	dip.panel.AddChild(dip.strength)
+	dip.panel.AddChild(dip.agility)
+	dip.panel.AddChild(dip.defense)
+	dip.panel.AddChild(dip.wisdom)
+	dip.panel.AddChild(dip.cowardice)
+	dip.panel.AddChild(dip.luck)
+
+	dip.panel.sizeChildren = true
+	//dip.panel.centerChildren = true
+	return dip
+}
+
+func (dip *DudeInfoPanel) SetDude(dude *Dude) {
+	dip.dude = dude
+	if dude == nil {
+		dip.hidden = true
+		return
+	}
+	dip.hidden = false
+	dip.SyncDude()
+}
+
+func (dip *DudeInfoPanel) SyncDude() {
+	if dip.dude == nil {
+		return
+	}
+
+	dip.title.SetText(dip.dude.Name())
+
+	dip.level.SetText(fmt.Sprintf("Level %d %s", dip.dude.Level(), dip.dude.Profession()))
+	dip.xp.SetText(fmt.Sprintf("%d/%d xp", dip.dude.XP(), dip.dude.NextLevelXP()))
+	stats := dip.dude.GetCalculatedStats()
+	dip.strength.SetText(fmt.Sprintf("%s strength", PaddedIntString(stats.strength, 4)))
+	dip.agility.SetText(fmt.Sprintf("%s agility", PaddedIntString(stats.agility, 4)))
+	dip.defense.SetText(fmt.Sprintf("%s defense", PaddedIntString(stats.defense, 4)))
+	dip.wisdom.SetText(fmt.Sprintf("%s wisdom", PaddedIntString(stats.wisdom, 4)))
+	dip.cowardice.SetText(fmt.Sprintf("%s cowardice", PaddedIntString(stats.cowardice, 4)))
+	dip.luck.SetText(fmt.Sprintf("%s luck", PaddedIntString(stats.luck, 4)))
+}
+
+func (dip *DudeInfoPanel) Layout(o *UIOptions) {
+	dip.panel.padding = 6 * o.Scale
+	dip.panel.spaceBetween = -3 * o.Scale
+	dip.panel.Layout(nil, o)
+}
+
+func (dip *DudeInfoPanel) Update(o *UIOptions) {
+	dip.panel.Update(o)
+}
+
+func (dip *DudeInfoPanel) Check(mx, my float64, kind UICheckKind) bool {
+	if dip.hidden {
+		return false
+	}
+	return dip.panel.Check(mx, my, kind)
+}
+
+func (dip *DudeInfoPanel) Draw(o *render.Options) {
+	if dip.hidden {
+		return
+	}
+	dip.panel.Draw(o)
 }
 
 type EquipmentPanel struct {

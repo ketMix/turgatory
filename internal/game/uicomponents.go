@@ -148,9 +148,11 @@ type UIItemList struct {
 	render.Sizeable
 	items             []UIElement
 	selected          int
+	hovered           int
 	itemOffset        int
 	direction         int
 	lastVisibleIndex  int
+	spaceBetween      float64
 	itemsAllVisible   bool
 	changed           bool
 	centerItems       bool // Center items on the opposite axis to direction
@@ -164,6 +166,7 @@ func NewUIItemList(direction int) *UIItemList {
 		direction:   direction,
 		centerItems: true,
 		selected:    -1,
+		hovered:     -1,
 	}
 
 	l.decrementUIButton = NewUIButton("arrow", "")
@@ -275,6 +278,7 @@ func (l *UIItemList) Update(o *UIOptions) {
 				v += l.items[i].Width()
 			}
 			v += o.Scale
+			v += l.spaceBetween * o.Scale
 
 			if v >= maxSize {
 				l.lastVisibleIndex = i
@@ -322,8 +326,14 @@ func (l *UIItemList) Check(mx, my float64, kind UICheckKind) bool {
 	}
 	for i := l.itemOffset; i < l.lastVisibleIndex; i++ {
 		if l.items[i].Check(mx, my, kind) {
+			if kind == UICheckHover {
+				l.hovered = i
+			}
 			return true
 		}
+	}
+	if kind == UICheckHover {
+		l.hovered = -1
 	}
 	return kind == UICheckHover
 }
@@ -340,6 +350,12 @@ func (l *UIItemList) Draw(o *render.Options) {
 				vector.DrawFilledRect(o.Screen, float32(l.X()), float32(l.items[i].Y()), float32(l.Width()), float32(l.items[i].Height()), assets.ColorSelected, false)
 			} else {
 				vector.DrawFilledRect(o.Screen, float32(l.items[i].X()), float32(l.Y()), float32(l.items[i].Width()), float32(l.Height()), assets.ColorSelected, false)
+			}
+		} else if i == l.hovered {
+			if l.direction == DirectionVertical {
+				vector.DrawFilledRect(o.Screen, float32(l.X()), float32(l.items[i].Y()), float32(l.Width()), float32(l.items[i].Height()), assets.ColorHovered, false)
+			} else {
+				vector.DrawFilledRect(o.Screen, float32(l.items[i].X()), float32(l.Y()), float32(l.items[i].Width()), float32(l.Height()), assets.ColorHovered, false)
 			}
 		}
 		l.items[i].Draw(o)
@@ -371,6 +387,7 @@ type UIPanel struct {
 	flowDirection  int
 	sizeChildren   bool
 	centerChildren bool
+	spaceBetween   float64
 
 	hideBackground bool
 	top            *render.Sprite
@@ -392,6 +409,7 @@ const (
 	PanelStyleButton
 	PanelStyleButtonDisabled
 	PanelStyleBar
+	PanelStyleTransparent
 )
 
 func NewUIPanel(style PanelStyle) *UIPanel {
@@ -415,6 +433,9 @@ func (p *UIPanel) SetStyle(style PanelStyle) {
 	} else if style == PanelStyleBar {
 		sp = Must(render.NewSprite("ui/bossPanels"))
 		size = 12
+	} else if style == PanelStyleTransparent {
+		sp = Must(render.NewSprite("ui/dudePanels"))
+		size = 16
 	} else {
 		sp = Must(render.NewSprite("ui/altPanels"))
 		size = 16
@@ -465,9 +486,9 @@ func (p *UIPanel) Layout(parent UIElement, o *UIOptions) {
 
 		child.Layout(p, o)
 		if p.flowDirection == DirectionVertical {
-			y += child.Height()
+			y += child.Height() + p.spaceBetween
 		} else {
-			x += child.Width()
+			x += child.Width() + p.spaceBetween
 		}
 	}
 }

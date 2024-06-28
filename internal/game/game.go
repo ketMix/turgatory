@@ -24,6 +24,7 @@ type Game struct {
 	audioController       *AudioController
 	overlay               *ebiten.Image
 	selectedDude          *Dude
+	hoveredDude           *Dude
 	paused                bool
 	speed                 int
 	gold                  int
@@ -72,10 +73,8 @@ func (g *Game) Update() error {
 
 	if ebiten.IsKeyPressed(ebiten.KeyQ) || ebiten.IsKeyPressed(ebiten.KeyLeft) {
 		g.camera.SetRotation(g.camera.Rotation() - 0.01)
-		g.selectedDude = nil
 	} else if ebiten.IsKeyPressed(ebiten.KeyE) || ebiten.IsKeyPressed(ebiten.KeyRight) {
 		g.camera.SetRotation(g.camera.Rotation() + 0.01)
-		g.selectedDude = nil
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyA) {
@@ -186,11 +185,15 @@ func (g *Game) CheckUI() (bool, UICheckKind) {
 		if g.ui.Check(mx, my, UICheckClick) {
 			return true, UICheckClick
 		}
+		g.selectedDude = nil
+		g.ui.dudeInfoPanel.SetDude(g.hoveredDude)
 		return false, UICheckClick
 	} else {
 		if g.ui.Check(mx, my, UICheckHover) {
 			return true, UICheckHover
 		}
+		g.hoveredDude = nil
+		g.ui.dudeInfoPanel.SetDude(g.selectedDude)
 		return false, UICheckHover
 	}
 	return false, UICheckNone
@@ -236,6 +239,7 @@ func (g *Game) Init() {
 	g.ui.dudePanel.onDudeClick = func(d *Dude) {
 		// select dat dude
 		g.selectedDude = d
+		g.ui.dudeInfoPanel.SetDude(d)
 	}
 	g.ui.speedPanel.pauseButton.onCheck = func(kind UICheckKind) {
 		if kind == UICheckClick {
@@ -284,6 +288,15 @@ func (g *Game) Init() {
 		}
 		dude := g.dudes[index]
 		g.selectedDude = dude
+		//g.ui.dudeInfoPanel.SetDude(dude)
+	}
+	g.ui.dudePanel2.onItemHover = func(index int) {
+		if index < 0 || index >= len(g.dudes) {
+			return
+		}
+		dude := g.dudes[index]
+		g.hoveredDude = dude
+		g.ui.dudeInfoPanel.SetDude(dude)
 	}
 
 	g.camera = *render.NewCamera(0, 0)
