@@ -1532,7 +1532,7 @@ func (bp *ButtonPanel) Draw(o *render.Options) {
 		return
 	}
 	op := o
-	if bp.hovered {
+	if bp.hovered && !bp.disabled {
 		op = &render.Options{
 			Screen: o.Screen,
 		}
