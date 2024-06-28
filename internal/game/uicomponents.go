@@ -3,6 +3,7 @@ package game
 import (
 	"image/color"
 	"math"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
@@ -233,6 +234,9 @@ func (l *UIItemList) Layout(parent UIElement, o *UIOptions) {
 		l.decrementUIButton.SetPosition(l.X()-bw/2+4, l.Y()+h/2-bh/2)
 		l.incrementUIButton.SetPosition(l.X()+l.Width()-bw/2-4, l.Y()+h/2-bh/2)
 	}
+	for _, item := range l.items {
+		item.Layout(l, o)
+	}
 }
 func (l *UIItemList) Update(o *UIOptions) {
 	l.decrementUIButton.Update(o)
@@ -250,9 +254,11 @@ func (l *UIItemList) Update(o *UIOptions) {
 		maxSize := 0.0
 		itemsSize := 0.0
 		if l.direction == DirectionVertical {
-			maxSize = l.Height() - l.decrementUIButton.Height()
+			maxSize = l.Height() - l.decrementUIButton.Height()/2
+			v += l.decrementUIButton.Height() / 2
 		} else {
-			maxSize = l.Width() - l.decrementUIButton.Width()
+			maxSize = l.Width() - l.decrementUIButton.Width()/2
+			v += l.decrementUIButton.Width() / 2
 		}
 		l.lastVisibleIndex = len(l.items)
 		for i := l.itemOffset; i < len(l.items); i++ {
@@ -410,6 +416,7 @@ const (
 	PanelStyleButtonDisabled
 	PanelStyleBar
 	PanelStyleTransparent
+	PanelStyleButtonAttached
 )
 
 func NewUIPanel(style PanelStyle) *UIPanel {
@@ -426,6 +433,9 @@ func (p *UIPanel) SetStyle(style PanelStyle) {
 		size = 16
 	} else if style == PanelStyleButton {
 		sp = Must(render.NewSprite("ui/buttonPanels"))
+		size = 8
+	} else if style == PanelStyleButtonAttached {
+		sp = Must(render.NewSprite("ui/buttonPanelsBot"))
 		size = 8
 	} else if style == PanelStyleButtonDisabled {
 		sp = Must(render.NewSprite("ui/buttonPanelsDisabled"))
@@ -593,14 +603,17 @@ func (p *UIPanel) AddChild(child UIElement) {
 type UIText struct {
 	render.Positionable
 	render.Sizeable
+	ignoreScale bool
 
 	text        string
+	lines       []string
 	textWidth   float64
 	textHeight  float64
 	textScale   float64
 	scale       float64
 	center      bool // This shouldn't be used for anything not intended to float
 	textOptions render.TextOptions
+	onCheck     func(kind UICheckKind)
 }
 
 func NewUIText(txt string, font assets.Font, color color.Color) *UIText {
@@ -613,15 +626,17 @@ func NewUIText(txt string, font assets.Font, color color.Color) *UIText {
 		textScale: 1,
 	}
 
-	w, h := text.Measure(txt, font.Face, font.LineHeight)
-	t.textWidth = float64(w)
-	t.textHeight = float64(h)
+	t.SetText(txt)
 
 	return t
 }
 
 func (t *UIText) Layout(parent UIElement, o *UIOptions) {
-	t.scale = o.Scale * t.textScale
+	if t.ignoreScale {
+		t.scale = 1
+	} else {
+		t.scale = o.Scale * t.textScale
+	}
 	t.Sizeable.SetSize(t.textWidth*t.scale, t.textHeight*t.scale)
 }
 
@@ -629,6 +644,10 @@ func (t *UIText) Update(o *UIOptions) {
 }
 
 func (t *UIText) Check(mx, my float64, kind UICheckKind) bool {
+	if InBounds(t.X(), t.Y(), t.Width(), t.Height(), mx, my) && t.onCheck != nil {
+		t.onCheck(kind)
+		return true
+	}
 	return false
 }
 
@@ -637,9 +656,25 @@ func (t *UIText) Draw(o *render.Options) {
 	t.textOptions.GeoM.Reset()
 
 	t.textOptions.GeoM.Scale(t.scale, t.scale)
-	t.textOptions.GeoM.Translate(t.X(), t.Y())
 
-	render.DrawText(&t.textOptions, t.text)
+	if t.center {
+		yStep := t.textOptions.Font.LineHeight * t.scale
+		y := t.Y() + t.Height()/2 - yStep*float64(len(t.lines))/1.5 // Ignore this....
+
+		for i, line := range t.lines {
+			w, _ := text.Measure(line, t.textOptions.Font.Face, t.textOptions.Font.LineHeight)
+			w *= t.scale
+			t.textOptions.GeoM.Reset()
+			t.textOptions.GeoM.Scale(t.scale, t.scale)
+			t.textOptions.GeoM.Translate(t.X()+(t.Width())/2-w/2, y+float64(i)*yStep)
+			render.DrawText(&t.textOptions, line)
+		}
+		//vector.DrawFilledRect(o.Screen, float32(t.X()), float32(t.Y()), float32(t.Width()), float32(t.Height()), color.RGBA{255, 0, 0, 255}, false)
+	} else {
+		t.textOptions.GeoM.Translate(t.X(), t.Y())
+
+		render.DrawText(&t.textOptions, t.text)
+	}
 }
 
 func (t *UIText) SetScale(scale float64) {
@@ -651,10 +686,25 @@ func (t *UIText) SetSize(w, h float64) {
 }
 
 func (t *UIText) SetText(txt string) {
+	t.lines = nil
 	t.text = txt
-	w, h := text.Measure(txt, t.textOptions.Font.Face, t.textOptions.Font.LineHeight)
-	t.textWidth = float64(w)
-	t.textHeight = float64(h)
+	t.textWidth = 0
+	t.textHeight = 0
+
+	if t.center {
+		t.lines = strings.Split(txt, "\n")
+		for _, line := range t.lines {
+			w, h := text.Measure(line, t.textOptions.Font.Face, t.textOptions.Font.LineHeight)
+			if float64(w) > t.textWidth {
+				t.textWidth = float64(w)
+			}
+			t.textHeight += float64(h)
+		}
+	} else {
+		w, h := text.Measure(txt, t.textOptions.Font.Face, t.textOptions.Font.LineHeight)
+		t.textWidth = float64(w)
+		t.textHeight = float64(h)
+	}
 	t.Sizeable.SetSize(t.textWidth*t.scale, t.textHeight*t.scale)
 }
 

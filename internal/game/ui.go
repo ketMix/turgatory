@@ -90,7 +90,7 @@ func NewUI() *UI {
 	ui.roomPanel = MakeRoomPanel()
 	ui.roomInfoPanel = MakeRoomInfoPanel()
 	ui.feedback = MakeFeedbackPopup()
-	ui.buttonPanel = MakeButtonPanel()
+	ui.buttonPanel = MakeButtonPanel(assets.DisplayFont, PanelStyleButton)
 	ui.buttonPanel.Disable()
 
 	ui.bossPanel = MakeBossPanel()
@@ -130,23 +130,23 @@ func (ui *UI) Layout(o *UIOptions) {
 	ui.gameInfoPanel.Layout(o)
 
 	// Manually position dude panel and equipment panel
-	h := float64(o.Height)/2 - float64(o.Height)/10
+	h := float64(o.Height)/2 - float64(o.Height)/12
 	ui.dudePanel2.panel.SetSize(
-		64*o.Scale,
-		h,
+		96*o.Scale,
+		h-8*o.Scale,
 	)
 	ui.dudePanel2.panel.SetPosition(
 		8,
-		float64(o.Height)/2-h-8,
+		float64(o.Height)/2-h-8*o.Scale,
 	)
 
 	ui.equipmentPanel.panel.SetSize(
-		64*o.Scale,
-		h,
+		96*o.Scale,
+		h-8*o.Scale,
 	)
 	ui.equipmentPanel.panel.SetPosition(
 		8,
-		float64(o.Height)/2+8,
+		float64(o.Height)/2+8*o.Scale,
 	)
 
 	ui.dudePanel2.Layout(o)
@@ -170,7 +170,7 @@ func (ui *UI) Layout(o *UIOptions) {
 
 	// Manually position roomPanel
 	ui.roomPanel.panel.SetSize(
-		64*o.Scale,
+		96*o.Scale,
 		float64(o.Height)-float64(o.Height)/3,
 	)
 	ui.roomPanel.panel.SetPosition(
@@ -203,7 +203,7 @@ func (ui *UI) Layout(o *UIOptions) {
 		float64(o.Width)/2-ui.buttonPanel.panel.Width()/2,
 		float64(o.Height)/2-ui.buttonPanel.panel.Height()/2+float64(o.Height)/4,
 	)
-	ui.buttonPanel.Layout(o)
+	ui.buttonPanel.Layout(nil, o)
 
 	ui.bossPanel.panel.SetSize(
 		float64(o.Width)/3,
@@ -1068,6 +1068,8 @@ type RoomPanel struct {
 	count       *UIText
 	roomDefs    []*RoomDef
 	onItemClick func(index int)
+	buyButton   *ButtonPanel
+	onBuyClick  func()
 }
 
 func MakeRoomPanel() RoomPanel {
@@ -1077,6 +1079,12 @@ func MakeRoomPanel() RoomPanel {
 		count: NewUIText("0", assets.BodyFont, assets.ColorHeading),
 		list:  NewUIItemList(DirectionVertical),
 	}
+	btn := MakeButtonPanel(assets.BodyFont, PanelStyleButtonAttached)
+	rp.buyButton = &btn
+	rp.buyButton.text.center = true
+	rp.buyButton.text.SetText("Reroll Rooms\ngp")
+	rp.list.spaceBetween = -2
+
 	rp.panel.AddChild(rp.title)
 	rp.panel.AddChild(rp.list)
 	rp.panel.sizeChildren = true
@@ -1112,6 +1120,11 @@ func (rp *RoomPanel) Layout(o *UIOptions) {
 
 	rp.count.Layout(nil, o)
 	rp.count.SetPosition(rp.list.X(), rp.list.Y()-rp.count.Height()/4)
+
+	rp.buyButton.SetSize(rp.panel.Width(), 48)
+	rp.buyButton.Layout(nil, o)
+	rp.buyButton.text.SetPosition(rp.buyButton.text.X(), rp.buyButton.text.Y()+4*o.Scale)
+	rp.buyButton.SetPosition(rp.panel.X()+rp.panel.Width()/2-rp.buyButton.Width()/2, rp.panel.Y()+rp.panel.Height()-10*o.Scale)
 }
 
 func (rp *RoomPanel) Update(o *UIOptions) {
@@ -1119,10 +1132,20 @@ func (rp *RoomPanel) Update(o *UIOptions) {
 }
 
 func (rp *RoomPanel) Check(mx, my float64, kind UICheckKind) bool {
-	return rp.panel.Check(mx, my, kind)
+	if rp.panel.Check(mx, my, kind) {
+		return true
+	}
+	if rp.buyButton.Check(mx, my, kind) {
+		if kind == UICheckClick && rp.onBuyClick != nil {
+			rp.onBuyClick()
+		}
+		return true
+	}
+	return false
 }
 
 func (rp *RoomPanel) Draw(o *render.Options) {
+	rp.buyButton.Draw(o)
 	rp.panel.Draw(o)
 	rp.count.Draw(o)
 }
@@ -1237,8 +1260,10 @@ type DudePanel2 struct {
 	dudeSprites []*UIImage
 	dudes       []*Dude
 	title       *UIText
+	buyButton   *ButtonPanel
 	onItemClick func(index int)
 	onItemHover func(index int)
+	onBuyClick  func()
 }
 
 func MakeDudePanel2() DudePanel2 {
@@ -1248,6 +1273,11 @@ func MakeDudePanel2() DudePanel2 {
 		list:  NewUIItemList(DirectionVertical),
 		count: NewUIText("0", assets.BodyFont, assets.ColorHeading),
 	}
+	btn := MakeButtonPanel(assets.BodyFont, PanelStyleButtonAttached)
+	dp.buyButton = &btn
+	dp.buyButton.text.center = true
+	dp.buyButton.text.SetText("Buy\nRandom Dude")
+
 	dp.panel.AddChild(dp.title)
 	dp.panel.AddChild(dp.list)
 	dp.panel.sizeChildren = true
@@ -1334,6 +1364,11 @@ func (dp *DudePanel2) Layout(o *UIOptions) {
 
 	dp.count.SetPosition(dp.list.X(), dp.list.Y()-dp.count.Height()/4)
 	dp.count.Layout(nil, o)
+
+	dp.buyButton.SetSize(dp.panel.Width(), 48)
+	dp.buyButton.Layout(nil, o)
+	dp.buyButton.text.SetPosition(dp.buyButton.text.X(), dp.buyButton.text.Y()+4*o.Scale)
+	dp.buyButton.SetPosition(dp.panel.X()+dp.panel.Width()/2-dp.buyButton.Width()/2, dp.panel.Y()+dp.panel.Height()-10*o.Scale)
 }
 
 func (dp *DudePanel2) Update(o *UIOptions) {
@@ -1347,10 +1382,20 @@ func (dp *DudePanel2) Update(o *UIOptions) {
 }
 
 func (dp *DudePanel2) Check(mx, my float64, kind UICheckKind) bool {
-	return dp.panel.Check(mx, my, kind)
+	if dp.panel.Check(mx, my, kind) {
+		return true
+	}
+	if dp.buyButton.Check(mx, my, kind) {
+		if kind == UICheckClick && dp.onBuyClick != nil {
+			dp.onBuyClick()
+		}
+		return true
+	}
+	return false
 }
 
 func (dp *DudePanel2) Draw(o *render.Options) {
+	dp.buyButton.Draw(o)
 	dp.panel.Draw(o)
 	dp.count.Draw(o)
 }
@@ -1469,9 +1514,14 @@ func (dip *DudeInfoPanel) Draw(o *render.Options) {
 }
 
 type EquipmentPanel struct {
-	panel *UIPanel
-	list  *UIItemList
-	title *UIText
+	panel       *UIPanel
+	list        *UIItemList
+	equipment   []*Equipment
+	title       *UIText
+	buyButton   *ButtonPanel
+	onBuyClick  func()
+	onItemClick func(index int)
+	onItemHover func(index int)
 }
 
 func MakeEquipmentPanel() EquipmentPanel {
@@ -1480,6 +1530,11 @@ func MakeEquipmentPanel() EquipmentPanel {
 		title: NewUIText("Loot", assets.DisplayFont, assets.ColorHeading),
 		list:  NewUIItemList(DirectionVertical),
 	}
+	btn := MakeButtonPanel(assets.BodyFont, PanelStyleButtonAttached)
+	ep.buyButton = &btn
+	ep.buyButton.text.center = true
+	ep.buyButton.text.SetText("Buy\nRandom Loot")
+	ep.list.spaceBetween = -2
 	ep.panel.AddChild(ep.title)
 	ep.panel.AddChild(ep.list)
 	ep.panel.sizeChildren = true
@@ -1488,9 +1543,33 @@ func MakeEquipmentPanel() EquipmentPanel {
 	return ep
 }
 
+func (ep *EquipmentPanel) SetEquipment(equipment []*Equipment) {
+	ep.equipment = equipment
+	ep.list.Clear()
+	for index, eq := range equipment {
+		txt := NewUIText(eq.Name(), assets.BodyFont, eq.quality.TextColor())
+		txt.ignoreScale = true
+		ep.list.AddItem(txt)
+
+		txt.onCheck = func(kind UICheckKind) {
+			if kind == UICheckClick && ep.onItemClick != nil {
+				ep.onItemClick(index)
+				ep.list.selected = index
+			}
+			if kind == UICheckHover && ep.onItemHover != nil {
+				ep.onItemHover(index)
+			}
+		}
+	}
+}
+
 func (ep *EquipmentPanel) Layout(o *UIOptions) {
 	ep.panel.padding = 6 * o.Scale
 	ep.list.SetSize(ep.panel.Width(), ep.panel.Height()-ep.panel.padding*2-ep.title.Height())
+	ep.buyButton.SetSize(ep.panel.Width(), 48)
+	ep.buyButton.Layout(nil, o)
+	ep.buyButton.text.SetPosition(ep.buyButton.text.X(), ep.buyButton.text.Y()+4*o.Scale)
+	ep.buyButton.SetPosition(ep.panel.X()+ep.panel.Width()/2-ep.buyButton.Width()/2, ep.panel.Y()+ep.panel.Height()-10*o.Scale)
 
 	ep.panel.Layout(nil, o)
 }
@@ -1500,10 +1579,22 @@ func (ep *EquipmentPanel) Update(o *UIOptions) {
 }
 
 func (ep *EquipmentPanel) Check(mx, my float64, kind UICheckKind) bool {
-	return ep.panel.Check(mx, my, kind)
+	if ep.panel.Check(mx, my, kind) {
+		return true
+	}
+	if ep.buyButton.Check(mx, my, kind) {
+		if kind == UICheckClick {
+			if ep.onBuyClick != nil {
+				ep.onBuyClick()
+			}
+		}
+		return true
+	}
+	return false
 }
 
 func (ep *EquipmentPanel) Draw(o *render.Options) {
+	ep.buyButton.Draw(o)
 	ep.panel.Draw(o)
 }
 
@@ -1575,10 +1666,10 @@ type ButtonPanel struct {
 	onClick  func()
 }
 
-func MakeButtonPanel() ButtonPanel {
+func MakeButtonPanel(font assets.Font, style PanelStyle) ButtonPanel {
 	bp := ButtonPanel{
-		panel: NewUIPanel(PanelStyleButton),
-		text:  NewUIText("arghh", assets.DisplayFont, assets.ColorHeading),
+		panel: NewUIPanel(style),
+		text:  NewUIText("arghh", font, assets.ColorHeading),
 	}
 	bp.panel.AddChild(bp.text)
 	bp.panel.sizeChildren = false
@@ -1586,10 +1677,11 @@ func MakeButtonPanel() ButtonPanel {
 	return bp
 }
 
-func (bp *ButtonPanel) Layout(o *UIOptions) {
+func (bp *ButtonPanel) Layout(parent UIElement, o *UIOptions) {
 	bp.panel.padding = 1 * o.Scale
 	bp.text.Layout(nil, o)
 	bp.panel.Layout(nil, o)
+	bp.doSize(o)
 }
 
 func (bp *ButtonPanel) doSize(o *UIOptions) {
@@ -1645,6 +1737,38 @@ func (bp *ButtonPanel) Enable() {
 	bp.panel.SetStyle(PanelStyleButton)
 	bp.disabled = false
 	bp.text.textOptions.ColorScale.ScaleAlpha(1.0)
+}
+
+func (bp *ButtonPanel) X() float64 {
+	return bp.panel.X()
+}
+
+func (bp *ButtonPanel) Y() float64 {
+	return bp.panel.Y()
+}
+
+func (bp *ButtonPanel) Position() (float64, float64) {
+	return bp.panel.Position()
+}
+
+func (bp *ButtonPanel) SetPosition(x, y float64) {
+	bp.panel.SetPosition(x, y)
+}
+
+func (bp *ButtonPanel) Size() (float64, float64) {
+	return bp.panel.Size()
+}
+
+func (bp *ButtonPanel) SetSize(w, h float64) {
+	bp.panel.SetSize(w, h)
+}
+
+func (bp *ButtonPanel) Width() float64 {
+	return bp.panel.Width()
+}
+
+func (bp *ButtonPanel) Height() float64 {
+	return bp.panel.Height()
 }
 
 type BossPanel struct {

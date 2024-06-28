@@ -199,4 +199,5 @@ func (s *GameStatePlay) CollectInventory(g *Game) {
 		dude.inventory = make([]*Equipment, 0)
 	}
 	AddMessage(MessageLoot, fmt.Sprintf("Collected %d items from dudes.", count))
+	g.ui.equipmentPanel.SetEquipment(g.equipment)
 }

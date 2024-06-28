@@ -67,6 +67,21 @@ func (s *GameStateBuild) Begin(g *Game) {
 		g.ui.roomInfoPanel.cost.SetText(fmt.Sprintf("Cost: %d", GetRoomCost(selected.kind, selected.size, s.nextStory.level)))
 	}
 
+	g.ui.equipmentPanel.buyButton.onClick = func() {
+		s.BuyEquipment(g)
+	}
+	g.ui.equipmentPanel.buyButton.text.SetText(fmt.Sprintf("Random Loot\n%dgp", s.EquipmentCost()))
+
+	g.ui.dudePanel2.buyButton.onClick = func() {
+		s.BuyDude(g)
+	}
+	g.ui.dudePanel2.buyButton.text.SetText(fmt.Sprintf("Random Dude\n%dgp", s.DudeCost()))
+
+	g.ui.roomPanel.buyButton.onClick = func() {
+		s.RerollRooms(g)
+	}
+	g.ui.roomPanel.buyButton.text.SetText(fmt.Sprintf("Reroll Rooms\n%dgp", s.RerollCost()))
+
 	// I guess we can allow the player to yeet whenever.
 	g.ui.buttonPanel.Enable()
 	g.ui.buttonPanel.onClick = func() {
@@ -265,9 +280,37 @@ func (s *GameStateBuild) TryPlaceRoom(g *Game) {
 	}
 }
 
+func (s *GameStateBuild) RollRooms(g *Game) {
+	numOptional := 3 + len(g.tower.Stories)/3
+	required := GetRequiredRooms(s.nextStory.level, 2)
+	optional := GetOptionalRooms(s.nextStory.level, numOptional) // 6 is minimum, but let's given 3 more for fun.
+	s.availableRooms = append(s.availableRooms, required...)
+	s.availableRooms = append(s.availableRooms, optional...)
+	s.availableRooms = SortRooms(s.availableRooms)
+}
+
+func (s *GameStateBuild) RerollCost() int {
+	return 25 + 75*(s.nextStory.level+1)
+}
+
+func (s *GameStateBuild) RerollRooms(g *Game) {
+	cost := s.RerollCost()
+	if g.gold < cost {
+		g.ui.feedback.Msg(FeedbackBad, fmt.Sprintf("need more gold to reroll rooms! (%d)", cost))
+		return
+	}
+	g.gold -= cost
+	s.RollRooms(g)
+	g.UpdateInfo()
+}
+
+func (s *GameStateBuild) DudeCost() int {
+	return 100 + 50*(s.nextStory.level+1)
+}
+
 func (s *GameStateBuild) BuyDude(g *Game) {
 	// COST?
-	cost := 100 * len(g.tower.Stories)
+	cost := s.DudeCost()
 	if g.gold < cost {
 		g.ui.feedback.Msg(FeedbackBad, fmt.Sprintf("need more gold to purchase a dude! (%d)", cost))
 		return
@@ -285,9 +328,13 @@ func (s *GameStateBuild) BuyDude(g *Game) {
 	g.UpdateInfo()
 }
 
+func (s *GameStateBuild) EquipmentCost() int {
+	return 25 + 50*(s.nextStory.level+1)
+}
+
 func (s *GameStateBuild) BuyEquipment(g *Game) {
 	// COST?
-	cost := 50 * len(g.tower.Stories)
+	cost := s.EquipmentCost()
 	if g.gold < cost {
 		g.ui.feedback.Msg(FeedbackBad, fmt.Sprintf("need more gold to purchase a equipment! (%d)", cost))
 		return
@@ -297,6 +344,8 @@ func (s *GameStateBuild) BuyEquipment(g *Game) {
 	level := len(g.tower.Stories)
 	e := GetRandomEquipment(level)
 	g.equipment = append(g.equipment, e)
+	g.ui.equipmentPanel.SetEquipment(g.equipment)
+	g.UpdateInfo()
 }
 
 func (s *GameStateBuild) SellEquipment(g *Game, e *Equipment) {
