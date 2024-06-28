@@ -156,7 +156,7 @@ func (ui *UI) Layout(o *UIOptions) {
 		96*o.Scale,
 		128*o.Scale,
 	)
-	ts := ui.dudeInfoPanel.title.Width() + 4*o.Scale
+	ts := ui.dudeInfoPanel.title.Width() + 6*o.Scale
 	if ts > ui.dudeInfoPanel.panel.Width() {
 		ts = math.Ceil(ts/ui.dudeInfoPanel.panel.center.Width()) * ui.dudeInfoPanel.panel.center.Width()
 		ui.dudeInfoPanel.panel.SetSize(ts, ui.dudeInfoPanel.panel.Height())
