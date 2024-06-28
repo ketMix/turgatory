@@ -216,6 +216,17 @@ func (s *GameStateBuild) Draw(g *Game, screen *ebiten.Image) {
 	}
 }
 
+func adjustSelectionIndex(index int, max int) int {
+	// I'm lazy.
+	if index >= max {
+		index--
+		if index < 0 {
+			index = 0
+		}
+	}
+	return index
+}
+
 func (s *GameStateBuild) TryPlaceRoom(g *Game) {
 	if s.focusedRoom != nil {
 		if s.placingRoom == nil {
@@ -227,7 +238,10 @@ func (s *GameStateBuild) TryPlaceRoom(g *Game) {
 				s.availableRooms = append(s.availableRooms, GetRoomDef(s.focusedRoom.kind, s.focusedRoom.size, s.focusedRoom.required))
 				s.availableRooms = SortRooms(s.availableRooms)
 				// Reselect after sort
-				g.ui.roomPanel.onItemClick(s.placingIndex)
+				s.placingIndex = adjustSelectionIndex(s.placingIndex, len(s.availableRooms))
+				if s.placingIndex < len(s.availableRooms) {
+					g.ui.roomPanel.onItemClick(s.placingIndex)
+				}
 				g.ui.roomPanel.SetRoomDefs(s.availableRooms)
 				g.UpdateInfo()
 				g.ui.feedback.Msg(FeedbackGood, fmt.Sprintf("%s %s sold!", s.focusedRoom.size.String(), s.focusedRoom.kind.String()))
@@ -249,20 +263,12 @@ func (s *GameStateBuild) TryPlaceRoom(g *Game) {
 						s.availableRooms = append(s.availableRooms[:s.placingIndex], s.availableRooms[s.placingIndex+1:]...)
 						s.availableRooms = SortRooms(s.availableRooms)
 
-						// Reselect after sort
-						g.ui.roomPanel.onItemClick(s.placingIndex)
-
 						// Resync UI, I guess.
 						g.ui.roomPanel.SetRoomDefs(s.availableRooms)
 						g.ui.roomInfoPanel.hidden = true
 
 						// I'm lazy.
-						if s.placingIndex >= len(s.availableRooms) {
-							s.placingIndex--
-							if s.placingIndex < 0 {
-								s.placingIndex = 0
-							}
-						}
+						s.placingIndex = adjustSelectionIndex(s.placingIndex, len(s.availableRooms))
 						if s.placingIndex < len(s.availableRooms) {
 							g.ui.roomPanel.onItemClick(s.placingIndex)
 						}
