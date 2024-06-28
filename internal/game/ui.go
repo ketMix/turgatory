@@ -1461,6 +1461,7 @@ type ButtonPanel struct {
 	text     *UIText
 	hidden   bool
 	disabled bool
+	hovered  bool
 	onClick  func()
 }
 
@@ -1517,8 +1518,11 @@ func (bp *ButtonPanel) Check(mx, my float64, kind UICheckKind) bool {
 			}
 		}
 		if kind == UICheckHover {
+			bp.hovered = true
 			return true
 		}
+	} else {
+		bp.hovered = false
 	}
 	return false
 }
@@ -1527,7 +1531,14 @@ func (bp *ButtonPanel) Draw(o *render.Options) {
 	if bp.hidden || bp.disabled {
 		return
 	}
-	bp.panel.Draw(o)
+	op := o
+	if bp.hovered {
+		op = &render.Options{
+			Screen: o.Screen,
+		}
+		op.DrawImageOptions.ColorScale.Scale(1.1, 1.1, 1.1, 1.0)
+	}
+	bp.panel.Draw(op)
 }
 
 func (bp *ButtonPanel) Disable() {
