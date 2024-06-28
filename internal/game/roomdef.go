@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
 )
 
@@ -35,6 +36,15 @@ func GetRoomDef(kind RoomKind, size RoomSize, required bool) *RoomDef {
 	img := ebiten.NewImage(stack.Width() /*+4*/, int(float64(stack.Height())*1.25))
 	img.Clear() // Just in case...
 
+	if required {
+		star, err := assets.LoadSprite("ui/requiredStar")
+		if err == nil {
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(float64(img.Bounds().Dx()-star.Image.Bounds().Dx()), 5)
+			img.DrawImage(star.Image, op)
+		}
+
+	}
 	o := render.Options{
 		Screen: img,
 		Pitch:  1,
