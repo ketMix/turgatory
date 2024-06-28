@@ -387,6 +387,10 @@ func (d *Dude) Trigger(e Event) Activity {
 			return DudeDeadActivity{dude: d}
 		}
 	case EventCombatRoom:
+		// Just in case
+		if d.IsDead() {
+			return DudeDeadActivity{dude: d}
+		}
 		// Attack enemy if there is one
 		if d.enemy != nil {
 			damage, isCrit := d.GetDamage()
@@ -434,6 +438,7 @@ func (d *Dude) Trigger(e Event) Activity {
 				}
 				if d.IsDead() {
 					d.enemy = nil
+					return DudeDeadActivity{dude: d}
 				}
 			}
 		}
@@ -611,9 +616,6 @@ func (d *Dude) ApplyDamage(amount int) (int, bool) {
 	}
 	d.dirtyStats = true
 	return amount, false
-
-	// If dead, uh, do something right? maybe an event or something idk
-	// maybe just doomed to roam the story forever
 }
 
 func (d *Dude) Stats() *Stats {
@@ -728,6 +730,7 @@ func (d *Dude) Heal(amount int) int {
 
 	initialHP := d.stats.currentHp
 	stats := d.GetCalculatedStats()
+	amount *= (stats.wisdom / 10) + 1 // Wisdom scaling
 	d.stats.currentHp += amount
 	if d.stats.currentHp > stats.totalHp {
 		d.stats.currentHp = stats.totalHp
