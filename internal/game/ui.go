@@ -1223,6 +1223,7 @@ type DudePanel2 struct {
 	list        *UIItemList
 	count       *UIText
 	dudeSprites []*UIImage
+	dudes       []*Dude
 	title       *UIText
 	onItemClick func(index int)
 	onItemHover func(index int)
@@ -1248,6 +1249,7 @@ func MakeDudePanel2() DudePanel2 {
 func (dp *DudePanel2) SetDudes(dudes []*Dude) {
 	dp.list.Clear()
 	dp.dudeSprites = nil
+	dp.dudes = nil
 	for index, dude := range dudes {
 		img := dp.DudeToImage(dude)
 		img.scale = 1
@@ -1264,6 +1266,7 @@ func (dp *DudePanel2) SetDudes(dudes []*Dude) {
 
 		dp.list.AddItem(img)
 		dp.dudeSprites = append(dp.dudeSprites, img)
+		dp.dudes = dudes
 	}
 	dp.count.text = fmt.Sprintf("%d", len(dudes))
 }
@@ -1322,6 +1325,12 @@ func (dp *DudePanel2) Layout(o *UIOptions) {
 }
 
 func (dp *DudePanel2) Update(o *UIOptions) {
+	for i, d := range dp.dudes {
+		if d.dirtyEquipment {
+			dp.dudeSprites[i] = dp.DudeToImage(d)
+			d.dirtyEquipment = false
+		}
+	}
 	dp.panel.Update(o)
 }
 
@@ -1344,6 +1353,7 @@ type DudeInfoPanel struct {
 
 	level     *UIText
 	xp        *UIText
+	hp        *UIText
 	strength  *UIText
 	agility   *UIText
 	defense   *UIText
@@ -1360,6 +1370,7 @@ func MakeDudeInfoPanel() DudeInfoPanel {
 		title:     NewUIText("Mah Dude", assets.DisplayFont, assets.ColorDudeTitle),
 		level:     NewUIText("Level 0 sucker", assets.BodyFont, assets.ColorDudeLevel),
 		xp:        NewUIText("0/0 xp", assets.BodyFont, assets.ColorDudeXP),
+		hp:        NewUIText("0/0 hp", assets.BodyFont, assets.ColorDudeHP),
 		strength:  NewUIText("0 strength", assets.BodyFont, assets.ColorDudeStrength),
 		agility:   NewUIText("0 agility", assets.BodyFont, assets.ColorDudeAgility),
 		defense:   NewUIText("0 defense", assets.BodyFont, assets.ColorDudeDefense),
@@ -1372,6 +1383,8 @@ func MakeDudeInfoPanel() DudeInfoPanel {
 	//dip.panel.AddChild(dip.description)
 
 	dip.panel.AddChild(dip.level)
+	dip.panel.AddChild(dip.xp)
+	dip.panel.AddChild(dip.hp)
 	dip.panel.AddChild(dip.strength)
 	dip.panel.AddChild(dip.agility)
 	dip.panel.AddChild(dip.defense)
@@ -1404,6 +1417,7 @@ func (dip *DudeInfoPanel) SyncDude() {
 	dip.level.SetText(fmt.Sprintf("Level %d %s", dip.dude.Level(), dip.dude.Profession()))
 	dip.xp.SetText(fmt.Sprintf("%d/%d xp", dip.dude.XP(), dip.dude.NextLevelXP()))
 	stats := dip.dude.GetCalculatedStats()
+	dip.hp.SetText(fmt.Sprintf("%d/%d hp", stats.currentHp, stats.totalHp))
 	dip.strength.SetText(fmt.Sprintf("%s strength", PaddedIntString(stats.strength, 4)))
 	dip.agility.SetText(fmt.Sprintf("%s agility", PaddedIntString(stats.agility, 4)))
 	dip.defense.SetText(fmt.Sprintf("%s defense", PaddedIntString(stats.defense, 4)))
@@ -1420,6 +1434,12 @@ func (dip *DudeInfoPanel) Layout(o *UIOptions) {
 
 func (dip *DudeInfoPanel) Update(o *UIOptions) {
 	dip.panel.Update(o)
+	if dip.dude != nil {
+		if dip.dude.dirtyStats {
+			dip.SyncDude()
+			dip.dude.dirtyStats = false
+		}
+	}
 }
 
 func (dip *DudeInfoPanel) Check(mx, my float64, kind UICheckKind) bool {

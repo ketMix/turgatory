@@ -14,6 +14,7 @@ var (
 	ColorDude            = color.NRGBA{160, 79, 201, 255}
 	ColorGold            = color.NRGBA{255, 215, 0, 255}
 	ColorBoss            = color.NRGBA{255, 255, 255, 255}
+	ColorDudeHP          = color.NRGBA{200, 50, 50, 200}
 	ColorDudeXP          = color.NRGBA{255, 255, 255, 200}
 	ColorDudeTitle       = color.NRGBA{255, 255, 255, 200}
 	ColorDudeDescription = color.NRGBA{200, 200, 200, 255}

@@ -47,6 +47,9 @@ type Dude struct {
 	variation    float64
 	enemy        *Enemy  // currently fighting enemy
 	trueRotation float64 // This is the absolute rotation of the dude, ignoring facing.
+	// for updating dude infos
+	dirtyEquipment bool
+	dirtyStats     bool
 }
 
 func NewDude(pk ProfessionKind, level int) *Dude {
@@ -456,6 +459,7 @@ func (d *Dude) Trigger(e Event) Activity {
 			d.story.AddText(t)
 		}
 	case EventUnequip:
+		d.dirtyEquipment = true
 		//fmt.Println(d.name, "unequipped", e.equipment.Name())
 		t := MakeFloatingTextFromDude(d, fmt.Sprintf("remove %s", e.equipment.Name()), color.NRGBA{200, 100, 100, 255}, 120, 0.4)
 		d.story.AddText(t)
@@ -601,6 +605,7 @@ func (d *Dude) ApplyDamage(amount int) (int, bool) {
 		t := MakeFloatingTextFromDude(d, fmt.Sprintf("%d", -amount), color.NRGBA{255, 0, 0, 255}, 40, 0.5)
 		d.story.AddText(t)
 	}
+	d.dirtyStats = true
 	return amount, false
 
 	// If dead, uh, do something right? maybe an event or something idk
@@ -643,6 +648,7 @@ func (d *Dude) Equip(eq *Equipment) {
 			break
 		}
 	}
+	d.dirtyEquipment = true
 }
 
 func (d *Dude) Unequip(t EquipmentType) {
@@ -651,6 +657,7 @@ func (d *Dude) Unequip(t EquipmentType) {
 		d.inventory = append(d.inventory, d.equipped[t])
 		d.Trigger(EventUnequip{dude: d, equipment: d.equipped[t]}) // Event isolated to dude?
 		d.equipped[t] = nil
+		d.dirtyEquipment = true
 	}
 }
 
@@ -701,6 +708,7 @@ func (d *Dude) AddXP(xp int) {
 		t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%dxp", xp), color.NRGBA{100, 200, 200, 200}, 50, 1)
 		d.story.AddText(t)
 	}
+	d.dirtyStats = true
 }
 
 func (d *Dude) XP() int {
@@ -726,6 +734,7 @@ func (d *Dude) Heal(amount int) int {
 			MessageNeutral,
 			fmt.Sprintf("%s healed for %d", d.name, amount),
 		)
+		d.dirtyStats = true
 	}
 	return amount
 }
@@ -736,6 +745,7 @@ func (d *Dude) FullHeal() {
 	// No rez
 	if d.stats.currentHp >= 0 {
 		d.Heal(stats.totalHp)
+		d.dirtyStats = true
 	}
 }
 
@@ -753,6 +763,7 @@ func (d *Dude) RestoreUses() {
 			MessageNeutral,
 			fmt.Sprintf("%s restored equipment uses", d.name),
 		)
+		d.dirtyEquipment = true
 	}
 }
 
@@ -795,6 +806,7 @@ func (d *Dude) LevelUpEquipment(amount int, maxQuality EquipmentQuality) {
 		MessageLoot,
 		fmt.Sprintf("%s leveled up %s by %d", d.name, eq.Name(), amount),
 	)
+	d.dirtyEquipment = true
 }
 
 func (d *Dude) Perkify(maxQuality PerkQuality) {
@@ -830,6 +842,7 @@ func (d *Dude) Perkify(maxQuality PerkQuality) {
 			)
 		}
 	}
+	d.dirtyEquipment = true
 }
 
 // Cursify the dude
@@ -891,6 +904,8 @@ func (d *Dude) Cursify(roomLevel int) {
 				fmt.Sprintf("%s lost a level on %s", d.name, eq.Name()),
 			)
 		}
+		d.dirtyEquipment = true
+		d.dirtyStats = true
 	}
 
 	// Check for perk delevel
@@ -915,6 +930,8 @@ func (d *Dude) Cursify(roomLevel int) {
 				)
 			}
 		}
+		d.dirtyEquipment = true
+		d.dirtyStats = true
 	}
 
 	// Check for dude delevel
@@ -928,6 +945,7 @@ func (d *Dude) Cursify(roomLevel int) {
 			MessageBad,
 			fmt.Sprintf("%s lost a level and is now level %d", d.name, d.stats.level),
 		)
+		d.dirtyStats = true
 	}
 }
 
@@ -952,6 +970,7 @@ func (d *Dude) TrapDamage(roomLevel int) {
 			MessageNeutral,
 			fmt.Sprintf("%s took %d damage from a trap", d.name, amount),
 		)
+		d.dirtyStats = true
 	}
 }
 
