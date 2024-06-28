@@ -136,7 +136,7 @@ func (a *AudioController) PauseRoomTracks() {
 
 func (a *AudioController) SetVol(roomKind RoomKind, volume float64) {
 	if track, ok := a.tracks[roomKind]; ok {
-		track.SetVolume(volume * 2)
+		track.SetVolume(volume)
 	}
 }
 
