@@ -91,7 +91,11 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 						return &GameStateLose{}
 					}
 				case TowerCompleteActivity:
-					return &GameStateWin{}
+					s.returningDudes = append(s.returningDudes, u.dude)
+					g.tower.RemoveDude(u.dude)
+					if !g.tower.HasAliveDudes() {
+						return &GameStateWin{}
+					}
 				case TowerLeaveActivity:
 					s.returningDudes = append(s.returningDudes, u.dude)
 					if !g.tower.HasAliveDudes() {
