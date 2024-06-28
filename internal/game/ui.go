@@ -71,7 +71,7 @@ func NewUI() *UI {
 	{
 		panelSprite := Must(render.NewSprite("ui/panels"))
 		ui.messagePanel = MessagePanel{
-			maxLines: 10,
+			maxLines: 15,
 			top:      Must(render.NewSubSprite(panelSprite, 16, 0, 16, 16)),
 			topleft:  Must(render.NewSubSprite(panelSprite, 0, 0, 16, 16)),
 			topright: Must(render.NewSubSprite(panelSprite, 32, 0, 16, 16)),
@@ -928,7 +928,7 @@ func (mp *MessagePanel) Layout(o *UIOptions) {
 
 	mp.width = float64(o.Width) * 0.75
 	mp.height = assets.BodyFont.LineHeight*float64(mp.maxLines) + 15 // buffer
-	mp.SetPosition((float64(o.Width))/2-(mp.width/2), float64(o.Height)-mp.height+50)
+	mp.SetPosition((float64(o.Width))/2-(mp.width/2), float64(o.Height)-mp.height)
 }
 
 func (mp *MessagePanel) Update(o *UIOptions) {
@@ -977,7 +977,7 @@ func (mp *MessagePanel) Draw(o *render.Options) {
 	op.DrawImageOptions.GeoM.Translate(-mp.width+pw, ph)
 
 	// mid
-	for y := 0; y < int(mp.height/ph)-2; y++ {
+	for y := 0; y < int(mp.height/ph); y++ {
 		mp.midleft.Draw(op)
 		op.DrawImageOptions.GeoM.Translate(pw, 0)
 		for x := 0; x < int(mp.width/pw)-2; x++ {
@@ -996,7 +996,7 @@ func (mp *MessagePanel) Draw(o *render.Options) {
 
 	// Set initial position to bottom right of message panel
 	baseX := x + mp.width - 10
-	baseY := y + mp.height - 10 // Bottom edge minus padding
+	baseY := y + mp.height - 15 // Bottom edge minus padding
 
 	// Calculate the number of messages to display
 	maxLines := min(mp.maxLines-1, len(messages))
@@ -1017,7 +1017,7 @@ func (mp *MessagePanel) Draw(o *render.Options) {
 
 		w, h := text.Measure(message.text, assets.BodyFont.Face, assets.BodyFont.LineHeight)
 		posX := baseX - w
-		posY := baseY - float64(h*float64(i+1))
+		posY := baseY - float64(h*float64(i))
 
 		// Ensure the text doesn't go above the panel
 		if posY < y {
