@@ -525,7 +525,11 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 // Number of bad rooms based on requested size count.
 // Stories 3, 6, 9, and 12 (?) are boss rooms
 // TODO: make sure you can actually fit all required rooms
-func GetRequiredRooms(storyLevel int, sizeCount int) []*RoomDef {
+func GetRequiredRooms(storyLevel int, roomCount int) []*RoomDef {
+	if roomCount < 1 {
+		return nil
+	}
+
 	level := storyLevel + 1
 
 	if level%3 == 0 {
@@ -533,56 +537,90 @@ func GetRequiredRooms(storyLevel int, sizeCount int) []*RoomDef {
 		return []*RoomDef{roomDef}
 	}
 
-	potentialRooms := []RoomTemplate{}
-	if level < 3 {
-		potentialRooms = append(
-			potentialRooms,
-			RoomTemplate{kind: Combat, size: Small},
-			RoomTemplate{kind: Trap, size: Small},
+	// Always have one combat room
+	potentialCombatRooms := []RoomTemplate{}
+	potentialOtherRooms := []RoomTemplate{}
+
+	potentialCombatRooms = append(
+		potentialCombatRooms,
+		RoomTemplate{kind: Combat, size: Small},
+	)
+	potentialOtherRooms = append(
+		potentialOtherRooms,
+		RoomTemplate{kind: Combat, size: Small},
+		RoomTemplate{kind: Trap, size: Small},
+	)
+
+	if level > 3 {
+		potentialCombatRooms = append(
+			potentialCombatRooms,
+			RoomTemplate{kind: Combat, size: Medium},
+			RoomTemplate{kind: Combat, size: Medium},
 		)
-	} else if level < 6 {
-		potentialRooms = append(
-			potentialRooms,
-			RoomTemplate{kind: Combat, size: Small},
-			RoomTemplate{kind: Trap, size: Small},
+		potentialOtherRooms = append(
+			potentialOtherRooms,
 			RoomTemplate{kind: Combat, size: Medium},
 			RoomTemplate{kind: Trap, size: Medium},
-		)
-	} else if level < 9 {
-		potentialRooms = append(
-			potentialRooms,
+			RoomTemplate{kind: Trap, size: Medium},
 			RoomTemplate{kind: Curse, size: Medium},
-			RoomTemplate{kind: Combat, size: Small},
-			RoomTemplate{kind: Trap, size: Small},
-			RoomTemplate{kind: Combat, size: Medium},
-			RoomTemplate{kind: Trap, size: Medium},
-			RoomTemplate{kind: Combat, size: Large},
-			RoomTemplate{kind: Trap, size: Large},
-		)
-	} else {
-		potentialRooms = append(
-			potentialRooms,
-			RoomTemplate{kind: Curse, size: Medium},
-			RoomTemplate{kind: Combat, size: Small},
-			RoomTemplate{kind: Trap, size: Small},
-			RoomTemplate{kind: Combat, size: Medium},
-			RoomTemplate{kind: Trap, size: Medium},
-			RoomTemplate{kind: Combat, size: Large},
-			RoomTemplate{kind: Trap, size: Large},
-			RoomTemplate{kind: Combat, size: Huge},
-			RoomTemplate{kind: Trap, size: Huge},
 		)
 	}
+
+	if level > 6 {
+		potentialCombatRooms = append(
+			potentialCombatRooms,
+			RoomTemplate{kind: Combat, size: Large},
+			RoomTemplate{kind: Combat, size: Large},
+		)
+		potentialOtherRooms = append(
+			potentialOtherRooms,
+			RoomTemplate{kind: Combat, size: Large},
+			RoomTemplate{kind: Trap, size: Large},
+			RoomTemplate{kind: Trap, size: Large},
+			RoomTemplate{kind: Curse, size: Medium},
+		)
+	}
+
+	if level > 9 {
+		potentialCombatRooms = append(
+			potentialCombatRooms,
+			RoomTemplate{kind: Combat, size: Huge},
+			RoomTemplate{kind: Combat, size: Huge},
+		)
+		potentialOtherRooms = append(
+			potentialOtherRooms,
+			RoomTemplate{kind: Combat, size: Huge},
+			RoomTemplate{kind: Trap, size: Huge},
+			RoomTemplate{kind: Trap, size: Huge},
+			RoomTemplate{kind: Curse, size: Medium},
+		)
+	}
+
 	rooms := make([]*RoomDef, 0)
-	for i := 0; i < sizeCount; {
-		room := potentialRooms[rand.Intn(len(potentialRooms))]
-		if i+int(room.size) > sizeCount {
+
+	// Select combat room
+	combatRoom := potentialCombatRooms[rand.Intn(len(potentialCombatRooms))]
+	roomDef := GetRoomDef(combatRoom.kind, combatRoom.size)
+	rooms = append(rooms, roomDef)
+
+	roomCount -= 1
+
+	// Select other rooms
+	remainingSize := Huge + Huge     // Max story size
+	remainingSize -= Small           // stairs
+	remainingSize -= combatRoom.size // combat room
+
+	for i := 0; i < roomCount; {
+		room := potentialOtherRooms[rand.Intn(len(potentialOtherRooms))]
+		if i+int(room.size) > roomCount || room.size > remainingSize {
 			continue
 		}
 		roomDef := GetRoomDef(room.kind, room.size)
 		rooms = append(rooms, roomDef)
 		i += int(room.size)
+		remainingSize -= room.size
 	}
+
 	return rooms
 }
 
