@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/kettek/ebijam24/internal/render"
@@ -30,6 +31,9 @@ func (t *Tower) Update(req *ActivityRequests) {
 	}
 	for _, u := range storyUpdates {
 		switch u := u.(type) {
+		case DudeDeadActivity:
+			// Propagate the dead dude up to the game.
+			req.Add(u)
 		case TowerLeaveActivity:
 			t.RemoveDude(u.dude)
 			// Send it up to the game so it can do logic to see if all dudes are gone.
@@ -189,8 +193,12 @@ func (t *Tower) HasAliveDudes() bool {
 	b := false
 	for _, d := range t.dudes {
 		if !d.IsDead() {
+			fmt.Println("Dude is alive: ", d.Name())
+			fmt.Println("Stats: ", d.stats)
 			b = true
 			break
+		} else {
+			fmt.Println("Dude is dead: ", d.Name())
 		}
 	}
 	return b

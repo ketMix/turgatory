@@ -8,31 +8,24 @@ type MessageKind int
 const (
 	// System Messages
 	MessageDebug MessageKind = iota
-	MessageInfo
-	MessageError
 	MessageUnknown
 
-	// Game Messages
-	MessageCombat
-	MessageDamage
-	MessageHeal
-	MessageDeath
+	MessageNeutral
+	MessageLoot
+	MessageGood
+	MessageBad
 )
 
 func (mk *MessageKind) Color() color.Color {
 	switch *mk {
-	case MessageDebug:
-		return color.RGBA{150, 150, 150, 255}
-	case MessageError:
-		return color.RGBA{250, 75, 75, 255}
-	case MessageCombat:
-		return color.RGBA{75, 75, 250, 255}
-	case MessageDamage:
-		return color.RGBA{250, 75, 75, 255}
-	case MessageHeal:
+	case MessageNeutral:
+		return color.RGBA{125, 125, 125, 255}
+	case MessageGood:
 		return color.RGBA{75, 250, 75, 255}
-	case MessageDeath:
-		return color.RGBA{0, 0, 0, 255}
+	case MessageBad:
+		return color.RGBA{250, 75, 75, 255}
+	case MessageLoot:
+		return color.RGBA{255, 215, 0, 255}
 	default:
 		return color.RGBA{200, 200, 200, 255}
 	}

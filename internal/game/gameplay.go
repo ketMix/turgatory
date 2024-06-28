@@ -186,7 +186,7 @@ func (s *GameStatePlay) CollectGold(g *Game) {
 	g.gold += int(gold)
 
 	g.ui.feedback.Msg(FeedbackGood, fmt.Sprintf("%d gold snarfed from yer dudes", int(gold)))
-	AddMessage(MessageInfo, fmt.Sprintf("Collected %d gold from dudes.", int(gold)))
+	AddMessage(MessageLoot, fmt.Sprintf("Collected %d gold from dudes.", int(gold)))
 	g.UpdateInfo()
 }
 
@@ -198,5 +198,5 @@ func (s *GameStatePlay) CollectInventory(g *Game) {
 		g.equipment = append(g.equipment, dude.inventory...)
 		dude.inventory = make([]*Equipment, 0)
 	}
-	AddMessage(MessageInfo, fmt.Sprintf("Collected %d items from dudes.", count))
+	AddMessage(MessageLoot, fmt.Sprintf("Collected %d items from dudes.", count))
 }

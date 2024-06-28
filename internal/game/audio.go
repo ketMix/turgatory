@@ -48,6 +48,10 @@ type AudioController struct {
 	tracksPaused    bool
 	sfxPaused       bool
 }
+type PanVol struct {
+	Pan float64
+	Vol float64
+}
 
 func NewAudioController() *AudioController {
 	audioContext := audio.NewContext(44100)
@@ -139,6 +143,21 @@ func (a *AudioController) SetVol(roomKind RoomKind, volume float64) {
 func (a *AudioController) SetPan(roomKind RoomKind, pan float64) {
 	if track, ok := a.tracks[roomKind]; ok {
 		track.SetPan(pan)
+	}
+}
+
+// For the tracks that we have,
+// set the volume and pan
+// If the track doesn't exist, set it to 0
+// Allows muting rooms that are removed
+func (a *AudioController) SetStoryPanVol(roomPanVol map[RoomKind]PanVol) {
+	for track := range a.tracks {
+		if panvol, ok := roomPanVol[track]; ok {
+			a.SetVol(track, panvol.Vol)
+			a.SetPan(track, panvol.Pan)
+		} else {
+			a.SetVol(track, 0)
+		}
 	}
 }
 

@@ -224,14 +224,30 @@ func (r *Room) Update(req *ActivityRequests) {
 	if r.kind == Boss {
 		if r.boss != nil {
 			if r.boss.IsDead() {
-				goldPerDude := r.boss.Gold() / float64(len(r.dudes))
-				xp := r.boss.XP() / len(r.dudes)
+				aliveDudes := 0
+				for _, d := range r.story.dudes {
+					if !d.IsDead() {
+						aliveDudes++
+					}
+				}
+				goldPerDude := r.boss.Gold() / float64(aliveDudes)
+				xp := r.boss.XP() / aliveDudes
+				AddMessage(
+					MessageGood,
+					fmt.Sprintf("The %s has been defeated!", r.boss.Name()),
+				)
+				AddMessage(
+					MessageLoot,
+					fmt.Sprintf("All dudes have earned %d XP and %f gold ", xp, goldPerDude),
+				)
 				r.boss = nil
 				r.killedBoss = true
 				for _, d := range r.dudes {
-					d.AddXP(xp)
-					d.UpdateGold(goldPerDude)
-					req.Add(RoomEndBossActivity{room: r, dude: d})
+					if !d.IsDead() {
+						d.AddXP(xp)
+						d.UpdateGold(goldPerDude)
+						req.Add(RoomEndBossActivity{room: r, dude: d})
+					}
 				}
 			} else {
 				// Boss combat
@@ -240,8 +256,16 @@ func (r *Room) Update(req *ActivityRequests) {
 					r.combatTicks = 0
 					bossTarget := r.boss.GetTarget(r.dudes)
 					if bossTarget != nil {
-						bossTarget.ApplyDamage(r.boss.Hit())
-						bossTarget.stats.ModifyStat(StatCowardice, r.boss.stats.strength)
+						amount, dodged := bossTarget.ApplyDamage(r.boss.Hit())
+						act := bossTarget.Trigger(EventDudeHit{dude: bossTarget, amount: amount})
+						if !dodged && !bossTarget.IsDead() {
+							bossTarget.stats.ModifyStat(StatCowardice, r.boss.stats.strength)
+						}
+						if act != nil {
+							fmt.Println("we got an activity")
+							fmt.Println(act)
+							req.Add(act)
+						}
 					}
 					for _, d := range r.dudes {
 						if !d.IsDead() && !r.boss.IsDead() {
@@ -253,7 +277,6 @@ func (r *Room) Update(req *ActivityRequests) {
 					}
 				}
 			}
-
 		} else {
 			// If all dudes are waiting, trigger boss fight
 			aliveDudes := 0
@@ -276,7 +299,6 @@ func (r *Room) Update(req *ActivityRequests) {
 			}
 		}
 	}
-
 }
 
 func (r *Room) Reset() {
@@ -289,17 +311,29 @@ func (r *Room) Reset() {
 }
 
 // Determins pan and vol of room track based on camera position
+// Center of camera is 0, left is -1, right is 1
+// Volume is 0.5 when pan is 0, 0 when pan is -1 or 1
 // TODO:
-// - Move this out a bit so we can consolidate duplicate rooms and not set pan/vol twice for same track (take highest)
 // - Determine by not only rotation but camera height, so scrolling up tower changes vol
 func (r *Room) getPanVol(rads float64, multiplier float64) (float64, float64) {
 	cR := rads
 	rR := r.stacks[0].Rotation()
 
-	// Determine pan and vol based on camera and room rotation
-	pan := math.Cos(cR-rR) * 0.5
-	vol := math.Sin(cR-rR) * 0.5
+	// Calculate angle difference
+	angleDiff := math.Mod(cR-rR+math.Pi, 2*math.Pi) - math.Pi
+	angleDiff -= 0.24828171122335682 // oh yeah, we're cooking with gas now
 
+	// Determine pan
+	pan := angleDiff / (math.Pi / 2)
+	pan *= -0.85 // Invert and smooth out the pan a bit
+
+	// Clamp pan to [-1, 1]
+	pan = math.Max(-1, math.Min(1, pan))
+
+	// Determine vol
+	vol := 0.5 * (1 - math.Abs(pan))
+
+	// Multiply vol by multiplier
 	vol *= multiplier
 
 	// Return pan and vol
@@ -469,6 +503,10 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 
 				// Add to inventory and equip if slot is empty
 				e.dude.AddToInventory(eq)
+				AddMessage(
+					MessageLoot,
+					fmt.Sprintf("%s found %s", e.dude.name, eq.Name()),
+				)
 			}
 		}
 		// Add other leave events here
