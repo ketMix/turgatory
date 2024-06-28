@@ -22,11 +22,11 @@ func NewTower() *Tower {
 }
 
 // Update the tower.
-func (t *Tower) Update(req *ActivityRequests) {
+func (t *Tower) Update(req *ActivityRequests, g *Game) {
 	// TODO: Should this only update "active" stories?
 	var storyUpdates ActivityRequests
 	for _, s := range t.Stories {
-		s.Update(&storyUpdates)
+		s.Update(&storyUpdates, g)
 	}
 	for _, u := range storyUpdates {
 		switch u := u.(type) {

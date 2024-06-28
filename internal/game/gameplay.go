@@ -83,7 +83,7 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 		s.updateTicker++
 		if s.updateTicker > g.speed {
 			var req ActivityRequests
-			g.tower.Update(&req)
+			g.tower.Update(&req, g)
 			for _, u := range req {
 				switch u := u.(type) {
 				case DudeDeadActivity:

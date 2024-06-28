@@ -207,7 +207,7 @@ func NewRoom(size RoomSize, kind RoomKind, required bool) *Room {
 }
 
 // Update updates the stuff in the room.
-func (r *Room) Update(req *ActivityRequests) {
+func (r *Room) Update(req *ActivityRequests, g *Game) {
 	r.stacks.Update()
 	if r.boss != nil {
 		r.boss.RoomUpdate(r)
@@ -225,7 +225,7 @@ func (r *Room) Update(req *ActivityRequests) {
 		if r.boss != nil {
 			if r.boss.IsDead() {
 				aliveDudes := 0
-				for _, d := range r.story.dudes {
+				for _, d := range g.dudes {
 					if !d.IsDead() {
 						aliveDudes++
 					}
@@ -278,7 +278,7 @@ func (r *Room) Update(req *ActivityRequests) {
 		} else {
 			// If all dudes are waiting, trigger boss fight
 			aliveDudes := 0
-			for _, d := range r.story.dudes {
+			for _, d := range g.dudes {
 				if !d.IsDead() {
 					aliveDudes++
 				}

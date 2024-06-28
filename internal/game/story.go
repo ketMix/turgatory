@@ -97,7 +97,7 @@ func NewStoryWithSize(size int) *Story {
 }
 
 // Update updates the rooms.
-func (s *Story) Update(req *ActivityRequests) {
+func (s *Story) Update(req *ActivityRequests, g *Game) {
 	for i := 0; i < len(s.texts); i++ {
 		s.texts[i].Update()
 		if !s.texts[i].Alive() {
@@ -126,7 +126,7 @@ func (s *Story) Update(req *ActivityRequests) {
 					continue
 				}
 			}
-			room.Update(req) // Just forward up room updates to tower
+			room.Update(req, g) // Just forward up room updates to tower
 			updatedRooms = append(updatedRooms, room)
 		}
 	}
