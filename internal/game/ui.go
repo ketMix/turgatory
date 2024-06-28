@@ -70,15 +70,16 @@ func NewUI() *UI {
 		}
 	}
 	{
-		panelSprite := Must(render.NewSprite("ui/panels"))
+		panelSprite := Must(render.NewSprite("ui/altPanels"))
 		ui.messagePanel = MessagePanel{
-			maxLines: 15,
+			maxLines: 8,
 			top:      Must(render.NewSubSprite(panelSprite, 16, 0, 16, 16)),
 			topleft:  Must(render.NewSubSprite(panelSprite, 0, 0, 16, 16)),
 			topright: Must(render.NewSubSprite(panelSprite, 32, 0, 16, 16)),
 			mid:      Must(render.NewSubSprite(panelSprite, 16, 16, 16, 16)),
 			midleft:  Must(render.NewSubSprite(panelSprite, 0, 16, 16, 16)),
 			midright: Must(render.NewSubSprite(panelSprite, 32, 16, 16, 16)),
+			pinned:   false,
 		}
 	}
 	ui.gameInfoPanel = MakeGameInfoPanel()
@@ -923,18 +924,18 @@ func (sp *SpeedPanel) Draw(o *render.Options) {
 
 type MessagePanel struct {
 	render.Positionable
-	width        float64
-	height       float64
-	drawered     bool
-	pinned       bool
-	maxLines     int
-	drawerInterp render.InterpNumber
-	top          *render.Sprite
-	topleft      *render.Sprite
-	topright     *render.Sprite
-	mid          *render.Sprite
-	midleft      *render.Sprite
-	midright     *render.Sprite
+	width    float64
+	height   float64
+	drawered bool
+	pinned   bool
+	maxLines int
+	//drawerInterp render.InterpNumber
+	top      *render.Sprite
+	topleft  *render.Sprite
+	topright *render.Sprite
+	mid      *render.Sprite
+	midleft  *render.Sprite
+	midright *render.Sprite
 }
 
 func (mp *MessagePanel) Layout(o *UIOptions) {
@@ -946,13 +947,19 @@ func (mp *MessagePanel) Layout(o *UIOptions) {
 	mp.topleft.Scale = o.Scale
 	mp.topright.Scale = o.Scale
 
-	mp.width = float64(o.Width) * 0.75
-	mp.height = assets.BodyFont.LineHeight*float64(mp.maxLines) + 15 // buffer
+	//mp.width = float64(o.Width) * 0.75
+	mp.width = 208 * o.Scale
+	lines := mp.maxLines
+	if mp.pinned {
+		lines *= 3
+	}
+
+	mp.height = assets.BodyFont.LineHeight*float64(lines) + 15 // buffer
 	mp.SetPosition((float64(o.Width))/2-(mp.width/2), float64(o.Height)-mp.height)
 }
 
 func (mp *MessagePanel) Update(o *UIOptions) {
-	mp.drawerInterp.Update()
+	//mp.drawerInterp.Update()
 
 	rpx, rpy := mp.Position()
 	mx, my := IntToFloat2(ebiten.CursorPosition())
@@ -960,17 +967,20 @@ func (mp *MessagePanel) Update(o *UIOptions) {
 	maxX := rpx + float64(mp.width)
 	maxY := rpy + mp.height
 
-	_, ph := mp.topleft.Size()
+	//_, ph := mp.topleft.Size()
 
-	if mx > rpx && mx < maxX && my > rpy && my < maxY {
-		if mp.drawered {
-			mp.drawered = false
-			mp.drawerInterp.Set(0, 4)
-		}
-	} else {
-		if !mp.drawered {
-			mp.drawered = true
-			mp.drawerInterp.Set(mp.height-ph*2, 4)
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		if mx > rpx && mx < maxX && my > rpy && my < maxY {
+			mp.pinned = !mp.pinned
+			/*if mp.drawered {
+				mp.drawered = false
+				mp.drawerInterp.Set(0, 4)
+			}*/
+		} else {
+			/*if !mp.drawered {
+				mp.drawered = true
+				mp.drawerInterp.Set(mp.height-ph*2, 4)
+			}*/
 		}
 	}
 }
@@ -983,7 +993,7 @@ func (mp *MessagePanel) Draw(o *render.Options) {
 	op := &render.Options{
 		Screen: o.Screen,
 	}
-	op.DrawImageOptions.GeoM.Translate(0, mp.drawerInterp.Current)
+	//op.DrawImageOptions.GeoM.Translate(0, mp.drawerInterp.Current)
 	op.DrawImageOptions.GeoM.Translate(x, y)
 
 	// top
@@ -1008,18 +1018,20 @@ func (mp *MessagePanel) Draw(o *render.Options) {
 		op.DrawImageOptions.GeoM.Translate(-mp.width+pw, ph)
 	}
 
-	if mp.drawered && !mp.pinned {
-		return
-	}
-
 	messages := GetMessages()
 
 	// Set initial position to bottom right of message panel
-	baseX := x + mp.width - 10
+	//baseX := x + mp.width - 10
+	baseX := x + 10
 	baseY := y + mp.height - 17 // Bottom edge minus padding
 
+	lines := mp.maxLines
+	if mp.pinned {
+		lines *= 3
+	}
+
 	// Calculate the number of messages to display
-	maxLines := min(mp.maxLines-1, len(messages))
+	maxLines := min(lines-1, len(messages))
 
 	// Render messages from bottom to top
 	for i := 0; i < maxLines; i++ {
@@ -1035,8 +1047,8 @@ func (mp *MessagePanel) Draw(o *render.Options) {
 			Color:  message.kind.Color(),
 		}
 
-		w, h := text.Measure(message.text, assets.BodyFont.Face, assets.BodyFont.LineHeight)
-		posX := baseX - w
+		_, h := text.Measure(message.text, assets.BodyFont.Face, assets.BodyFont.LineHeight)
+		posX := baseX
 		posY := baseY - float64(h*float64(i))
 
 		// Ensure the text doesn't go above the panel
