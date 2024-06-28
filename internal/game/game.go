@@ -225,7 +225,7 @@ func (g *Game) UpdateInfo() {
 	aliveDudes := g.GetAliveDudes()
 	g.ui.gameInfoPanel.dudeText.SetText(fmt.Sprintf("Dudes: %d", len(aliveDudes)))
 	// Move this if it's too heavy.
-	g.ui.dudePanel.SetDudes(g.dudes)
+	g.ui.dudePanel.SetDudes(aliveDudes)
 }
 
 func (g *Game) Init() {
