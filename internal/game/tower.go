@@ -79,6 +79,8 @@ func (t *Tower) Update(req *ActivityRequests) {
 			if u.dude != nil {
 				u.dude.SetActivity(Idle)
 			}
+			// Set wait activity so we can notify the player of their dudes' impending doom
+			req.Add(u)
 		case RoomStartBossActivity:
 			if act := u.dude.Trigger(EventStartBoss{room: u.room, dude: u.dude}); act != nil {
 				req.Add(act)
@@ -86,6 +88,8 @@ func (t *Tower) Update(req *ActivityRequests) {
 			if u.dude != nil {
 				u.dude.SetActivity(FightBoss)
 			}
+			// Set boss start up to tower so we can show health bar.
+			req.Add(u)
 		case RoomEndBossActivity:
 			if act := u.dude.Trigger(EventEndBoss{room: u.room, dude: u.dude}); act != nil {
 				req.Add(act)
@@ -94,7 +98,8 @@ func (t *Tower) Update(req *ActivityRequests) {
 				// Keep it movin bub
 				u.dude.SetActivity(Centering)
 			}
-
+			// Set boss end up to tower so we can show health bar.
+			req.Add(u)
 		case RoomEndActivity:
 			if act := u.dude.Trigger(EventEndRoom{room: u.room, dude: u.dude}); act != nil {
 				req.Add(act)

@@ -12,4 +12,5 @@ var (
 	ColorStory           = color.NRGBA{182, 129, 129, 255}
 	ColorDude            = color.NRGBA{160, 79, 201, 255}
 	ColorGold            = color.NRGBA{255, 215, 0, 255}
+	ColorBoss            = color.NRGBA{255, 255, 255, 255}
 )

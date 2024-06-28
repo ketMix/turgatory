@@ -17,6 +17,7 @@ type GameStatePlay struct {
 	wobbler        float64
 	updateTicker   int
 	returningDudes []*Dude
+	boss           *Enemy
 }
 
 func (s *GameStatePlay) Begin(g *Game) {
@@ -98,7 +99,22 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 						g.tower.ClearBodies()
 						return &GameStateBuild{}
 					}
+				case RoomWaitActivity:
+					g.ui.feedback.Msg(FeedbackBad, "a boss -- can ur dudes make it??")
+				case RoomStartBossActivity:
+					g.ui.bossPanel.hidden = false
+					g.ui.bossPanel.current = float64(u.room.boss.stats.currentHp) / float64(u.room.boss.stats.totalHp)
+					g.ui.bossPanel.text.SetText(u.room.boss.Name())
+					s.boss = u.room.boss
+				case RoomEndBossActivity:
+					g.ui.bossPanel.hidden = true
+					s.boss = nil
 				}
+			}
+
+			// FIXME: We need a RoomHurtBossActivity or some such...
+			if s.boss != nil {
+				g.ui.bossPanel.current = float64(s.boss.stats.currentHp) / float64(s.boss.stats.totalHp)
 			}
 
 			s.updateTicker = 0

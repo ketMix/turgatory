@@ -390,6 +390,7 @@ const (
 	PanelStyleInteractive
 	PanelStyleButton
 	PanelStyleButtonDisabled
+	PanelStyleBar
 )
 
 func NewUIPanel(style PanelStyle) *UIPanel {
@@ -410,6 +411,9 @@ func (p *UIPanel) SetStyle(style PanelStyle) {
 	} else if style == PanelStyleButtonDisabled {
 		sp = Must(render.NewSprite("ui/buttonPanelsDisabled"))
 		size = 8
+	} else if style == PanelStyleBar {
+		sp = Must(render.NewSprite("ui/bossPanels"))
+		size = 12
 	} else {
 		sp = Must(render.NewSprite("ui/altPanels"))
 		size = 16

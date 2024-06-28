@@ -8,6 +8,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
 )
@@ -39,6 +40,7 @@ type UI struct {
 	options        *UIOptions
 	feedback       FeedbackPopup
 	buttonPanel    ButtonPanel
+	bossPanel      BossPanel
 }
 
 func NewUI() *UI {
@@ -87,6 +89,8 @@ func NewUI() *UI {
 	ui.feedback = MakeFeedbackPopup()
 	ui.buttonPanel = MakeButtonPanel()
 	ui.buttonPanel.Disable()
+
+	ui.bossPanel = MakeBossPanel()
 
 	return ui
 }
@@ -182,6 +186,16 @@ func (ui *UI) Layout(o *UIOptions) {
 	)
 	ui.buttonPanel.Layout(o)
 
+	ui.bossPanel.panel.SetSize(
+		float64(o.Width)/3,
+		24*o.Scale,
+	)
+	ui.bossPanel.panel.SetPosition(
+		float64(o.Width)/2-ui.bossPanel.panel.Width()/2,
+		float64(o.Height)/8-ui.bossPanel.panel.Height()/2,
+	)
+	ui.bossPanel.panel.padding = 2 * o.Scale
+	ui.bossPanel.Layout(o)
 }
 
 func (ui *UI) Update(o *UIOptions) {
@@ -237,6 +251,8 @@ func (ui *UI) Draw(o *render.Options) {
 
 	ui.gameInfoPanel.Draw(o)
 
+	ui.bossPanel.Draw(o)
+
 	ui.feedback.Draw(o)
 }
 
@@ -286,8 +302,8 @@ type DudePanel struct {
 
 type DudeProfile struct {
 	render.Positionable
-	stack      *render.Stack
 	dude       *Dude
+	stack      *render.Stack
 	hovered    bool
 	height     float64
 	width      float64
@@ -1408,4 +1424,62 @@ func (bp *ButtonPanel) Enable() {
 	bp.panel.SetStyle(PanelStyleButton)
 	bp.disabled = false
 	bp.text.textOptions.ColorScale.ScaleAlpha(1.0)
+}
+
+type BossPanel struct {
+	panel   *UIPanel
+	text    *UIText
+	current float64
+	hidden  bool
+}
+
+func MakeBossPanel() BossPanel {
+	bp := BossPanel{
+		panel:   NewUIPanel(PanelStyleBar),
+		text:    NewUIText("baus", assets.DisplayFont, assets.ColorBoss),
+		current: 1.0,
+		hidden:  true,
+	}
+	bp.panel.AddChild(bp.text)
+	return bp
+}
+
+func (bp *BossPanel) Layout(o *UIOptions) {
+	if bp.hidden {
+		return
+	}
+
+	bp.text.Layout(nil, o)
+	bp.panel.Layout(nil, o)
+	// Force text's position
+	bp.text.SetPosition(bp.panel.X()+bp.panel.Width()/2-bp.text.Width()/2, bp.panel.Y()+bp.panel.Height()/2-bp.text.Height()/2-3)
+}
+
+func (bp *BossPanel) Update(o *UIOptions) {
+	if bp.hidden {
+		return
+	}
+
+	bp.panel.Update(o)
+}
+
+func (bp *BossPanel) Draw(o *render.Options) {
+	if bp.hidden {
+		return
+	}
+
+	// Draw that bar.
+	x, y := bp.panel.Position()
+	w, h := bp.panel.Size()
+
+	x += bp.panel.padding
+	y += bp.panel.padding
+	w -= bp.panel.padding * 2
+	h -= bp.panel.padding * 2
+
+	w *= bp.current
+
+	vector.DrawFilledRect(o.Screen, float32(x), float32(y), float32(w), float32(h), color.NRGBA{200, 20, 20, 200}, true)
+
+	bp.panel.Draw(o)
 }
