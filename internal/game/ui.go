@@ -771,7 +771,14 @@ func (dp *DudePanel) DudeToImage(dude *Dude) *UIImage {
 		estack.SetOrigin(stack.Origin())
 		estack.SetPosition(stack.Position())
 		estack.SetRotation(stack.Rotation())
-		estack.Draw(&profileOptions)
+		equipOptions := render.Options{
+			Screen:           profileOptions.Screen,
+			Pitch:            1,
+			DrawImageOptions: profileOptions.DrawImageOptions,
+		}
+		color := eq.quality.Color()
+		equipOptions.DrawImageOptions.ColorScale.ScaleWithColorScale(color)
+		estack.Draw(&equipOptions)
 	}
 
 	return NewUIImage(profileOptions.Screen)
