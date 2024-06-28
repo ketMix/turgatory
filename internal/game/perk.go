@@ -247,7 +247,7 @@ func (p PerkHealOnRoomEnter) String() string {
 }
 
 func (p PerkHealOnRoomEnter) Description() string {
-	return fmt.Sprintf("Heals %d * wisdom on room enter", int(p.quality))
+	return fmt.Sprintf("Heals %d * wisdom/4 on room enter", int(p.quality))
 }
 
 func (p PerkHealOnRoomEnter) Check(e Event) bool {
