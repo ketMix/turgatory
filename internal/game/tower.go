@@ -142,6 +142,7 @@ func (t *Tower) Draw(o *render.Options) {
 func (t *Tower) AddStory(s *Story) {
 	s.level = len(t.Stories)
 	t.Stories = append(t.Stories, s)
+	s.tower = t
 }
 
 // AddDude adds a new dude at the lowest story of the tower and assigns the dude's appropriate activity state.

@@ -8,16 +8,18 @@ import (
 
 // Story is a single story in the tower. It contains rooms.
 type Story struct {
-	rooms       []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
-	dudes       []*Dude
-	portalStack *render.Stack
-	stacks      render.Stacks
-	doorStack   *render.Stack
-	walls       render.Stacks
-	vgroup      *render.VGroup
-	level       int
-	open        bool
-	texts       []FloatingText
+	rooms            []*Room // Rooms represent the counter-clockwise "pie" of rooms. This field is sized according to the capacity of the story (which is assumed to always be 8, but not necessarily).
+	dudes            []*Dude
+	portalStack      *render.Stack
+	stacks           render.Stacks
+	doorStack        *render.Stack
+	walls            render.Stacks
+	vgroup           *render.VGroup
+	level            int
+	open             bool
+	texts            []FloatingText
+	tower            *Tower
+	hasRenderedWalls bool
 }
 
 // StoryHeight is the height of a story in da tower.
@@ -212,7 +214,24 @@ func (s *Story) Draw(o *render.Options) {
 
 	// If the story is not yet open, just draw the tower exterior stacks.
 	if !s.open {
+		s.hasRenderedWalls = false
+		var storyWithWalls *Story
+		for _, story := range s.tower.Stories {
+			if story == s {
+				continue
+			}
+			if story.hasRenderedWalls {
+				storyWithWalls = story
+				break
+			}
+		}
+		if storyWithWalls != nil {
+			// If another story has rendered walls, we can just copy them.
+			storyWithWalls.vgroup.Draw(o)
+			return
+		}
 		s.walls.Draw(opts)
+		s.hasRenderedWalls = true
 	} else {
 		// Conditionally render the walls based upon rotation.
 		for _, stack := range s.walls {
