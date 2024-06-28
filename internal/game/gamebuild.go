@@ -43,11 +43,13 @@ func (s *GameStateBuild) Begin(g *Game) {
 		panic("No next story found!")
 	}
 	// Generate our new rooms.
+	numOptional := 3 + len(g.tower.Stories)/3
 	required := GetRequiredRooms(s.nextStory.level, 2)
-	optional := GetOptionalRooms(s.nextStory.level, 9) // 6 is minimum, but let's given 3 more for fun.
+	optional := GetOptionalRooms(s.nextStory.level, numOptional) // 6 is minimum, but let's given 3 more for fun.
 	s.availableRooms = append(s.availableRooms, required...)
 	s.availableRooms = append(s.availableRooms, optional...)
 	s.availableRooms = SortRooms(s.availableRooms)
+
 	// Update room panel.
 	g.ui.roomPanel.SetRoomDefs(s.availableRooms)
 	// Add onClick handler.
