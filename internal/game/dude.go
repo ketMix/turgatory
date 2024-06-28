@@ -84,6 +84,11 @@ func NewDude(pk ProfessionKind, level int) *Dude {
 	// Initialize stats and equipment
 	profession := NewProfession(pk, level)
 	dude.stats = profession.StartingStats()
+
+	for i := 0; i < level-1; i++ {
+		dude.stats.LevelUp()
+	}
+
 	dude.inventory = make([]*Equipment, 0)
 
 	dude.equipped = make(map[EquipmentType]*Equipment)
