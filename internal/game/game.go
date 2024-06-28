@@ -211,19 +211,11 @@ func (g *Game) CheckUI() (bool, UICheckKind) {
 }
 
 func (g *Game) UpdateInfo() {
-	var currentStory *Story
-	for i := len(g.tower.Stories) - 1; i >= 0; i-- {
-		story := g.tower.Stories[i]
-		if story.open {
-			currentStory = story
-			break
-		}
-	}
-	if currentStory != nil {
-		g.ui.gameInfoPanel.storyText.SetText(fmt.Sprintf("Stories: %d/%d", currentStory.level, len(g.tower.Stories)))
-	}
+	g.ui.gameInfoPanel.storyText.SetText(fmt.Sprintf("Stories: %d", len(g.tower.Stories)-1))
 	g.ui.gameInfoPanel.goldText.SetText(fmt.Sprintf("Gold: %d", g.gold))
-	g.ui.gameInfoPanel.dudeText.SetText(fmt.Sprintf("Dudes: %d", len(g.dudes)))
+
+	aliveDudes := g.GetAliveDudes()
+	g.ui.gameInfoPanel.dudeText.SetText(fmt.Sprintf("Dudes: %d", len(aliveDudes)))
 	// Move this if it's too heavy.
 	g.ui.dudePanel.SetDudes(g.dudes)
 }
@@ -345,6 +337,16 @@ func (g *Game) AdjustCamera() {
 		g.ui.speedPanel.cameraButton.SetImage("tower")
 		g.ui.speedPanel.cameraButton.tooltip = "camera: tower"
 	}
+}
+
+func (g *Game) GetAliveDudes() []*Dude {
+	dudes := make([]*Dude, 0)
+	for _, dude := range g.dudes {
+		if !dude.IsDead() {
+			dudes = append(dudes, dude)
+		}
+	}
+	return dudes
 }
 
 func New() *Game {

@@ -93,6 +93,7 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 			for _, u := range req {
 				switch u := u.(type) {
 				case DudeDeadActivity:
+					g.UpdateInfo()
 					if !g.tower.HasAliveDudes() {
 						return &GameStateLose{}
 					}
