@@ -116,6 +116,13 @@ func NewSprite(name string) (*Sprite, error) {
 	return sprite, nil
 }
 
+func NewSpriteFromImage(image *ebiten.Image) *Sprite {
+	return &Sprite{
+		image: image,
+		Scale: 1,
+	}
+}
+
 func NewSubSprite(dataSprite *Sprite, x, y, w, h int) (*Sprite, error) {
 	sprite := &Sprite{
 		Scale: 1,
