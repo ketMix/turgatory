@@ -449,6 +449,16 @@ func (s *Story) IsInCenterOfRoom(rads float64, roomIndex int) bool {
 	return rads >= centerStart && rads <= centerEnd
 }
 
+func (s *Story) GetRoomCenterRad(roomIndex int) float64 {
+	room := s.rooms[roomIndex]
+	if room == nil {
+		return 0
+	}
+	start := float64(room.index) * (math.Pi / 4)
+	end := start + float64(room.size)*(math.Pi/4)
+	return (start + end) / 2
+}
+
 func (s *Story) AngleFromCenter(x, y float64) float64 {
 	cx := float64(TowerCenterX)
 	cy := float64(TowerCenterY)

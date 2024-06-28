@@ -315,13 +315,22 @@ func (r *Room) Reset() {
 // Volume is 0.5 when pan is 0, 0 when pan is -1 or 1
 // TODO:
 // - Determine by not only rotation but camera height, so scrolling up tower changes vol
-func (r *Room) getPanVol(rads float64, multiplier float64) (float64, float64) {
-	cR := rads
-	rR := r.stacks[0].Rotation()
+func (r *Room) getPanVol(cameraRot float64, roomCenter float64, multiplier float64) (float64, float64) {
+	// Normalize camera rotation
+	cR := math.Atan2(math.Sin(cameraRot), math.Cos(cameraRot))
+	if cR < 0 {
+		cR += 2 * math.Pi
+	}
+
+	// Wrap camera rotation to [0, 2pi]
+	rR := math.Atan2(math.Sin(roomCenter), math.Cos(roomCenter))
+	if rR < 0 {
+		rR += 2 * math.Pi
+	}
 
 	// Calculate angle difference
 	angleDiff := math.Mod(cR-rR+math.Pi, 2*math.Pi) - math.Pi
-	angleDiff -= 0.24828171122335682 // oh yeah, we're cooking with gas now
+	angleDiff -= 0.12828171122335682 // oh yeah, we're cooking with gas now
 
 	// Determine pan
 	pan := angleDiff / (math.Pi / 2)

@@ -129,8 +129,8 @@ func (g *Game) Update() error {
 			if story.open {
 				// Build map of roomkind to max vol
 				roomPanVol := make(map[RoomKind]PanVol)
-				for _, room := range story.rooms {
-					pan, vol := room.getPanVol(g.camera.Rotation(), 1.0) // Replace 1.0 with a calculation based on focused story index vs. current
+				for i, room := range story.rooms {
+					pan, vol := room.getPanVol(g.camera.Rotation(), story.GetRoomCenterRad(i), 1.0) // Replace 1.0 with a calculation based on focused story index vs. current
 					if roomPanVol[room.kind].Vol < vol {
 						roomPanVol[room.kind] = PanVol{Pan: pan, Vol: vol}
 					}
