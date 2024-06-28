@@ -116,19 +116,21 @@ func (g *Game) Update() error {
 
 	// If we have a tower with rooms, synchronize the music.
 	if g.tower != nil {
+		// Build map of roomkind to max vol
+		roomPanVol := make(map[RoomKind]PanVol)
+
 		for _, story := range g.tower.Stories {
-			if story.open {
-				// Build map of roomkind to max vol
-				roomPanVol := make(map[RoomKind]PanVol)
+			// If we have dudes in that story, calculate the pan and vol for each room.
+			if len(story.dudes) > 0 || story.open {
 				for i, room := range story.rooms {
 					pan, vol := room.getPanVol(g.camera.Rotation(), story.GetRoomCenterRad(i), 1.0) // Replace 1.0 with a calculation based on focused story index vs. current
 					if roomPanVol[room.kind].Vol < vol {
 						roomPanVol[room.kind] = PanVol{Pan: pan, Vol: vol}
 					}
 				}
-				g.audioController.SetStoryPanVol(roomPanVol)
 			}
 		}
+		g.audioController.SetStoryPanVol(roomPanVol)
 	}
 
 	return nil
