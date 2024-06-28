@@ -14,20 +14,22 @@ type Story struct {
 	stacks           render.Stacks
 	doorStack        *render.Stack
 	walls            render.Stacks
+	clouds           render.Stacks
 	vgroup           *render.VGroup
 	level            int
 	open             bool
 	texts            []FloatingText
 	tower            *Tower
 	hasRenderedWalls bool
+	hasClouds        bool
 }
 
 // StoryHeight is the height of a story in da tower.
 const StoryHeight = 28                                      // StoryHeight is used to space stories apart from each other vertically.
 const StorySlices = 28                                      // The amount of slices used for the frame buffers, should be equal to maximum staxie slice count used in a story.
 const StoryWallHeight = 9                                   // The height of the wall stack -- this is repeated 3 times to get the full height (roughly)
-const StoryVGroupWidth = 128                                // Framebuffer's maximum width for rendering.
-const StoryVGroupHeight = 132                               // Framebuffer's maximum height for rendering.
+const StoryVGroupWidth = 244                                // Framebuffer's maximum width for rendering.
+const StoryVGroupHeight = 162                               // Framebuffer's maximum height for rendering.
 const PortalDistance = 44                                   // Distance from the center of the tower to the portal.
 const PortalRotationHuge = 7.0 * -(math.Pi / 8)             // Rotation of the portal.
 const PortalRotationLarge = 7.0*-(math.Pi/8) - math.Pi/4.5  // Rotation of the portal.
@@ -214,7 +216,7 @@ func (s *Story) Draw(o *render.Options) {
 	if !s.open {
 		var storyWithWalls *Story
 		for _, story := range s.tower.Stories {
-			if story == s {
+			if story == s || story.hasClouds {
 				continue
 			}
 			if story.hasRenderedWalls {
@@ -504,6 +506,50 @@ func (s *Story) DistanceFromCenter(x, y float64) float64 {
 
 func (s *Story) AddText(t FloatingText) {
 	s.texts = append(s.texts, t)
+}
+
+func (s *Story) AddClouds() {
+	clr := (float32(float32(s.level) / float32(s.tower.targetStories)))
+	for i := 1; i < 3; i++ {
+		for j := 0; j < 8; j++ {
+			stack := s.walls[i*8+j]
+			x := float64(StoryVGroupWidth) / 2
+			y := float64(StoryVGroupHeight) / 2
+			v := 21.0
+			stack.SetPosition(x, y-v)
+			stack.SetOrigin(0, v)
+			stack.SetRotation((float64(i)*0.5 + float64(j)) * (math.Pi / 4))
+
+			stack.SetStaxie("walls/clouds")
+			stack.SetStack("base")
+			stack.ColorScale.Reset()
+			stack.ColorScale.Scale(1, clr, clr, 1)
+			stack.SliceColorMin = 0.1
+		}
+	}
+	s.hasClouds = true
+}
+func (s *Story) RemoveClouds() {
+	for i := 1; i < 3; i++ {
+		for j := 0; j < 8; j++ {
+			stack := s.walls[i*8+j]
+			x := float64(StoryVGroupWidth) / 2
+			y := float64(StoryVGroupHeight) / 2
+
+			stack.SetStaxie("walls/exterior")
+			stack.SetStack("stone")
+
+			stack.SetOrigin(0, 0)
+			stack.SetPosition(x, y)
+			stack.SetRotation(float64(j) * (math.Pi / 4))
+			stack.ColorScale.Reset()
+			stack.SliceColorMin = 0.5
+			s.walls[i*8+j] = stack
+		}
+	}
+
+	s.hasClouds = false
+	s.clouds = nil
 }
 
 const (

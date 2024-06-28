@@ -20,9 +20,12 @@ type Stack struct {
 	MaxSliceIndex    int
 	VgroupOffset     int
 	SliceOffset      int
+	SliceColorOffset int
+	SliceColorMin    float64
 	HeightOffset     float64
 	NoLighting       bool
 	Transparency     float32
+	ColorScale       ebiten.ColorScale
 }
 
 func NewStack(name string, stackName string, animationName string) (*Stack, error) {
@@ -58,7 +61,7 @@ func NewStack(name string, stackName string, animationName string) (*Stack, erro
 		return nil, fmt.Errorf("frame 0 does not exist in %s", animationName)
 	}
 
-	return &Stack{data: staxie, currentStack: stack, currentAnimation: &animation, currentFrame: frame}, nil
+	return &Stack{data: staxie, currentStack: stack, currentAnimation: &animation, currentFrame: frame, SliceColorMin: 0.5}, nil
 }
 
 func CopyStack(stack *Stack) *Stack {
@@ -75,6 +78,7 @@ func CopyStack(stack *Stack) *Stack {
 		VgroupOffset:     stack.VgroupOffset,
 		SliceOffset:      stack.SliceOffset,
 		HeightOffset:     stack.HeightOffset,
+		SliceColorMin:    0.5,
 	}
 }
 
@@ -112,8 +116,8 @@ func (s *Stack) Draw(o *Options) {
 		i := index
 
 		// TODO: Make this configurable
-		c := float64(index) / float64(len(s.currentFrame.Slices))
-		c = math.Min(1.0, math.Max(0.5, c))
+		c := float64(index) / float64(len(s.currentFrame.Slices)+s.SliceColorOffset)
+		c = math.Min(1.0, math.Max(s.SliceColorMin, c))
 		color := float32(c)
 		// TODO: Add color offsets...
 		if s.NoLighting {
@@ -123,6 +127,8 @@ func (s *Stack) Draw(o *Options) {
 		opts.ColorScale.Reset()
 		opts.ColorScale.Scale(color, color, color, 1.0)
 		opts.ColorScale.ScaleWithColorScale(o.DrawImageOptions.ColorScale)
+
+		opts.ColorScale.ScaleWithColorScale(s.ColorScale)
 
 		if s.Transparency != 0 {
 			opts.ColorScale.ScaleAlpha(1.0 - s.Transparency)
@@ -165,6 +171,15 @@ func (s *Stack) Width() int {
 
 func (s *Stack) Height() int {
 	return s.currentFrame.Slices[0].Image.Bounds().Dy()
+}
+
+func (s *Stack) SetStaxie(name string) error {
+	staxie, err := assets.LoadStaxie(name)
+	if err != nil {
+		return err
+	}
+	s.data = staxie
+	return nil
 }
 
 func (s *Stack) SetStack(name string) error {

@@ -10,6 +10,7 @@ import (
 type Tower struct {
 	render.Positionable // I guess it's okay to re-use this in such a fashion.
 	Stories             []*Story
+	targetStories       int
 	portalOpen          bool
 	dudes               []*Dude
 }
@@ -140,9 +141,15 @@ func (t *Tower) Draw(o *render.Options) {
 
 // AddStory does as it says.
 func (t *Tower) AddStory(s *Story) {
+	if len(t.Stories) > 0 {
+		t.Stories[len(t.Stories)-1].RemoveClouds()
+	}
+
 	s.level = len(t.Stories)
 	t.Stories = append(t.Stories, s)
 	s.tower = t
+
+	s.AddClouds()
 }
 
 // AddDude adds a new dude at the lowest story of the tower and assigns the dude's appropriate activity state.

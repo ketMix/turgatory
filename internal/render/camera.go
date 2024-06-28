@@ -46,7 +46,7 @@ func (c *Camera) SetStory(level int) {
 	case CameraModeStack:
 		c.SetPosition(c.x.Target, float64(level)*c.GetMultiplier()*c.zoom.Target)
 	case CameraModeSuperZoom:
-		c.SetPosition(c.x.Target, 52+float64(level)*c.GetMultiplier()*c.zoom.Target)
+		c.SetPosition(c.x.Target, 61+float64(level)*c.GetMultiplier()*c.zoom.Target)
 	}
 	c.lastLevel = level
 }
