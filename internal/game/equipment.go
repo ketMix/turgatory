@@ -393,7 +393,7 @@ func (e *Equipment) Type() EquipmentType {
 }
 
 func (e *Equipment) GoldValue() int {
-	return e.stats.level * (1 + int(e.quality)) * 10
+	return (e.stats.level + 5*int(e.quality)) * 10
 }
 
 func (e *Equipment) RestoreUses() bool {
