@@ -5,6 +5,6 @@ professions:
  - cleric
 stats: 
   strength: 1
-  wisdom: 2
+  wisdom: 1
   cowardice: 5
 perk: Heal On Room Enter

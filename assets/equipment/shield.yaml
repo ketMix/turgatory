@@ -2,5 +2,5 @@ name: Shield
 description: Protects your vital bits
 type: accessory
 stats: 
-  defense: 3
+  defense: 2
   agility: -1
