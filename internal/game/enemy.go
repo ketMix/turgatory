@@ -168,9 +168,9 @@ func (e *Enemy) XP() int {
 	return e.stats.totalHp
 }
 
-func (e *Enemy) Gold() float64 {
+func (e *Enemy) Gold() int {
 	randMultiplier := 0.5 + rand.Float64()
-	return float64(e.stats.totalHp) * randMultiplier
+	return int(float64(e.stats.totalHp) * randMultiplier)
 }
 
 func (e *Enemy) IsDead() bool {

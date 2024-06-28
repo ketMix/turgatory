@@ -32,7 +32,7 @@ const (
 type Dude struct {
 	name         string
 	xp           int
-	gold         float64
+	gold         int
 	profession   ProfessionKind
 	stats        Stats
 	equipped     map[EquipmentType]*Equipment
@@ -620,11 +620,11 @@ func (d *Dude) Profession() ProfessionKind {
 	return d.profession
 }
 
-func (d *Dude) Gold() float64 {
+func (d *Dude) Gold() int {
 	return d.gold
 }
 
-func (d *Dude) UpdateGold(amount float64) {
+func (d *Dude) UpdateGold(amount int) {
 	d.gold += amount
 	if d.gold < 0 {
 		d.gold = 0
@@ -873,7 +873,7 @@ func (d *Dude) Cursify(roomLevel int) {
 
 	// Check for gold loss
 	if curseRoll <= threshold*0.75 { // high chance for gold loss
-		goldLoss := float64(roomLevel * 5)
+		goldLoss := roomLevel * 5
 		d.Trigger(EventGoldLoss{dude: d, amount: goldLoss})
 		//fmt.Println(d.name, "lost", goldLoss, "gold")
 		t := MakeFloatingTextFromDude(d, fmt.Sprintf("-%.0fgp", goldLoss), color.NRGBA{255, 255, 0, 200}, 40, 0.5)

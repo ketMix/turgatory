@@ -162,8 +162,8 @@ func (p PerkFindGold) chance() float64 {
 	return 0.25 * float64(p.quality)
 }
 
-func (p PerkFindGold) amount() float64 {
-	return float64(p.quality) * 5
+func (p PerkFindGold) amount() int {
+	return int(p.quality) * 5
 }
 
 func (p PerkFindGold) Name() string {
@@ -355,8 +355,8 @@ type PerkStickyFingers struct {
 	*Perk
 }
 
-func (p PerkStickyFingers) amount() float64 {
-	return float64(p.quality+1) * 0.1
+func (p PerkStickyFingers) amount() int {
+	return int(float64(p.quality+1) * 0.1)
 }
 
 func (p PerkStickyFingers) Name() string {
@@ -385,8 +385,8 @@ type PerkGoldBoost struct {
 	*Perk
 }
 
-func (p PerkGoldBoost) amount() float64 {
-	return float64(p.quality+1) * 0.1
+func (p PerkGoldBoost) amount() int {
+	return int(float64(p.quality+1) * 0.1)
 }
 
 func (p PerkGoldBoost) Name() string {

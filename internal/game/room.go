@@ -230,7 +230,7 @@ func (r *Room) Update(req *ActivityRequests, g *Game) {
 						aliveDudes++
 					}
 				}
-				goldPerDude := r.boss.Gold() / float64(aliveDudes)
+				goldPerDude := int(r.boss.Gold() / aliveDudes)
 				xp := r.boss.XP() / aliveDudes
 				AddMessage(
 					MessageGood,
@@ -238,7 +238,7 @@ func (r *Room) Update(req *ActivityRequests, g *Game) {
 				)
 				AddMessage(
 					MessageLoot,
-					fmt.Sprintf("All dudes have earned %d XP and %f gold ", xp, goldPerDude),
+					fmt.Sprintf("All dudes have earned %d XP and %d gold ", xp, goldPerDude),
 				)
 				r.boss = nil
 				r.killedBoss = true
@@ -556,7 +556,7 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 		case Treasure:
 			// Add gold
 			goldAmount := (r.story.level + 1) * rand.Intn(10*int(r.size))
-			e.dude.Trigger(EventGoldGain{dude: e.dude, amount: float64(goldAmount)})
+			e.dude.Trigger(EventGoldGain{dude: e.dude, amount: goldAmount})
 		case Library:
 			// Level up a random equipment perk or add one
 			maxQuality := PerkQuality(r.story.level/2 + 1)
