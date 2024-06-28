@@ -724,6 +724,11 @@ func (d *Dude) NextLevelXP() int {
 }
 
 func (d *Dude) Heal(amount int) int {
+	// no healing dead dudes
+	if d.IsDead() {
+		return 0
+	}
+
 	initialHP := d.stats.currentHp
 	stats := d.GetCalculatedStats()
 	d.stats.currentHp += amount
@@ -748,7 +753,7 @@ func (d *Dude) FullHeal() {
 	stats := d.GetCalculatedStats()
 
 	// No rez
-	if d.stats.currentHp >= 0 {
+	if !d.IsDead() {
 		d.Heal(stats.totalHp)
 		d.dirtyStats = true
 	}
@@ -955,6 +960,10 @@ func (d *Dude) Cursify(roomLevel int) {
 }
 
 func (d *Dude) TrapDamage(roomLevel int) {
+	// he's dead jim
+	if d.IsDead() {
+		return
+	}
 	// Chance based on agility
 	agilityRoll := rand.Intn(d.stats.agility + 1)
 
