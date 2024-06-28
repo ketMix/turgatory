@@ -1199,10 +1199,11 @@ func (gip *GameInfoPanel) Draw(o *render.Options) {
 }
 
 type DudePanel2 struct {
-	panel *UIPanel
-	list  *UIItemList
-	title *UIText
-	//dudeDefs []*DudeDef
+	panel       *UIPanel
+	list        *UIItemList
+	dudeSprites []*UIImage
+	title       *UIText
+	onItemClick func(index int)
 }
 
 func MakeDudePanel2() DudePanel2 {
@@ -1215,22 +1216,77 @@ func MakeDudePanel2() DudePanel2 {
 	dp.panel.AddChild(dp.list)
 	dp.panel.sizeChildren = true
 	dp.panel.centerChildren = true
+	dp.list.centerItems = true
+	dp.list.centerList = true
 
 	return dp
 }
 
-/*func (dp *DudePanel2) SetDudeDefs(dudeDefs []*DudeDef) {
+func (dp *DudePanel2) SetDudes(dudes []*Dude) {
 	dp.list.Clear()
-	for _, dd := range dudeDefs {
-		img := NewUIImage(dd.image)
-		img.ignoreScale = true
+	dp.dudeSprites = nil
+	for index, dude := range dudes {
+		img := dp.DudeToImage(dude)
+		img.scale = 1
+
+		img.onCheck = func(kind UICheckKind) {
+			if kind == UICheckClick && dp.onItemClick != nil {
+				dp.onItemClick(index)
+				dp.list.selected = index
+			}
+		}
+
 		dp.list.AddItem(img)
+		dp.dudeSprites = append(dp.dudeSprites, img)
 	}
-}*/
+}
+
+func (dp *DudePanel2) DudeToImage(dude *Dude) *UIImage {
+	stack := render.CopyStack(dude.stack)
+
+	img := ebiten.NewImage(int(float64(stack.Width())*1.25), int(float64(stack.Height())*2))
+	img.Clear()
+
+	profileOptions := render.Options{
+		Screen: img,
+		Pitch:  1,
+	}
+	stack.SetPosition(0, float64(stack.Height())*1.25)
+	stack.SetRotation(math.Pi / 3)
+
+	// Absoltue criminality.
+	profileOptions.DrawImageOptions.ColorScale.Scale(0, 0, 0, 1)
+	for x := -1; x < 2; x += 2 {
+		for y := -1; y < 2; y += 2 {
+			profileOptions.DrawImageOptions.GeoM.Scale(1.25, 1)
+			profileOptions.DrawImageOptions.GeoM.Translate(float64(x), float64(y))
+			stack.Draw(&profileOptions)
+			profileOptions.DrawImageOptions.GeoM.Reset()
+		}
+	}
+	profileOptions.DrawImageOptions.ColorScale.Reset()
+
+	profileOptions.DrawImageOptions.GeoM.Scale(1.25, 1)
+	stack.Draw(&profileOptions)
+
+	for _, eq := range dude.equipped {
+		estack := render.CopyStack(eq.stack)
+		estack.SetOrigin(stack.Origin())
+		estack.SetPosition(stack.Position())
+		estack.SetRotation(stack.Rotation())
+		estack.Draw(&profileOptions)
+	}
+
+	return NewUIImage(profileOptions.Screen)
+}
 
 func (dp *DudePanel2) Layout(o *UIOptions) {
 	dp.panel.padding = 6 * o.Scale
 	dp.list.SetSize(dp.panel.Width(), dp.panel.Height()-dp.panel.padding*2-dp.title.Height())
+	for _, ds := range dp.dudeSprites {
+		ds.Layout(dp.list, o)
+	}
+	dp.list.Layout(nil, o)
 
 	dp.panel.Layout(nil, o)
 }
