@@ -407,7 +407,7 @@ func (d *Dude) Trigger(e Event) Activity {
 				d.AddXP(xp)
 				AddMessage(
 					MessageGood,
-					fmt.Sprintf("%s defeated %s and gained %d xp and %.0fgp", d.name, d.enemy.name, xp, gold),
+					fmt.Sprintf("%s defeated %s and gained %d xp and %d gp", d.name, d.enemy.name, xp, gold),
 				)
 				d.enemy = nil
 			} else {
