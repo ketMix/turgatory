@@ -86,8 +86,8 @@ func (b *UIButton) Check(mx, my float64, kind UICheckKind) bool {
 		if mx > x && mx < x+w && my > y && my < y+h {
 			if b.onCheck != nil {
 				b.onCheck(kind)
-				return true
 			}
+			return true
 		}
 	}
 	return false
@@ -518,7 +518,8 @@ func (p *UIPanel) Check(mx, my float64, kind UICheckKind) bool {
 			return true
 		}
 	}
-	return false
+	return true
+	//return false
 }
 
 func (p *UIPanel) Draw(o *render.Options) {
