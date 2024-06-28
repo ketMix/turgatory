@@ -425,7 +425,7 @@ func (s *Story) RoomIndexFromAngle(rads float64) int {
 	if rads < 0 {
 		rads += math.Pi * 2
 	}
-	return int(math.Floor(rads/(math.Pi/4))) % len(s.rooms)
+	return int(math.Abs(math.Floor(rads/(math.Pi/4)))) % len(s.rooms)
 }
 
 func (s *Story) IsInCenterOfRoom(rads float64, roomIndex int) bool {
