@@ -1305,7 +1305,19 @@ func (edp *EquipmentDetailsPanel) SetEquipment(equipment *Equipment) {
 		edp.title.SetText(equipment.Name())
 		edp.title.textOptions.Color = equipment.quality.TextColor()
 		edp.description.SetText(equipment.Description())
-		edp.level.SetText(fmt.Sprintf("Level %d %s", equipment.stats.level, equipment.Type()))
+		professions := equipment.professions
+		professionText := ""
+		if len(professions) > 0 {
+			for i, p := range professions {
+				if i > 0 {
+					professionText += "/"
+				}
+				professionText += p.String()
+			}
+			professionText += " "
+		}
+
+		edp.level.SetText(fmt.Sprintf("Level %d %s%s", equipment.stats.level, professionText, equipment.Type()))
 
 		edp.uses.SetText(fmt.Sprintf("%d/%d uses", equipment.uses, equipment.totalUses))
 
