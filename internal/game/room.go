@@ -157,6 +157,7 @@ type RoomTemplate struct {
 // Room is a room within a story of za toweru.
 type Room struct {
 	story          *Story
+	required       bool
 	index          int // Reference to the index within the story.
 	kind           RoomKind
 	size           RoomSize
@@ -172,10 +173,11 @@ type Room struct {
 	highlight      bool
 }
 
-func NewRoom(size RoomSize, kind RoomKind) *Room {
+func NewRoom(size RoomSize, kind RoomKind, required bool) *Room {
 	r := &Room{
 		size:       size,
 		kind:       kind,
+		required:   required,
 		killedBoss: false,
 	}
 
@@ -532,7 +534,7 @@ func GetRequiredRooms(storyLevel int, roomCount int) []*RoomDef {
 	level := storyLevel + 1
 
 	if level%3 == 0 {
-		roomDef := GetRoomDef(Boss, Huge)
+		roomDef := GetRoomDef(Boss, Huge, true)
 		return []*RoomDef{roomDef}
 	}
 
@@ -599,7 +601,7 @@ func GetRequiredRooms(storyLevel int, roomCount int) []*RoomDef {
 
 	// Select combat room
 	combatRoom := potentialCombatRooms[rand.Intn(len(potentialCombatRooms))]
-	roomDef := GetRoomDef(combatRoom.kind, combatRoom.size)
+	roomDef := GetRoomDef(combatRoom.kind, combatRoom.size, true)
 	rooms = append(rooms, roomDef)
 
 	roomCount -= 1
@@ -614,7 +616,7 @@ func GetRequiredRooms(storyLevel int, roomCount int) []*RoomDef {
 		if i+int(room.size) > roomCount || room.size > remainingSize {
 			continue
 		}
-		roomDef := GetRoomDef(room.kind, room.size)
+		roomDef := GetRoomDef(room.kind, room.size, true)
 		rooms = append(rooms, roomDef)
 		i += int(room.size)
 		remainingSize -= room.size
@@ -669,7 +671,7 @@ func GetOptionalRooms(storyLevel int, roomCount int) []*RoomDef {
 	rooms := make([]*RoomDef, 0)
 	for i := 0; i < roomCount; i++ {
 		room := potentialRooms[rand.Intn(len(potentialRooms))]
-		roomDef := GetRoomDef(room.kind, room.size)
+		roomDef := GetRoomDef(room.kind, room.size, false)
 		rooms = append(rooms, roomDef)
 	}
 	return rooms

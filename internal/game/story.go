@@ -42,10 +42,10 @@ func NewStoryWithSize(size int) *Story {
 
 	// Fill with template rooms
 	for i := 0; i < size-1; i++ {
-		story.PlaceRoom(NewRoom(Small, Empty), i)
+		story.PlaceRoom(NewRoom(Small, Empty, false), i)
 	}
 	// Place entrance/exit room
-	room := NewRoom(Small, Stairs)
+	room := NewRoom(Small, Stairs, true)
 	PanicIfErr(story.PlaceRoom(room, 7))
 
 	for i := 0; i < 4; i++ {
@@ -410,7 +410,7 @@ func (s *Story) RemoveRoom(index int) error {
 	// Clear out the room references.
 	for i := 0; i < int(room.size); i++ {
 		s.rooms[index+i] = nil
-		s.PlaceRoom(NewRoom(Small, Empty), index+i)
+		s.PlaceRoom(NewRoom(Small, Empty, false), index+i)
 	}
 	room.story = nil
 	room.index = -1

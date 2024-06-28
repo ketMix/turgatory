@@ -9,14 +9,15 @@ import (
 
 // RoomDef is used for providing the visuals for placing a room. It renders a stack at a pitch of 1 to a new image and stores that image for use during rendering.
 type RoomDef struct {
-	kind  RoomKind
-	size  RoomSize
-	image *ebiten.Image
+	kind     RoomKind
+	size     RoomSize
+	image    *ebiten.Image
+	required bool
 }
 
 var RoomDefs = make(map[string]*RoomDef)
 
-func GetRoomDef(kind RoomKind, size RoomSize) *RoomDef {
+func GetRoomDef(kind RoomKind, size RoomSize, required bool) *RoomDef {
 	key := fmt.Sprintf("%s_%s", kind.String(), size.String())
 	if r, ok := RoomDefs[key]; ok {
 		return r
@@ -42,9 +43,10 @@ func GetRoomDef(kind RoomKind, size RoomSize) *RoomDef {
 	stack.Draw(&o)
 
 	r := &RoomDef{
-		kind:  kind,
-		size:  size,
-		image: img,
+		kind:     kind,
+		size:     size,
+		image:    img,
+		required: required,
 	}
 
 	RoomDefs[key] = r

@@ -64,11 +64,25 @@ func (s *GameStateBuild) Begin(g *Game) {
 	g.ui.buttonPanel.Enable()
 	g.ui.buttonPanel.onClick = func() {
 		emptyRooms := 0
+		requiredRooms := 0
 		for _, room := range s.nextStory.rooms {
 			if room.kind == Empty {
 				emptyRooms++
 			}
 		}
+		for _, room := range s.availableRooms {
+			if room.required {
+				requiredRooms++
+			}
+		}
+
+		// If there are required rooms, prevent the player from leaving.
+		if requiredRooms > 0 {
+			g.ui.feedback.Msg(FeedbackBad, "you must place all required rooms!")
+			return
+		}
+
+		// If there are empty rooms, and we have rooms to place, ask for confirmation.
 		if emptyRooms > 0 && len(s.availableRooms) > 0 {
 			if s.readyAttempts > 0 {
 				g.ui.feedback.Msg(FeedbackBad, "...so be it")
@@ -192,7 +206,7 @@ func (s *GameStateBuild) TryPlaceRoom(g *Game) {
 			// If it's not stairs or empty, allow the player to sell it back at full value.
 			if s.focusedRoom.kind != Stairs && s.focusedRoom.kind != Empty {
 				g.gold += GetRoomCost(s.focusedRoom.kind, s.focusedRoom.size, s.nextStory.level)
-				s.availableRooms = append(s.availableRooms, GetRoomDef(s.focusedRoom.kind, s.focusedRoom.size))
+				s.availableRooms = append(s.availableRooms, GetRoomDef(s.focusedRoom.kind, s.focusedRoom.size, s.focusedRoom.required))
 				g.ui.roomPanel.SetRoomDefs(s.availableRooms)
 				g.UpdateInfo()
 				g.ui.feedback.Msg(FeedbackGood, fmt.Sprintf("%s %s sold!", s.focusedRoom.size.String(), s.focusedRoom.kind.String()))
@@ -201,7 +215,7 @@ func (s *GameStateBuild) TryPlaceRoom(g *Game) {
 				if g.gold-GetRoomCost(s.placingRoom.kind, s.placingRoom.size, s.nextStory.level) < 0 {
 					g.ui.feedback.Msg(FeedbackBad, "ur broke lol")
 				} else {
-					room := NewRoom(s.placingRoom.size, s.placingRoom.kind)
+					room := NewRoom(s.placingRoom.size, s.placingRoom.kind, s.placingRoom.required)
 					if err := s.nextStory.PlaceRoom(room, s.focusedRoom.index); err != nil {
 						g.ui.feedback.Msg(FeedbackBad, err.Error())
 					} else {
@@ -229,7 +243,6 @@ func (s *GameStateBuild) TryPlaceRoom(g *Game) {
 			}
 		}
 	}
-
 }
 
 func (s *GameStateBuild) BuyDude(g *Game) {
