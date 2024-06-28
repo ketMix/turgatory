@@ -48,15 +48,7 @@ func (s *GameStateBuild) Begin(g *Game) {
 	g.selectedDude = nil
 
 	// Generate our new rooms.
-	numOptional := 3 + len(g.tower.Stories)/3
-	required := GetRequiredRooms(s.nextStory.level, 2)
-	optional := GetOptionalRooms(s.nextStory.level, numOptional) // 6 is minimum, but let's given 3 more for fun.
-	s.availableRooms = append(s.availableRooms, required...)
-	s.availableRooms = append(s.availableRooms, optional...)
-	s.availableRooms = SortRooms(s.availableRooms)
-
-	// Update room panel.
-	g.ui.roomPanel.SetRoomDefs(s.availableRooms)
+	s.RollRooms(g)
 	// Add onClick handler.
 	g.ui.roomPanel.onItemClick = func(which int) {
 		g.ui.roomInfoPanel.hidden = false
@@ -72,16 +64,19 @@ func (s *GameStateBuild) Begin(g *Game) {
 		s.BuyEquipment(g)
 	}
 	g.ui.equipmentPanel.buyButton.text.SetText(fmt.Sprintf("Random Loot\n%dgp", s.EquipmentCost()))
+	g.ui.equipmentPanel.buyButton.disabled = false
 
 	g.ui.dudePanel2.buyButton.onClick = func() {
 		s.BuyDude(g)
 	}
 	g.ui.dudePanel2.buyButton.text.SetText(fmt.Sprintf("Random Dude\n%dgp", s.DudeCost()))
+	g.ui.dudePanel2.buyButton.disabled = false
 
 	g.ui.roomPanel.buyButton.onClick = func() {
 		s.RerollRooms(g)
 	}
 	g.ui.roomPanel.buyButton.text.SetText(fmt.Sprintf("Reroll Rooms\n%dgp", s.RerollCost()))
+	g.ui.roomPanel.buyButton.disabled = false
 
 	// I guess we can allow the player to yeet whenever.
 	g.ui.buttonPanel.Enable()
@@ -135,6 +130,9 @@ func (s *GameStateBuild) End(g *Game) {
 	}
 	g.ui.buttonPanel.hidden = true
 	g.ui.roomInfoPanel.hidden = true
+	g.ui.roomPanel.buyButton.disabled = true
+	g.ui.dudePanel2.buyButton.disabled = true
+	g.ui.equipmentPanel.buyButton.disabled = true
 }
 func (s *GameStateBuild) Update(g *Game) GameState {
 	if s.readyAttempts >= 2 {
@@ -296,12 +294,16 @@ func (s *GameStateBuild) TryPlaceRoom(g *Game) {
 }
 
 func (s *GameStateBuild) RollRooms(g *Game) {
+	s.availableRooms = nil
 	numOptional := 3 + len(g.tower.Stories)/3
 	required := GetRequiredRooms(s.nextStory.level, 2)
 	optional := GetOptionalRooms(s.nextStory.level, numOptional) // 6 is minimum, but let's given 3 more for fun.
 	s.availableRooms = append(s.availableRooms, required...)
 	s.availableRooms = append(s.availableRooms, optional...)
 	s.availableRooms = SortRooms(s.availableRooms)
+
+	// Update room panel.
+	g.ui.roomPanel.SetRoomDefs(s.availableRooms)
 }
 
 func (s *GameStateBuild) RerollCost() int {
