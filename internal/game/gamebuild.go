@@ -465,10 +465,13 @@ func (s *GameStateBuild) BuyDude(g *Game) {
 		return
 	}
 	g.gold -= cost
-	level := len(g.tower.Stories) + 1
-	if level < 1 {
-		level = 1
+
+	// Average level of all dudes.
+	level := 0
+	for _, d := range g.dudes {
+		level += d.stats.level
 	}
+	level /= len(g.dudes)
 
 	// Random profession ??
 	profession := RandomProfessionKind()
