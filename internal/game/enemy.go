@@ -35,6 +35,8 @@ func (e EnemyKind) String() string {
 		return "Boss Rat"
 	case EnemyBossSlime:
 		return "Boss Slime"
+	case EnemyBossSkelly:
+		return "Boss Skelly"
 	case EnemyBossEbi:
 		return "Boss Ebi"
 	default:
