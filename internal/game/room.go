@@ -329,7 +329,7 @@ func (r *Room) getPanVol(cameraRot float64, roomCenter float64, multiplier float
 
 	// Calculate angle difference
 	angleDiff := math.Mod(cR-rR+math.Pi, 2*math.Pi) - math.Pi
-	angleDiff -= 0.12828171122335682 // oh yeah, we're cooking with gas now
+	angleDiff -= 0.1283 // oh yeah, we're cooking with gas now
 
 	// Determine pan
 	pan := angleDiff / (math.Pi / 2)
@@ -423,13 +423,17 @@ func (r *Room) RollLoot(luck int) *Equipment {
 	}
 
 	// Determine if we get equipment at all
-	if rand.Intn(100) > ((luck + 1) * 20) {
+	// Higher luck increases chance of finding equipment
+	// Base chance is 10%
+	// Max chance is 50%
+	getsLoot := rand.Float64() < math.Min(0.1+float64(luck)/100.0, 0.5)
+	if !getsLoot {
 		return nil
 	}
 
 	// Determine the initial quality of the equipment based on luck
-	fromLuck := float64(luck) / 5.0
-	fromRoomLevel := float64(r.story.level) / 2.0
+	fromLuck := float64(luck) / 10.0
+	fromRoomLevel := float64(r.story.level) / 3.0
 	initialQuality := EquipmentQuality((math.Floor(fromLuck + fromRoomLevel)))
 	if initialQuality > EquipmentQualityLegendary {
 		initialQuality = EquipmentQualityLegendary
@@ -437,11 +441,14 @@ func (r *Room) RollLoot(luck int) *Equipment {
 
 	// Determine if perk exists based on luck
 	// Determine perk quality based on luck and room level
-	hasPerk := rand.Intn(100) < luck
+	// Base chance is 5%
+	// Max chance is 25%
 	var perk IPerk = nil
+
+	hasPerk := rand.Float64() < math.Min(0.05+float64(luck)/100.0, 0.25)
 	if hasPerk {
-		fromLuck = float64(luck) / 5.0
-		fromRoomLevel = float64(r.story.level) / 2.0
+		fromLuck = float64(luck) / 10.0
+		fromRoomLevel = float64(r.story.level) / 3.0
 		perkQuality := PerkQuality((math.Floor(fromLuck + fromRoomLevel)))
 		if perkQuality > PerkQualityGodly {
 			perkQuality = PerkQualityGodly
