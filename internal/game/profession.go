@@ -120,7 +120,7 @@ func getStartingStats(kind ProfessionKind, level int) *Stats {
 			wisdom:    1,
 			defense:   3,
 			agility:   1,
-			cowardice: -15, // balls get bigger
+			cowardice: -1, // balls get bigger
 			luck:      0,
 		}, false)
 	case Cleric:
@@ -131,7 +131,7 @@ func getStartingStats(kind ProfessionKind, level int) *Stats {
 			wisdom:    3,
 			defense:   1,
 			agility:   2,
-			cowardice: 10, // balls get smaller
+			cowardice: 2, // balls get smaller
 			luck:      0,
 		}, false)
 	case Vagabond:
@@ -142,7 +142,7 @@ func getStartingStats(kind ProfessionKind, level int) *Stats {
 			wisdom:    1,
 			defense:   2,
 			agility:   1,
-			cowardice: 5,
+			cowardice: 1,
 			luck:      0,
 		}, false)
 	case Ranger:
@@ -153,7 +153,7 @@ func getStartingStats(kind ProfessionKind, level int) *Stats {
 			wisdom:    1,
 			defense:   1,
 			agility:   3,
-			cowardice: 15,
+			cowardice: 3,
 			luck:      0,
 		}, false)
 	default:

@@ -175,7 +175,7 @@ func (p PerkFindGold) String() string {
 }
 
 func (p PerkFindGold) Description() string {
-	return fmt.Sprintf("Has a %.2f Chance to find finds %.2f gold", p.chance()*100, p.amount())
+	return fmt.Sprintf("Has a %.2f Chance to find finds %d gold", p.chance()*100, p.amount())
 }
 
 func (p PerkFindGold) Check(e Event) bool {
@@ -194,6 +194,13 @@ type PerkStatBoost struct {
 	stat Stat
 }
 
+func (p PerkStatBoost) amount() int {
+	if p.stat == StatMaxHP {
+		return int(p.quality) * 10
+	}
+	return int(p.quality) + 1
+}
+
 func (p PerkStatBoost) Name() string {
 	statStr := string(p.stat)
 	return constructName(p.String(), p.quality, &statStr)
@@ -207,16 +214,16 @@ func (p PerkStatBoost) Description() string {
 	if p.stat == "" {
 		return "No bonus! How sad."
 	}
-	return fmt.Sprintf("Boosts %s stat by %d", p.stat, p.quality+1)
+	return fmt.Sprintf("Boosts %s stat by %d", p.stat, p.amount())
 }
 
 func (p PerkStatBoost) Check(e Event) bool {
 	switch e := e.(type) {
 	case EventEquip:
-		e.dude.Stats().ModifyStat(p.stat, int(p.quality)+1)
+		e.dude.Stats().ModifyStat(p.stat, p.amount())
 		return true
 	case EventUnequip:
-		e.dude.Stats().ModifyStat(p.stat, -int(p.quality)+1)
+		e.dude.Stats().ModifyStat(p.stat, p.amount())
 		return true
 	}
 	return false
@@ -368,7 +375,7 @@ func (p PerkStickyFingers) String() string {
 }
 
 func (p PerkStickyFingers) Description() string {
-	return fmt.Sprintf("Reduces gold loss by %f percent", p.amount()*100)
+	return fmt.Sprintf("Reduces gold loss by %.2f percent", p.amount()*100)
 }
 
 func (p PerkStickyFingers) Check(e Event) bool {
@@ -398,7 +405,7 @@ func (p PerkGoldBoost) String() string {
 }
 
 func (p PerkGoldBoost) Description() string {
-	return fmt.Sprintf("Increases gold gain by %f percent", p.amount()*100)
+	return fmt.Sprintf("Increases gold gain by %.2f percent", p.amount()*100)
 }
 
 func (p PerkGoldBoost) Check(e Event) bool {
@@ -481,7 +488,6 @@ func GetRandomPerk(quality PerkQuality) IPerk {
 		PerkStatBoost{perk, StatWisdom},
 		PerkStatBoost{perk, StatDefense},
 		PerkStatBoost{perk, StatAgility},
-		PerkStatBoost{perk, StatCowardice},
 		PerkStatBoost{perk, StatLuck},
 		PerkStatBoost{perk, StatMaxHP},
 		PerkHealOnRoomEnter{perk},

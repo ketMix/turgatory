@@ -466,12 +466,12 @@ func (d *Dude) Trigger(e Event) Activity {
 	case EventGoldGain:
 		d.UpdateGold(e.amount)
 		//fmt.Println(d.name, "gained", e.amount, "gold")
-		t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%.0fgp", e.amount), color.NRGBA{255, 255, 0, 255}, 40, 0.6)
+		t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%dgp", e.amount), color.NRGBA{255, 255, 0, 255}, 40, 0.6)
 		d.story.AddText(t)
 	case EventGoldLoss:
 		d.UpdateGold(e.amount)
 		//fmt.Println(d.name, "lost", e.amount, "gold")
-		t := MakeFloatingTextFromDude(d, fmt.Sprintf("-%.0fgp", e.amount), color.NRGBA{255, 255, 0, 255}, 40, 0.4)
+		t := MakeFloatingTextFromDude(d, fmt.Sprintf("-%dgp", e.amount), color.NRGBA{255, 255, 0, 255}, 40, 0.4)
 		d.story.AddText(t)
 	}
 	return nil

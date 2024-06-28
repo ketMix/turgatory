@@ -35,8 +35,6 @@ type Stats struct {
 	levelUpChange *Stats
 }
 
-const WISDOM_PER_VARIANCE = 5
-
 // ApplyLevelUp applies the level up changes to the stats
 // with some variance depend on wisdom
 func (s *Stats) LevelUp() {
@@ -44,13 +42,11 @@ func (s *Stats) LevelUp() {
 	s.level += 1
 
 	// variance is a random number between 1 and (wisdom/5) + 1
-	// need 5 wisdom to get a variance of 2
 	// lowest variance is 1
-	// multiplier can get pretty high with his wisdom and level
-
 	variance := func() float64 {
-		return 1 + rand.Float64()*(float64(s.wisdom)/WISDOM_PER_VARIANCE)
+		return 1 + rand.Float64()
 	}
+
 	getValue := func(base int) int {
 		return int(math.Floor(float64(base) * variance()))
 	}
@@ -69,43 +65,17 @@ func (s *Stats) LevelUp() {
 }
 
 // ApplyLevelDown applies the level down changes to the stats
-// with some variance depend on wisdom
 func (s *Stats) LevelDown() {
 	// the devil refuses to heal you
 	s.currentHp += 0
 
-	// instead of using variance to determine the amount it increases,
-	// we use it to determine if the stat is skipped from being reduced
-	// variance is a number between 1 and (wisdom/5) + 1
-	// lowest variance is 0.1
-	level := s.level
-	if level <= 0 {
-		level = 1
-	}
-	threshold := 0.1 * (float64(s.wisdom)/WISDOM_PER_VARIANCE + float64(level))
-
-	// conditionally apply the variance to the stats
-	if rand.Float64() > threshold {
-		s.ModifyStat(StatMaxHP, -s.levelUpChange.totalHp)
-	}
-	if rand.Float64() > threshold {
-		s.ModifyStat(StatStrength, -s.levelUpChange.strength)
-	}
-	if rand.Float64() > threshold {
-		s.ModifyStat(StatWisdom, -s.levelUpChange.wisdom)
-	}
-	if rand.Float64() > threshold {
-		s.ModifyStat(StatDefense, -s.levelUpChange.defense)
-	}
-	if rand.Float64() > threshold {
-		s.ModifyStat(StatAgility, -s.levelUpChange.agility)
-	}
-	if rand.Float64() > threshold {
-		s.ModifyStat(StatCowardice, -s.levelUpChange.cowardice)
-	}
-	if rand.Float64() > threshold {
-		s.ModifyStat(StatLuck, -s.levelUpChange.luck)
-	}
+	s.ModifyStat(StatMaxHP, -s.levelUpChange.totalHp)
+	s.ModifyStat(StatStrength, -s.levelUpChange.strength)
+	s.ModifyStat(StatWisdom, -s.levelUpChange.wisdom)
+	s.ModifyStat(StatDefense, -s.levelUpChange.defense)
+	s.ModifyStat(StatAgility, -s.levelUpChange.agility)
+	s.ModifyStat(StatCowardice, -s.levelUpChange.cowardice)
+	s.ModifyStat(StatLuck, -s.levelUpChange.luck)
 
 	// cant forget this part
 	s.level -= 1

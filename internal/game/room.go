@@ -259,7 +259,7 @@ func (r *Room) Update(req *ActivityRequests, g *Game) {
 						amount, dodged := bossTarget.ApplyDamage(r.boss.Hit())
 						act := bossTarget.Trigger(EventDudeHit{dude: bossTarget, amount: amount})
 						if !dodged && !bossTarget.IsDead() {
-							bossTarget.stats.ModifyStat(StatCowardice, r.boss.stats.strength)
+							bossTarget.stats.ModifyStat(StatCowardice, -1)
 						}
 						if act != nil {
 							req.Add(act)

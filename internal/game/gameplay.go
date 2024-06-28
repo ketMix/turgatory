@@ -109,9 +109,8 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 						g.tower.ClearBodies()
 						return &GameStateBuild{}
 					}
-				case RoomWaitActivity:
-					g.ui.feedback.Msg(FeedbackBad, "a boss -- can ur dudes make it??")
 				case RoomStartBossActivity:
+					g.ui.feedback.Msg(FeedbackBad, "a boss -- can ur dudes make it??")
 					g.ui.bossPanel.hidden = false
 					g.ui.bossPanel.current = float64(u.room.boss.stats.currentHp) / float64(u.room.boss.stats.totalHp)
 					g.ui.bossPanel.text.SetText(u.room.boss.Name())
