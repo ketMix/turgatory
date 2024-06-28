@@ -1,5 +1,7 @@
 name: Ebi
-description: A... shrimp? Holding it makes you feel lucky... and a bit hungry.
+description: |
+  A... shrimp? Holding it makes you feel lucky...
+  and a bit hungry.
 type: accessory
 stats: 
   luck: 5
