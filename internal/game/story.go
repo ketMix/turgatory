@@ -197,8 +197,6 @@ func (s *Story) Update(req *ActivityRequests, g *Game) {
 
 // Draw draws the rooms.
 func (s *Story) Draw(o *render.Options) {
-	s.vgroup.Clear()
-
 	opts := &render.Options{
 		Camera:        o.Camera,
 		Screen:        o.Screen,
@@ -213,7 +211,6 @@ func (s *Story) Draw(o *render.Options) {
 	opts.DrawImageOptions.GeoM.Translate(StoryVGroupWidth/2, StoryVGroupHeight/2)
 
 	// If the story is not yet open, just draw the tower exterior stacks.
-	s.hasRenderedWalls = false
 	if !s.open {
 		var storyWithWalls *Story
 		for _, story := range s.tower.Stories {
@@ -230,9 +227,12 @@ func (s *Story) Draw(o *render.Options) {
 			storyWithWalls.vgroup.Draw(o)
 			return
 		}
+		s.vgroup.Clear()
 		s.walls.Draw(opts)
 		s.hasRenderedWalls = true
 	} else {
+		s.vgroup.Clear()
+		s.hasRenderedWalls = false
 		// Conditionally render the walls based upon rotation.
 		for _, stack := range s.walls {
 			r := stack.Rotation() + o.TowerRotation

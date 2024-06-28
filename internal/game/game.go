@@ -210,7 +210,8 @@ func (g *Game) CheckUI() (bool, UICheckKind) {
 
 func (g *Game) UpdateInfo() {
 	var currentStory *Story
-	for _, story := range g.tower.Stories {
+	for i := len(g.tower.Stories) - 1; i >= 0; i-- {
+		story := g.tower.Stories[i]
 		if story.open {
 			currentStory = story
 			break
