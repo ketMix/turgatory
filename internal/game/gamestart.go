@@ -9,9 +9,13 @@ import (
 
 type GameStateStart struct {
 	newDudes []*Dude
+	length   int
 }
 
 func (s *GameStateStart) Begin(g *Game) {
+	if s.length == 0 {
+		s.length = 3
+	}
 	// Give the player a reasonable amount of GOLD
 	g.gold = 700
 
@@ -33,14 +37,13 @@ func (s *GameStateStart) Begin(g *Game) {
 
 	// Create a new tower, yo.
 	tower := NewTower()
-
-	firstStory := NewStory()
-	firstStory.Open()
-	tower.AddStory(firstStory)
-	tower.AddStory(NewStory())
-	tower.AddStory(NewStory())
-	tower.AddStory(NewStory())
-	tower.AddStory(NewStory())
+	for i := 0; i < 3+s.length*2; i++ {
+		story := NewStory()
+		if i == 0 {
+			story.Open()
+		}
+		tower.AddStory(story)
+	}
 
 	g.tower = tower
 }
