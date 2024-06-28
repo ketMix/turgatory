@@ -72,7 +72,6 @@ func (vg *VGroup) Draw(o *Options) {
 		w, h := vg.Width, vg.Height
 		for i := 0; i < h; i++ {
 			opts2 := ebiten.DrawImageOptions{}
-
 			opts2.GeoM.Concat(opts.GeoM)
 			opts2.GeoM.Translate(0, float64(h)) // It seems okay to shunt it down like this..
 			opts2.GeoM.Translate(0, float64(i))

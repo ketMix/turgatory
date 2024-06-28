@@ -24,8 +24,8 @@ type Story struct {
 const StoryHeight = 28                                      // StoryHeight is used to space stories apart from each other vertically.
 const StorySlices = 28                                      // The amount of slices used for the frame buffers, should be equal to maximum staxie slice count used in a story.
 const StoryWallHeight = 9                                   // The height of the wall stack -- this is repeated 3 times to get the full height (roughly)
-const StoryVGroupWidth = 256                                // Framebuffer's maximum width for rendering.
-const StoryVGroupHeight = 256                               // Framebuffer's maximum height for rendering.
+const StoryVGroupWidth = 128                                // Framebuffer's maximum width for rendering.
+const StoryVGroupHeight = 144                               // Framebuffer's maximum height for rendering.
 const PortalDistance = 44                                   // Distance from the center of the tower to the portal.
 const PortalRotationHuge = 7.0 * -(math.Pi / 8)             // Rotation of the portal.
 const PortalRotationLarge = 7.0*-(math.Pi/8) - math.Pi/4.5  // Rotation of the portal.
