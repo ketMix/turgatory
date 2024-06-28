@@ -137,8 +137,19 @@ func (s *GameStateBuild) Update(g *Game) GameState {
 		if kind == UICheckHover {
 			mx, my := IntToFloat2(ebiten.CursorPosition())
 
+			// Center of screen.
 			cx := float64(g.lastWidth) / 2
 			cy := float64(g.lastHeight) / 2
+
+			// if mouse is not within a bounds, unhighlight.
+			buffer := 100.0 * g.camera.Zoom()
+			if mx < cx-buffer || mx > cx+buffer || my < cy-buffer || my > cy+buffer {
+				if s.focusedRoom != nil {
+					s.focusedRoom.highlight = false
+				}
+				s.focusedRoom = nil
+				return nil
+			}
 
 			// FIXME: This ain't right.
 			cy -= float64(s.nextStory.level) * 20 * g.camera.Zoom()
