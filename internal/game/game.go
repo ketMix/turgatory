@@ -119,14 +119,22 @@ func (g *Game) Update() error {
 		// Build map of roomkind to max vol
 		roomPanVol := make(map[RoomKind]PanVol)
 
-		for _, story := range g.tower.Stories {
-			// If we have dudes in that story, calculate the pan and vol for each room.
-			if len(story.dudes) > 0 || story.open {
-				for i, room := range story.rooms {
-					pan, vol := room.getPanVol(g.camera.Rotation(), story.GetRoomCenterRad(i), 1.0) // Replace 1.0 with a calculation based on focused story index vs. current
-					if roomPanVol[room.kind].Vol < vol {
-						roomPanVol[room.kind] = PanVol{Pan: pan, Vol: vol}
-					}
+		// Play tracks from all stories
+		currentStoryIndex := g.camera.Story()
+		for storyIndex, story := range g.tower.Stories {
+			multiplier := 1.0
+			// Decrease volume by distance from current story
+			// About 1.0 at current story, 0.0 at 3 stories away
+			if storyIndex < currentStoryIndex {
+				multiplier = 1.0 - (float64(currentStoryIndex-storyIndex) * 0.25)
+			} else if storyIndex > currentStoryIndex {
+				multiplier = 1.0 - (float64(storyIndex-currentStoryIndex) * 0.25)
+			}
+
+			for i, room := range story.rooms {
+				pan, vol := room.getPanVol(g.camera.Rotation(), story.GetRoomCenterRad(i), multiplier)
+				if roomPanVol[room.kind].Vol < vol {
+					roomPanVol[room.kind] = PanVol{Pan: pan, Vol: vol}
 				}
 			}
 		}
