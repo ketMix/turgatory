@@ -996,7 +996,7 @@ func (mp *MessagePanel) Draw(o *render.Options) {
 
 	// Set initial position to bottom right of message panel
 	baseX := x + mp.width - 10
-	baseY := y + mp.height - 15 // Bottom edge minus padding
+	baseY := y + mp.height - 17 // Bottom edge minus padding
 
 	// Calculate the number of messages to display
 	maxLines := min(mp.maxLines-1, len(messages))

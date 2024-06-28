@@ -252,13 +252,13 @@ func (s *GameStateBuild) TryPlaceRoom(g *Game) {
 
 func (s *GameStateBuild) BuyDude(g *Game) {
 	// COST?
-	cost := 100
+	cost := 100 * len(g.tower.Stories)
 	if g.gold < cost {
-		AddMessage(MessageError, "Not enough gold to buy a dude.")
+		g.ui.feedback.Msg(FeedbackBad, fmt.Sprintf("need more gold to purchase a dude! (%d)", cost))
 		return
 	}
 	g.gold -= cost
-	level := len(g.tower.Stories) / 2
+	level := len(g.tower.Stories)
 	if level < 1 {
 		level = 1
 	}
@@ -272,14 +272,14 @@ func (s *GameStateBuild) BuyDude(g *Game) {
 
 func (s *GameStateBuild) BuyEquipment(g *Game) {
 	// COST?
-	cost := 50
+	cost := 50 * len(g.tower.Stories)
 	if g.gold < cost {
-		AddMessage(MessageError, "Not enough gold to buy equipment.")
+		g.ui.feedback.Msg(FeedbackBad, fmt.Sprintf("need more gold to purchase a equipment! (%d)", cost))
 		return
 	}
 	g.gold -= cost
 
-	level := len(g.tower.Stories) / 2
+	level := len(g.tower.Stories)
 	e := GetRandomEquipment(level)
 	g.equipment = append(g.equipment, e)
 }
@@ -288,14 +288,15 @@ func (s *GameStateBuild) SellEquipment(g *Game, e *Equipment) {
 	if e == nil {
 		return
 	}
-	g.gold += int(e.GoldValue())
+	value := int(e.GoldValue())
+	g.gold += value
 	for i, eq := range g.equipment {
 		if eq == e {
 			g.equipment = append(g.equipment[:i], g.equipment[i+1:]...)
 			break
 		}
 	}
-
+	AddMessage(MessageLoot, fmt.Sprintf("Sold %s for %d gold.", e.Name(), value))
 	// Trigger on sell event
 	e.Activate(EventSell{equipment: e})
 

@@ -224,14 +224,30 @@ func (r *Room) Update(req *ActivityRequests) {
 	if r.kind == Boss {
 		if r.boss != nil {
 			if r.boss.IsDead() {
-				goldPerDude := r.boss.Gold() / float64(len(r.dudes))
-				xp := r.boss.XP() / len(r.dudes)
+				aliveDudes := 0
+				for _, d := range r.story.dudes {
+					if !d.IsDead() {
+						aliveDudes++
+					}
+				}
+				goldPerDude := r.boss.Gold() / float64(aliveDudes)
+				xp := r.boss.XP() / aliveDudes
+				AddMessage(
+					MessageGood,
+					fmt.Sprintf("The %s has been defeated!", r.boss.Name()),
+				)
+				AddMessage(
+					MessageLoot,
+					fmt.Sprintf("All dudes have earned %d XP and %f gold ", xp, goldPerDude),
+				)
 				r.boss = nil
 				r.killedBoss = true
 				for _, d := range r.dudes {
-					d.AddXP(xp)
-					d.UpdateGold(goldPerDude)
-					req.Add(RoomEndBossActivity{room: r, dude: d})
+					if !d.IsDead() {
+						d.AddXP(xp)
+						d.UpdateGold(goldPerDude)
+						req.Add(RoomEndBossActivity{room: r, dude: d})
+					}
 				}
 			} else {
 				// Boss combat
@@ -240,8 +256,16 @@ func (r *Room) Update(req *ActivityRequests) {
 					r.combatTicks = 0
 					bossTarget := r.boss.GetTarget(r.dudes)
 					if bossTarget != nil {
-						bossTarget.ApplyDamage(r.boss.Hit())
-						bossTarget.stats.ModifyStat(StatCowardice, r.boss.stats.strength)
+						amount, dodged := bossTarget.ApplyDamage(r.boss.Hit())
+						act := bossTarget.Trigger(EventDudeHit{dude: bossTarget, amount: amount})
+						if !dodged && !bossTarget.IsDead() {
+							bossTarget.stats.ModifyStat(StatCowardice, r.boss.stats.strength)
+						}
+						if act != nil {
+							fmt.Println("we got an activity")
+							fmt.Println(act)
+							req.Add(act)
+						}
 					}
 					for _, d := range r.dudes {
 						if !d.IsDead() && !r.boss.IsDead() {
@@ -253,7 +277,6 @@ func (r *Room) Update(req *ActivityRequests) {
 					}
 				}
 			}
-
 		} else {
 			// If all dudes are waiting, trigger boss fight
 			aliveDudes := 0
@@ -276,7 +299,6 @@ func (r *Room) Update(req *ActivityRequests) {
 			}
 		}
 	}
-
 }
 
 func (r *Room) Reset() {
@@ -469,6 +491,10 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 
 				// Add to inventory and equip if slot is empty
 				e.dude.AddToInventory(eq)
+				AddMessage(
+					MessageLoot,
+					fmt.Sprintf("%s found %s", e.dude.name, eq.Name()),
+				)
 			}
 		}
 		// Add other leave events here

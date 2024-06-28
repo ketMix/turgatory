@@ -152,7 +152,7 @@ func (e *Enemy) XP() int {
 
 func (e *Enemy) Gold() float64 {
 	randMultiplier := 0.5 + rand.Float64()
-	return float64(e.stats.totalHp*e.stats.level) * randMultiplier
+	return float64(e.stats.totalHp) * randMultiplier
 }
 
 func (e *Enemy) IsDead() bool {
