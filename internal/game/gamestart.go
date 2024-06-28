@@ -33,8 +33,6 @@ func (s *GameStateStart) Begin(g *Game) {
 		s.newDudes = append(s.newDudes, dude)
 	}
 
-	g.camera.SetMode(render.CameraModeTower)
-
 	// Create a new tower, yo.
 	tower := NewTower()
 	for i := 0; i < 3+s.length*2; i++ {
@@ -46,9 +44,11 @@ func (s *GameStateStart) Begin(g *Game) {
 	}
 
 	g.tower = tower
+	g.camera.SetMode(render.CameraModeTower)
 }
 func (s *GameStateStart) End(g *Game) {
 	g.dudes = append(g.dudes, s.newDudes...)
+	g.camera.SetMode(render.CameraModeStack)
 }
 func (s *GameStateStart) Update(g *Game) GameState {
 	//return &GameStateWin{}

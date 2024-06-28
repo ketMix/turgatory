@@ -24,7 +24,6 @@ type GameStateBuild struct {
 }
 
 func (s *GameStateBuild) Begin(g *Game) {
-	g.camera.SetMode(render.CameraModeTower)
 	// g.audioController.PlayRoomTracks()
 	// On build phase, full heal all dudes and restore uses
 	for _, d := range g.dudes {
@@ -47,6 +46,10 @@ func (s *GameStateBuild) Begin(g *Game) {
 	if s.nextStory == nil {
 		panic("No next story found!")
 	}
+
+	// Make camera reset and focus story.
+	g.camera.SetStory(s.nextStory.level)
+	g.camera.SetRotation(math.Pi / 8)
 
 	// Just in case
 	g.ui.bossPanel.hidden = true
@@ -171,7 +174,7 @@ func (s *GameStateBuild) Update(g *Game) GameState {
 			}
 
 			// FIXME: This ain't right.
-			cy -= float64(s.nextStory.level) * 20 * g.camera.Zoom()
+			cy -= float64(s.nextStory.level) * 10 * g.camera.Zoom()
 
 			r := math.Atan2(my-cy, mx-cx) - g.camera.Rotation()
 			roomIndex := s.nextStory.RoomIndexFromAngle(r)

@@ -77,19 +77,10 @@ func (g *Game) Update() error {
 		g.camera.SetRotation(g.camera.Rotation() + 0.01)
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyA) {
-		x, y := g.camera.Position()
-		g.camera.SetPosition(x-10, y)
-	} else if ebiten.IsKeyPressed(ebiten.KeyD) {
-		x, y := g.camera.Position()
-		g.camera.SetPosition(x+10, y)
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyW) {
-		x, y := g.camera.Position()
-		g.camera.SetPosition(x, y-10)
-	} else if ebiten.IsKeyPressed(ebiten.KeyS) {
-		x, y := g.camera.Position()
-		g.camera.SetPosition(x, y+10)
+	if inpututil.IsKeyJustPressed(ebiten.KeyW) {
+		g.camera.SetStory(g.camera.Story() + 1)
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyS) {
+		g.camera.SetStory(g.camera.Story() - 1)
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.Key1) {
@@ -137,10 +128,6 @@ func (g *Game) Update() error {
 				}
 				g.audioController.SetStoryPanVol(roomPanVol)
 			}
-		}
-		if g.selectedDude != nil {
-			r := g.selectedDude.trueRotation
-			g.camera.SetRotation(-r)
 		}
 	}
 

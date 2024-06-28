@@ -23,6 +23,7 @@ type Camera struct {
 	zoom       InterpNumber
 	Mode       CameraMode
 	textOffset InterpNumber
+	lastLevel  int
 }
 
 func NewCamera(x, y float64) *Camera {
@@ -34,22 +35,36 @@ func NewCamera(x, y float64) *Camera {
 	}
 }
 
+func (c *Camera) Story() int {
+	return c.lastLevel
+}
+
+func (c *Camera) SetStory(level int) {
+	switch c.Mode {
+	case CameraModeTower:
+		c.SetPosition(c.x.Target, -100+float64(level)*18.5*c.zoom.Target)
+	case CameraModeStack:
+		c.SetPosition(c.x.Target, float64(level)*9.32*c.zoom.Target)
+	case CameraModeSuperZoom:
+		c.SetPosition(c.x.Target, 90+float64(level)*3.5*c.zoom.Target)
+	}
+	c.lastLevel = level
+}
+
 func (c *Camera) SetMode(mode CameraMode) {
 	c.Mode = mode
 	switch mode {
 	case CameraModeTower:
-		c.SetPosition(0, -100)
 		c.SetZoom(1.5)
 		c.SetTextOffset(125)
 	case CameraModeStack:
-		c.SetPosition(0, 0)
 		c.SetZoom(3)
 		c.SetTextOffset(0)
 	case CameraModeSuperZoom:
-		c.SetPosition(0, 90)
 		c.SetZoom(8.0)
 		c.SetTextOffset(-80)
 	}
+	c.SetStory(c.lastLevel)
 }
 
 func (c *Camera) Update() {

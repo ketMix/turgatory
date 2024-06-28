@@ -21,8 +21,6 @@ type GameStatePlay struct {
 }
 
 func (s *GameStatePlay) Begin(g *Game) {
-	g.camera.SetMode(render.CameraModeStack)
-
 	// Make sure our dudes are visible.
 	for _, d := range g.dudes {
 		d.stack.Transparency = 0
@@ -34,6 +32,9 @@ func (s *GameStatePlay) Begin(g *Game) {
 
 	// TODO: Set up dude state to spawn outside first story?
 	g.ui.dudePanel.SyncDudes(g.dudes)
+
+	g.camera.SetRotation(math.Pi / 8)
+	g.camera.SetStory(0)
 }
 func (s *GameStatePlay) End(g *Game) {
 	// Reset tower
@@ -70,6 +71,14 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 	if handled, kind := g.CheckUI(); !handled {
 		if kind == UICheckClick {
 			g.selectedDude = nil
+		}
+	}
+
+	if g.selectedDude != nil {
+		if g.selectedDude.story != nil {
+			g.camera.SetStory(g.selectedDude.story.level)
+			r := g.selectedDude.trueRotation
+			g.camera.SetRotation(-r)
 		}
 	}
 
