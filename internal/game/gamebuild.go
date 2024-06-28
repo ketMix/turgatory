@@ -389,7 +389,7 @@ func (s *GameStateBuild) BuyDude(g *Game) {
 		return
 	}
 	g.gold -= cost
-	level := len(g.tower.Stories)
+	level := len(g.tower.Stories) + 1
 	if level < 1 {
 		level = 1
 	}
