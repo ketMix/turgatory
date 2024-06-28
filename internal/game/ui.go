@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"math"
+	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -39,6 +40,7 @@ type UI struct {
 	roomInfoPanel  RoomInfoPanel
 	options        *UIOptions
 	feedback       FeedbackPopup
+	hint           HintPopup
 	buttonPanel    ButtonPanel
 	bossPanel      BossPanel
 }
@@ -67,6 +69,7 @@ func NewUI() *UI {
 	ui.roomPanel = MakeRoomPanel()
 	ui.roomInfoPanel = MakeRoomInfoPanel()
 	ui.feedback = MakeFeedbackPopup()
+	ui.hint = MakeHintPopup()
 	ui.buttonPanel = MakeButtonPanel(assets.DisplayFont, PanelStyleButton)
 	ui.buttonPanel.Disable()
 
@@ -104,6 +107,17 @@ func (ui *UI) Layout(o *UIOptions) {
 	)
 
 	ui.gameInfoPanel.Layout(o)
+
+	// Hint Panel
+	ui.hint.panel.SetSize(
+		96*o.Scale,
+		16*o.Scale,
+	)
+	ui.hint.panel.SetPosition(
+		float64(o.Width)/2-ui.hint.panel.Width()/2,
+		ui.gameInfoPanel.panel.Y()+ui.gameInfoPanel.panel.Height(),
+	)
+	ui.hint.Layout(o)
 
 	// Manually position dude panel and equipment panel
 	h := float64(o.Height)/2 - float64(o.Height)/12
@@ -206,6 +220,7 @@ func (ui *UI) Update(o *UIOptions) {
 	ui.messagePanel.Update(o)
 	ui.feedback.Update(o)
 	ui.buttonPanel.Update(o)
+	ui.hint.Update(o)
 }
 
 func (ui *UI) Check(mx, my float64, kind UICheckKind) bool {
@@ -256,6 +271,8 @@ func (ui *UI) Draw(o *render.Options) {
 	ui.bossPanel.Draw(o)
 
 	ui.feedback.Draw(o)
+	o.DrawImageOptions.GeoM.Reset()
+	ui.hint.Draw(o)
 }
 
 func PaddedIntString(i int, pad int) string {
@@ -1415,6 +1432,15 @@ func (edp *EquipmentDetailsPanel) Draw(o *render.Options) {
 	edp.panel.Draw(o)
 }
 
+type FeedbackKind color.NRGBA
+
+var (
+	FeedbackGeneric = FeedbackKind{255, 255, 255, 255}
+	FeedbackGood    = FeedbackKind{0, 255, 0, 255}
+	FeedbackBad     = FeedbackKind{255, 0, 0, 255}
+	FeedbackWarning = FeedbackKind{255, 255, 0, 255}
+)
+
 type FeedbackPopup struct {
 	panel *UIPanel
 	text  *UIText
@@ -1466,14 +1492,109 @@ func (fp *FeedbackPopup) Msg(kind FeedbackKind, text string) {
 	fp.ticks = len(text) * 5
 }
 
-type FeedbackKind color.NRGBA
+type HintPopup struct {
+	panel        *UIPanel
+	text         *UIText
+	ticks        int
+	color        color.NRGBA
+	lifetime     int
+	fadeOutTicks int
+	hintList     []string
+	shownHints   []string
+	hidden       bool
+}
 
-var (
-	FeedbackGeneric = FeedbackKind{255, 255, 255, 255}
-	FeedbackGood    = FeedbackKind{0, 255, 0, 255}
-	FeedbackBad     = FeedbackKind{255, 0, 0, 255}
-	FeedbackWarning = FeedbackKind{255, 255, 0, 255}
-)
+func MakeHintPopup() HintPopup {
+	// Load hints from assets
+	hints := assets.GetHints()
+
+	hp := HintPopup{
+		panel:        NewUIPanel(PanelStyleInteractive),
+		text:         NewUIText("", assets.BodyFont, assets.ColorHeading),
+		color:        color.NRGBA{R: 200, G: 200, B: 200, A: 255},
+		lifetime:     400,
+		fadeOutTicks: 15,
+		hintList:     hints,
+		shownHints:   []string{},
+		hidden:       true,
+	}
+	hp.text.center = true
+	hp.panel.AddChild(hp.text)
+	hp.panel.hideBackground = true
+	hp.panel.centerChildren = true
+	return hp
+}
+
+func (hp *HintPopup) Show() {
+	hp.ticks = 0
+	hp.hidden = false
+}
+
+func (hp *HintPopup) Hide() {
+	hp.hidden = true
+}
+
+func (hp *HintPopup) Layout(o *UIOptions) {
+	hp.panel.Layout(nil, o)
+}
+
+func (hp *HintPopup) Update(o *UIOptions) {
+	if hp.hidden {
+		return
+	}
+
+	hp.ticks--
+
+	// Restart with new hint
+	if hp.ticks < 0 {
+		hp.ticks = hp.lifetime
+
+		// Pick a hint that hasn't been shown yet
+		// by adding current hint to shown list
+		// and popping one from the hint list.
+		// If hint list is empty, reset it.
+		// Choose hint at random
+		if len(hp.hintList) == 0 {
+			hp.hintList = hp.shownHints
+			hp.shownHints = []string{}
+		}
+
+		hintIndex := rand.Intn(len(hp.hintList))
+		hint := hp.hintList[hintIndex]
+		hp.hintList = append(hp.hintList[:hintIndex], hp.hintList[hintIndex+1:]...)
+		hp.shownHints = append(hp.shownHints, hint)
+		hp.text.SetText(hint)
+	}
+
+	// Fade out
+	if hp.ticks < int(hp.fadeOutTicks) {
+		hp.text.textOptions.Color = color.NRGBA{
+			R: hp.color.R,
+			G: hp.color.G,
+			B: hp.color.B,
+			A: uint8(float64(hp.ticks) / float64(hp.fadeOutTicks) * 255),
+		}
+	}
+
+	// Fade in after delay
+	if hp.ticks > hp.lifetime-hp.fadeOutTicks {
+		hp.text.textOptions.Color = color.NRGBA{
+			R: hp.color.R,
+			G: hp.color.G,
+			B: hp.color.B,
+			A: uint8(float64(hp.lifetime-hp.ticks) / float64(hp.fadeOutTicks) * 255),
+		}
+	}
+
+	hp.panel.Update(o)
+}
+
+func (hp *HintPopup) Draw(o *render.Options) {
+	if hp.hidden {
+		return
+	}
+	hp.panel.Draw(o)
+}
 
 type ButtonPanel struct {
 	panel    *UIPanel

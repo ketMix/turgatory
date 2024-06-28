@@ -42,6 +42,7 @@ func (s *GameStateStart) Begin(g *Game) {
 
 	g.tower = tower
 	g.camera.SetMode(render.CameraModeTower)
+	g.ui.hint.Show()
 }
 func (s *GameStateStart) End(g *Game) {
 	g.dudes = append(g.dudes, s.newDudes...)

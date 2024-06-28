@@ -1,0 +1,15 @@
+The boss will always target the dude with the least cowardice.
+Hits from a boss will increase a dude's cowardice.
+Dudes fight alone in combat rooms but together in boss rooms.
+Enemies scale with the tower level. Even rats can be dangerous!
+Hired dudes will always be at your average dude level.
+Dangerous rooms near end of the story will allow you to power up/heal beforehand.
+You only get gold and equipment from a dude if they survive the tower!
+Perks expend uses when used. Wells restore uses!
+Dudes heal to full and restore all uses after completing the tower.
+Wisdom increases healing recieved.
+Strength increases damage done.
+Defense reduces damage taken.
+Agility increases move speed and crit chance.
+Luck increases loot quality and crit chance.
+Hiring dudes is irreversible. Watch your gold!
