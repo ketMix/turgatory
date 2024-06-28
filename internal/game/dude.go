@@ -456,30 +456,34 @@ func (d *Dude) Trigger(e Event) Activity {
 	case EventEquip:
 		//fmt.Println(d.name, "equipped", e.equipment.Name())
 		if d.stack != nil {
-			t := MakeFloatingTextFromDude(d, fmt.Sprintf("equip %s", e.equipment.Name()), color.NRGBA{100, 200, 200, 255}, 120, 0.4)
+			d.floatingText(fmt.Sprintf("equip %s", e.equipment.Name()), color.NRGBA{100, 200, 200, 255}, 120, 0.4)
 			AddMessage(
 				MessageNeutral,
 				fmt.Sprintf("%s equipped %s", d.name, e.equipment.Name()),
 			)
-			d.story.AddText(t)
 		}
 	case EventUnequip:
 		d.dirtyEquipment = true
 		//fmt.Println(d.name, "unequipped", e.equipment.Name())
-		t := MakeFloatingTextFromDude(d, fmt.Sprintf("remove %s", e.equipment.Name()), color.NRGBA{200, 100, 100, 255}, 120, 0.4)
-		d.story.AddText(t)
+		d.floatingText(fmt.Sprintf("remove %s", e.equipment.Name()), color.NRGBA{200, 100, 100, 255}, 120, 0.4)
 	case EventGoldGain:
 		d.UpdateGold(e.amount)
 		//fmt.Println(d.name, "gained", e.amount, "gold")
-		t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%dgp", e.amount), color.NRGBA{255, 255, 0, 255}, 40, 0.6)
-		d.story.AddText(t)
+		d.floatingText(fmt.Sprintf("+%dgp", e.amount), color.NRGBA{255, 255, 0, 255}, 40, 0.6)
 	case EventGoldLoss:
 		d.UpdateGold(e.amount)
 		//fmt.Println(d.name, "lost", e.amount, "gold")
-		t := MakeFloatingTextFromDude(d, fmt.Sprintf("-%dgp", e.amount), color.NRGBA{255, 255, 0, 255}, 40, 0.4)
-		d.story.AddText(t)
+		d.floatingText(fmt.Sprintf("-%dgp", e.amount), color.NRGBA{255, 255, 0, 255}, 40, 0.4)
 	}
 	return nil
+}
+
+func (d *Dude) floatingText(text string, color color.NRGBA, lifetime int, speed float64) {
+	if d == nil || d.story == nil {
+		return
+	}
+	t := MakeFloatingTextFromDude(d, text, color, lifetime, speed)
+	d.story.AddText(t)
 }
 
 func (d *Dude) Position() (float64, float64) {
@@ -540,8 +544,7 @@ func (d *Dude) GetDamage() (int, bool) {
 	multiplier := 1.0
 	if randRoll < luckRoll {
 		d.AddXP(1)
-		t := MakeFloatingTextFromDude(d, "*CRIT*", color.NRGBA{255, 128, 255, 128}, 60, 1.0)
-		d.story.AddText(t)
+		d.floatingText("*CRIT*", color.NRGBA{255, 128, 255, 128}, 60, 1.0)
 		multiplier = 2.0
 		wasCrit = true
 	}
@@ -553,8 +556,7 @@ func (d *Dude) GetDamage() (int, bool) {
 	missRoll := math.Min(float64(stats.cowardice)/100.0, 0.5)
 
 	if rand.Float64() < missRoll {
-		t := MakeFloatingTextFromDude(d, "*miss*", color.NRGBA{128, 128, 128, 128}, 30, 0.5)
-		d.story.AddText(t)
+		d.floatingText("*miss*", color.NRGBA{128, 128, 128, 128}, 30, 0.5)
 		multiplier = 0.0
 
 		AddMessage(
@@ -580,8 +582,7 @@ func (d *Dude) ApplyDamage(amount int) (int, bool) {
 	chance := math.Min(dodgeChance, 0.5)
 	if rand.Float64() < chance {
 		d.AddXP(1)
-		t := MakeFloatingTextFromDude(d, "*dodge*", color.NRGBA{255, 255, 0, 128}, 30, 0.5)
-		d.story.AddText(t)
+		d.floatingText("*dodge*", color.NRGBA{255, 255, 0, 128}, 30, 0.5)
 		AddMessage(
 			MessageNeutral,
 			fmt.Sprintf("%s dodged an attack", d.name),
@@ -600,15 +601,13 @@ func (d *Dude) ApplyDamage(amount int) (int, bool) {
 	if d.stats.currentHp == 0 {
 		d.SetActivity(Ded)
 
-		t := MakeFloatingTextFromDude(d, "RIP", color.NRGBA{64, 64, 64, 255}, 80, 1)
-		d.story.AddText(t)
+		d.floatingText("RIP", color.NRGBA{64, 64, 64, 255}, 80, 1)
 		AddMessage(
 			MessageBad,
 			fmt.Sprintf("%s took %d damage and was defeated", d.name, amount),
 		)
 	} else {
-		t := MakeFloatingTextFromDude(d, fmt.Sprintf("%d", -amount), color.NRGBA{255, 0, 0, 255}, 40, 0.5)
-		d.story.AddText(t)
+		d.floatingText(fmt.Sprintf("%d", -amount), color.NRGBA{255, 0, 0, 255}, 40, 0.5)
 	}
 	d.dirtyStats = true
 	return amount, false
@@ -656,14 +655,15 @@ func (d *Dude) Equip(eq *Equipment) {
 	d.dirtyEquipment = true
 }
 
-func (d *Dude) Unequip(t EquipmentType) {
-	if _, ok := d.equipped[t]; ok {
-		// Add to inventory
-		d.inventory = append(d.inventory, d.equipped[t])
-		d.Trigger(EventUnequip{dude: d, equipment: d.equipped[t]}) // Event isolated to dude?
-		d.equipped[t] = nil
+func (d *Dude) Unequip(t EquipmentType) *Equipment {
+	if e, ok := d.equipped[t]; ok {
+		d.Trigger(EventUnequip{dude: d, equipment: e}) // Event isolated to dude?
+		// Delete the equipment from the equipped map
+		delete(d.equipped, t)
 		d.dirtyEquipment = true
+		return e // Return the unequipped item
 	}
+	return nil
 }
 
 func (d *Dude) AddToInventory(eq *Equipment) {
@@ -673,8 +673,7 @@ func (d *Dude) AddToInventory(eq *Equipment) {
 	}
 
 	//fmt.Println(d.name, "added", eq.Name(), "to inventory")
-	t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%s", eq.Name()), color.NRGBA{200, 200, 50, 128}, 100, 1.0)
-	d.story.AddText(t)
+	d.floatingText(fmt.Sprintf("+%s", eq.Name()), color.NRGBA{200, 200, 50, 128}, 100, 1.0)
 }
 
 func (d *Dude) Inventory() []*Equipment {
@@ -703,15 +702,13 @@ func (d *Dude) AddXP(xp int) {
 	if d.xp >= nextLevelXP {
 		d.xp -= nextLevelXP
 		d.stats.LevelUp()
-		t := MakeFloatingTextFromDude(d, "LEVEL UP", color.NRGBA{100, 255, 255, 255}, 80, 1)
-		d.story.AddText(t)
+		d.floatingText("LEVEL UP", color.NRGBA{100, 255, 255, 255}, 80, 1)
 		AddMessage(
 			MessageGood,
 			fmt.Sprintf("%s leveled up to level %d", d.name, d.Level()),
 		)
 	} else {
-		t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%dxp", xp), color.NRGBA{100, 200, 200, 200}, 50, 1)
-		d.story.AddText(t)
+		d.floatingText(fmt.Sprintf("+%dxp", xp), color.NRGBA{100, 200, 200, 200}, 50, 1)
 	}
 	d.dirtyStats = true
 }
@@ -738,8 +735,7 @@ func (d *Dude) Heal(amount int) int {
 	amount = d.stats.currentHp - initialHP
 
 	if amount > 0 && d.story != nil {
-		t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%d", amount), color.NRGBA{0, 255, 0, 255}, 40, 0.5)
-		d.story.AddText(t)
+		d.floatingText(fmt.Sprintf("+%d", amount), color.NRGBA{0, 255, 0, 255}, 40, 0.5)
 		AddMessage(
 			MessageNeutral,
 			fmt.Sprintf("%s healed for %d", d.name, amount),
@@ -767,8 +763,7 @@ func (d *Dude) RestoreUses() {
 		}
 	}
 	if restored && d.story != nil {
-		t := MakeFloatingTextFromDude(d, "+eq restore", color.NRGBA{0, 128, 255, 200}, 40, 0.5)
-		d.story.AddText(t)
+		d.floatingText("+eq restore", color.NRGBA{0, 128, 255, 200}, 40, 0.5)
 		AddMessage(
 			MessageNeutral,
 			fmt.Sprintf("%s restored equipment uses", d.name),
@@ -810,8 +805,7 @@ func (d *Dude) LevelUpEquipment(amount int, maxQuality EquipmentQuality) {
 	}
 
 	//fmt.Println(d.name, "leveled up equipment by", amount)
-	t := MakeFloatingTextFromDude(d, fmt.Sprintf("+eq up %d", amount), color.NRGBA{128, 128, 255, 255}, 50, 0.5)
-	d.story.AddText(t)
+	d.floatingText(fmt.Sprintf("+eq up %d", amount), color.NRGBA{128, 128, 255, 255}, 50, 0.5)
 	AddMessage(
 		MessageLoot,
 		fmt.Sprintf("%s leveled up %s by %d", d.name, eq.Name(), amount),
@@ -830,8 +824,7 @@ func (d *Dude) Perkify(maxQuality PerkQuality) {
 		prevName := eq.Name()
 		eq.perk = GetRandomPerk(PerkQualityTrash)
 		//fmt.Println(d.name, "upgraded his equipment", prevName, "with", eq.perk.Name())
-		t := MakeFloatingTextFromDude(d, fmt.Sprintf("+%s perk %s", prevName, eq.perk.Name()), color.NRGBA{128, 255, 128, 255}, 100, 0.5)
-		d.story.AddText(t)
+		d.floatingText(fmt.Sprintf("+%s perk %s", prevName, eq.perk.Name()), color.NRGBA{128, 255, 128, 255}, 100, 0.5)
 		AddMessage(
 			MessageLoot,
 			fmt.Sprintf("%s upgraded %s with %s", d.name, prevName, eq.perk.Name()),
@@ -844,8 +837,7 @@ func (d *Dude) Perkify(maxQuality PerkQuality) {
 		if eq.perk.Quality() != previousQuality {
 			//fmt.Println(eq.perk.Quality(), previousQuality)
 			//fmt.Println(d.name, "upgraded his equipment", previousName, "to", eq.Name())
-			t := MakeFloatingTextFromDude(d, fmt.Sprintf("+eq %s upgrade to %s", previousName, eq.Name()), color.NRGBA{128, 255, 128, 255}, 100, 0.5)
-			d.story.AddText(t)
+			d.floatingText(fmt.Sprintf("+eq %s upgrade to %s", previousName, eq.Name()), color.NRGBA{128, 255, 128, 255}, 100, 0.5)
 			AddMessage(
 				MessageLoot,
 				fmt.Sprintf("%s upgraded %s to %s", d.name, previousName, eq.Name()),
@@ -886,8 +878,7 @@ func (d *Dude) Cursify(roomLevel int) {
 		goldLoss := roomLevel * 5
 		d.Trigger(EventGoldLoss{dude: d, amount: goldLoss})
 		//fmt.Println(d.name, "lost", goldLoss, "gold")
-		t := MakeFloatingTextFromDude(d, fmt.Sprintf("-%dgp", goldLoss), color.NRGBA{255, 255, 0, 200}, 40, 0.5)
-		d.story.AddText(t)
+		d.floatingText(fmt.Sprintf("-%dgp", goldLoss), color.NRGBA{255, 255, 0, 200}, 40, 0.5)
 
 		// If gold is negative, set to 0
 		if d.gold < 0 {
@@ -906,8 +897,7 @@ func (d *Dude) Cursify(roomLevel int) {
 		if eq := d.equipped[equipmentType]; eq != nil {
 			eq.LevelDown()
 			//fmt.Println(d.name, "lost a level on", eq.Name())
-			t := MakeFloatingTextFromDude(d, fmt.Sprintf("-eq level %s", eq.Name()), color.NRGBA{200, 200, 32, 200}, 50, 0.5)
-			d.story.AddText(t)
+			d.floatingText(fmt.Sprintf("-eq level %s", eq.Name()), color.NRGBA{200, 200, 32, 200}, 50, 0.5)
 
 			AddMessage(
 				MessageBad,
@@ -931,8 +921,7 @@ func (d *Dude) Cursify(roomLevel int) {
 			if eq := d.equipped[randomEquipType]; eq != nil {
 				eq.perk.LevelDown()
 				//fmt.Println(d.name, "lost a perk level on", eq.Name())
-				t := MakeFloatingTextFromDude(d, fmt.Sprintf("-eq perk %s", eq.Name()), color.NRGBA{200, 200, 32, 200}, 50, 0.5)
-				d.story.AddText(t)
+				d.floatingText(fmt.Sprintf("-eq perk %s", eq.Name()), color.NRGBA{200, 200, 32, 200}, 50, 0.5)
 
 				AddMessage(
 					MessageBad,
@@ -948,8 +937,7 @@ func (d *Dude) Cursify(roomLevel int) {
 	if curseRoll <= threshold*0.1 { // lowest chance for dude delevel
 		d.stats.LevelDown()
 		//fmt.Println(d.name, "lost a level")
-		t := MakeFloatingTextFromDude(d, "-level", color.NRGBA{100, 0, 0, 200}, 50, 0.5)
-		d.story.AddText(t)
+		d.floatingText("-level", color.NRGBA{100, 0, 0, 200}, 50, 0.5)
 
 		AddMessage(
 			MessageBad,

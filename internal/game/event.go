@@ -111,7 +111,7 @@ func (e EventUnequip) String() string {
 
 // EventSell occurs when an equipment is sold
 type EventSell struct {
-	tower     *Tower
+	dudes     []*Dude
 	equipment *Equipment
 }
 

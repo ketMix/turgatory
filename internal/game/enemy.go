@@ -54,7 +54,7 @@ func (e EnemyKind) BossStack() string {
 func (e EnemyKind) Stats() *Stats {
 	switch e {
 	case EnemyRat:
-		return &Stats{strength: 2, defense: 2, totalHp: 15, luck: 1}
+		return &Stats{strength: 6, defense: 2, totalHp: 15, luck: 1}
 	case EnemySlime:
 		return &Stats{strength: 3, defense: 3, totalHp: 20, luck: 1}
 	case EnemySkelly:

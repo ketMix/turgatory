@@ -1223,8 +1223,8 @@ type EquipmentDetailsPanel struct {
 
 	swapButton  *ButtonPanel
 	sellButton  *ButtonPanel
-	onSwapClick func()
-	onSellClick func()
+	onSwapClick func(e *Equipment)
+	onSellClick func(e *Equipment)
 
 	hidden bool
 }
@@ -1254,7 +1254,7 @@ func NewEquipmentDetailsPanel(small bool) *EquipmentDetailsPanel {
 		edp.sellButton.text.ignoreScale = edp.small
 		edp.sellButton.onClick = func() {
 			if edp.onSellClick != nil {
-				edp.onSellClick()
+				edp.onSellClick(edp.equipment)
 			}
 		}
 	}
@@ -1266,7 +1266,7 @@ func NewEquipmentDetailsPanel(small bool) *EquipmentDetailsPanel {
 		edp.swapButton.text.ignoreScale = edp.small
 		edp.swapButton.onClick = func() {
 			if edp.onSwapClick != nil {
-				edp.onSwapClick()
+				edp.onSwapClick(edp.equipment)
 			}
 		}
 	}

@@ -291,7 +291,9 @@ func (p PerkHealOnSell) Check(e Event) bool {
 	switch e := e.(type) {
 	case EventSell:
 		// Heal all dudes
-		fmt.Println("Unimplemented", e.String())
+		for _, dude := range e.dudes {
+			dude.Heal(p.amount())
+		}
 		return true
 	}
 	return false

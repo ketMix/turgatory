@@ -112,10 +112,10 @@ type Equipment struct {
 	description   string           // Description of the equipment
 	equipmentType EquipmentType    // Type of equipment (weapon, armor, etc.)
 
-	perk        IPerk             // Perk of the equipment (if any)
-	stats       *Stats            // Stats of the equipment (if any)
-	stack       *render.Stack     // How to draw the equipment
-	professions []*ProfessionKind // If restricted to a profession
+	perk        IPerk            // Perk of the equipment (if any)
+	stats       *Stats           // Stats of the equipment (if any)
+	stack       *render.Stack    // How to draw the equipment
+	professions []ProfessionKind // If restricted to a profession
 	Draw        func(*render.Options)
 }
 
@@ -136,12 +136,12 @@ func NewEquipment(name string, level int, quality EquipmentQuality, perk IPerk) 
 		fmt.Println("Error loading equipment stack for: ", baseEquipment.BaseName, err)
 		stack = nil
 	}
-	professions := make([]*ProfessionKind, len(baseEquipment.Professions))
+	professions := make([]ProfessionKind, len(baseEquipment.Professions))
 
 	// Convert the professions to ProfessionKind
 	for i, p := range baseEquipment.Professions {
-		professions[i] = new(ProfessionKind)
-		*professions[i] = ProfessionKind(p)
+		professions[i] = *new(ProfessionKind)
+		professions[i] = ProfessionKind(p)
 	}
 
 	// If base equipment has perk, load it
@@ -380,7 +380,7 @@ func (e *Equipment) CanEquip(p ProfessionKind) bool {
 	// If the profession is in the list of professions that can equip this item
 	// then we can equip it
 	for _, prof := range e.professions {
-		if *prof == p {
+		if prof == p {
 			return true
 		}
 	}

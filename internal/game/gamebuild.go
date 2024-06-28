@@ -85,12 +85,11 @@ func (s *GameStateBuild) Begin(g *Game) {
 		g.ui.equipmentPanel.details.SetEquipment(g.equipment[which])
 		g.ui.equipmentPanel.showDetails = true
 	}
-	g.ui.equipmentPanel.details.onSellClick = func() {
-		if s.selectedEquipment >= len(g.equipment) {
+	g.ui.equipmentPanel.details.onSellClick = func(e *Equipment) {
+		if e == nil {
 			return
 		}
-		eq := g.equipment[s.selectedEquipment]
-		s.SellEquipment(g, eq)
+		s.SellEquipment(g, e)
 		g.ui.equipmentPanel.SetEquipment(g.equipment)
 		if s.selectedEquipment >= len(g.equipment) {
 			s.selectedEquipment--
@@ -101,26 +100,100 @@ func (s *GameStateBuild) Begin(g *Game) {
 			g.ui.equipmentPanel.details.SetEquipment(nil)
 		}
 	}
-	g.ui.equipmentPanel.details.onSwapClick = func() {
+	g.ui.equipmentPanel.details.onSwapClick = func(e *Equipment) {
+		if e == nil {
+			return
+		}
 		if g.selectedDude == nil {
 			g.ui.feedback.Msg(FeedbackBad, "select a dude to swap equipment with!")
 			return
 		}
+		equipType := e.Type()
+		professions := e.professions
+		profession := g.selectedDude.profession
 
-		if s.selectedEquipment >= len(g.equipment) {
+		// Check if the dude can equip the item.
+		canEquip := len(professions) == 0
+		for _, p := range professions {
+			if p == profession {
+				canEquip = canEquip || true
+			}
+		}
+
+		if !canEquip {
+			g.ui.feedback.Msg(FeedbackBad, fmt.Sprintf("%s cannot equip %s", g.selectedDude.Name(), e.Name()))
 			return
 		}
-		eq := g.equipment[s.selectedEquipment]
 
-		fmt.Println("swap", eq.Name(), "to", g.selectedDude.Name())
+		// Unequip the dude's current equipment.
+		if g.selectedDude.equipped[equipType] != nil {
+			unequipped := g.selectedDude.Unequip(equipType)
+			if unequipped != nil {
+				// Add to game equipment.
+				g.equipment = append(g.equipment, unequipped)
+				g.ui.equipmentPanel.SetEquipment(g.equipment)
+			}
+		}
+
+		// Equip the new item.
+		g.selectedDude.Equip(e)
+		// Remove from game equipment.
+		for i, eq := range g.equipment {
+			if eq == e {
+				g.equipment = append(g.equipment[:i], g.equipment[i+1:]...)
+				g.ui.equipmentPanel.SetEquipment(g.equipment)
+				break
+			}
+		}
+
+		if s.selectedEquipment < len(g.equipment) {
+			g.ui.equipmentPanel.onItemClick(s.selectedEquipment)
+		} else {
+			s.selectedEquipment--
+			if s.selectedEquipment < 0 {
+				s.selectedEquipment = 0
+			}
+			if s.selectedEquipment < len(g.equipment) {
+				g.ui.equipmentPanel.onItemClick(s.selectedEquipment)
+			}
+		}
+		g.ui.dudeInfoPanel.SyncDude() // Hmmm... thought g.UpdateInfo() would do this.
+		g.UpdateInfo()
 	}
 	g.ui.dudeInfoPanel.equipmentDetails.sellButton.hidden = false
-	g.ui.dudeInfoPanel.equipmentDetails.onSellClick = func() {
-		fmt.Println("argh, sell equipment")
+	g.ui.dudeInfoPanel.equipmentDetails.onSellClick = func(e *Equipment) {
+		// Selling a dude's equipment
+		if e == nil {
+			return
+		}
+		equipmentType := e.Type()
+		item := g.selectedDude.Unequip(equipmentType)
+
+		if item == nil {
+			return
+		}
+		// Add to game equipment and immediately sell it.
+		g.equipment = append(g.equipment, item)
+		s.SellEquipment(g, item)
+		// Hide the equipment details panel.
+		g.ui.dudeInfoPanel.equipmentDetails.hidden = true
 	}
 	g.ui.dudeInfoPanel.equipmentDetails.swapButton.hidden = false
-	g.ui.dudeInfoPanel.equipmentDetails.onSwapClick = func() {
-		fmt.Println("argh, swap equipment")
+	g.ui.dudeInfoPanel.equipmentDetails.onSwapClick = func(e *Equipment) {
+		// Snarfing loot
+		if e == nil || g.selectedDude == nil {
+			return
+		}
+		equipType := e.Type()
+		item := g.selectedDude.Unequip(equipType)
+		if item != nil {
+			g.equipment = append(g.equipment, item)
+			g.ui.equipmentPanel.SetEquipment(g.equipment)
+		}
+		// Hide the equipment details panel.
+		g.ui.dudeInfoPanel.equipmentDetails.SetEquipment(nil)
+		g.ui.dudeInfoPanel.equipmentDetails.hidden = true
+		g.UpdateInfo()
 	}
 
 	g.ui.dudePanel.buyButton.onClick = func() {
@@ -448,6 +521,6 @@ func (s *GameStateBuild) SellEquipment(g *Game, e *Equipment) {
 	g.gold += value
 	AddMessage(MessageLoot, fmt.Sprintf("Sold %s for %d gold.", e.Name(), value))
 	// Trigger on sell event
-	e.Activate(EventSell{equipment: e})
+	e.Activate(EventSell{equipment: e, dudes: g.GetAliveDudes()})
 	g.UpdateInfo()
 }

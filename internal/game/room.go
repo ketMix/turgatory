@@ -91,18 +91,19 @@ func (r *RoomKind) GetRoomEnemy(roomSize RoomSize, storyLevel int) EnemyKind {
 			return EnemySlime
 		case Large:
 			return EnemySkelly
+		case Huge:
+			return EnemyEbi
 		}
 	case Boss:
 		// Every 3 levels, boss is upgraded
 		if storyLevel <= 3 {
 			return EnemyBossRat
 		} else if storyLevel <= 6 {
-			return EnemyBossRat
+			return EnemyBossSlime
 		} else if storyLevel <= 9 {
-			return EnemyBossRat
-		} else if storyLevel <= 12 {
-			// Last level?
-			return EnemyBossRat
+			return EnemyBossSkelly
+		} else {
+			return EnemyBossEbi
 		}
 	}
 	return EnemyUnknown
@@ -624,6 +625,7 @@ func GetRequiredRooms(storyLevel int, roomCount int) []*RoomDef {
 			RoomTemplate{kind: Combat, size: Large},
 			RoomTemplate{kind: Trap, size: Large},
 			RoomTemplate{kind: Trap, size: Large},
+			RoomTemplate{kind: Curse, size: Medium},
 			RoomTemplate{kind: Curse, size: Medium},
 		)
 	}
