@@ -209,6 +209,8 @@ func (g *Game) UpdateInfo() {
 	}
 	g.ui.gameInfoPanel.goldText.SetText(fmt.Sprintf("Gold: %d", g.gold))
 	g.ui.gameInfoPanel.dudeText.SetText(fmt.Sprintf("Dudes: %d", len(g.dudes)))
+	// Move this if it's too heavy.
+	g.ui.dudePanel2.SetDudes(g.dudes)
 }
 
 func (g *Game) Init() {
@@ -275,6 +277,13 @@ func (g *Game) Init() {
 				g.ui.speedPanel.soundButton.tooltip = "sound off"
 			}
 		}
+	}
+	g.ui.dudePanel2.onItemClick = func(index int) {
+		if index < 0 || index >= len(g.dudes) {
+			return
+		}
+		dude := g.dudes[index]
+		g.selectedDude = dude
 	}
 
 	g.camera = *render.NewCamera(0, 0)
