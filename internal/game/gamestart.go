@@ -13,7 +13,7 @@ type GameStateStart struct {
 
 func (s *GameStateStart) Begin(g *Game) {
 	// Give the player a reasonable amount of GOLD
-	g.gold = 7000
+	g.gold = 700
 
 	professions := []ProfessionKind{Knight, Vagabond, Ranger, Cleric}
 	dudeLimit := len(professions)
@@ -41,8 +41,6 @@ func (s *GameStateStart) Begin(g *Game) {
 	tower.AddStory(NewStory())
 	tower.AddStory(NewStory())
 	tower.AddStory(NewStory())
-	// Always remove door from last story(?)
-	tower.Stories[len(tower.Stories)-1].RemoveDoor()
 
 	g.tower = tower
 }

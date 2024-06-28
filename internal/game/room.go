@@ -672,16 +672,16 @@ func GetRequiredRooms(storyLevel int, roomCount int) []*RoomDef {
 }
 
 // Returns an amount of rooms until the given size/space count is reached.
-func GetOptionalRooms(storyLevel int, roomCount int) []*RoomDef {
-	if roomCount < 1 {
+func GetOptionalRooms(storyLevel int, roomSpace int) []*RoomDef {
+	if roomSpace < 1 {
 		return nil
 	}
 
 	level := storyLevel + 1
 
-	// if we are at boss level, no optional rooms
+	// if we are at boss level, give 3 rooms.
 	if level%3 == 0 {
-		return nil
+		roomSpace = 3
 	}
 
 	potentialRooms := []RoomTemplate{}
@@ -715,8 +715,18 @@ func GetOptionalRooms(storyLevel int, roomCount int) []*RoomDef {
 	}
 
 	rooms := make([]*RoomDef, 0)
-	for i := 0; i < roomCount; i++ {
+	attempts := 0
+	for i := 0; i < roomSpace; {
 		room := potentialRooms[rand.Intn(len(potentialRooms))]
+
+		if i+int(room.size) > roomSpace {
+			if attempts > 10 {
+				break
+			}
+			continue
+		}
+		i += int(room.size)
+
 		roomDef := GetRoomDef(room.kind, room.size, false)
 		rooms = append(rooms, roomDef)
 

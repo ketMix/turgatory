@@ -33,7 +33,12 @@ func (s *GameStateBuild) Begin(g *Game) {
 	}
 
 	for _, st := range g.tower.Stories {
-		if st.doorStack != nil {
+		if st.level == len(g.tower.Stories)-1 {
+			// If it's the last story, automatically remove the door.
+			s.nextStory = st
+			st.RemoveDoor()
+			break
+		} else if st.doorStack != nil {
 			s.nextStory = st
 			break
 		}
@@ -295,7 +300,7 @@ func (s *GameStateBuild) TryPlaceRoom(g *Game) {
 
 func (s *GameStateBuild) RollRooms(g *Game) {
 	s.availableRooms = nil
-	numOptional := 3 + len(g.tower.Stories)/3
+	numOptional := 5 + s.nextStory.level/3
 	required := GetRequiredRooms(s.nextStory.level, 2)
 	optional := GetOptionalRooms(s.nextStory.level, numOptional) // 6 is minimum, but let's given 3 more for fun.
 	s.availableRooms = append(s.availableRooms, required...)

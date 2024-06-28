@@ -223,20 +223,6 @@ func (g *Game) UpdateInfo() {
 func (g *Game) Init() {
 	// Init the equipment
 	assets.LoadEquipment()
-	tower := NewTower()
-
-	firstStory := NewStory()
-	firstStory.Open()
-	tower.AddStory(firstStory)
-
-	tower.AddStory(NewStoryWithSize(8))
-	//tower.Stories[1].Open()
-	//firstStory.RemoveDoor()
-	tower.AddStory(NewStory())
-	tower.AddStory(NewStory())
-	tower.AddStory(NewStory())
-
-	g.tower = tower
 
 	g.ui = NewUI()
 	g.uiOptions = UIOptions{Scale: 2.0}
