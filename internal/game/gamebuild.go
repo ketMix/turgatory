@@ -33,6 +33,9 @@ func (s *GameStateBuild) Begin(g *Game) {
 		d.RestoreUses()
 	}
 
+	// Add new story
+	g.tower.AddStory(NewStory())
+
 	for _, st := range g.tower.Stories {
 		if st.level == len(g.tower.Stories)-1 {
 			// If it's the last story, automatically remove the door.
@@ -399,6 +402,11 @@ func (s *GameStateBuild) BuyDude(g *Game) {
 	dude := NewDude(profession, level)
 	g.dudes = append(g.dudes, dude)
 	g.UpdateInfo()
+
+	AddMessage(
+		MessageNeutral,
+		fmt.Sprintf("Hired %s (Level %d %s) for %d gold.", dude.Name(), level, profession.String(), cost),
+	)
 }
 
 func (s *GameStateBuild) EquipmentCost() int {

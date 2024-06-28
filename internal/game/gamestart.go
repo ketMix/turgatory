@@ -35,13 +35,9 @@ func (s *GameStateStart) Begin(g *Game) {
 
 	// Create a new tower, yo.
 	tower := NewTower()
-	for i := 0; i < 3+s.length*2; i++ {
-		story := NewStory()
-		if i == 0 {
-			story.Open()
-		}
-		tower.AddStory(story)
-	}
+	story := NewStory()
+	story.Open()
+	tower.AddStory(story)
 
 	g.tower = tower
 	g.camera.SetMode(render.CameraModeTower)
