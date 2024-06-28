@@ -980,25 +980,42 @@ func (dip *DudeInfoPanel) SyncDude() {
 	if armor, ok := dip.dude.equipped[EquipmentTypeArmor]; ok {
 		dip.armorText.SetText(armor.Name())
 		dip.armorText.textOptions.Color = armor.quality.TextColor()
+		if dip.whichSelect == 1 {
+			dip.equipmentDetails.SetEquipment(armor)
+		}
 	} else {
 		dip.armorText.SetText("no armor")
 		dip.armorText.textOptions.Color = assets.ColorDudeDefense
+		if dip.whichSelect == 1 {
+			dip.equipmentDetails.SetEquipment(nil)
+		}
 	}
 	if weapon, ok := dip.dude.equipped[EquipmentTypeWeapon]; ok {
 		dip.weaponText.SetText(weapon.Name())
 		dip.weaponText.textOptions.Color = weapon.quality.TextColor()
+		if dip.whichSelect == 2 {
+			dip.equipmentDetails.SetEquipment(weapon)
+		}
 	} else {
 		dip.weaponText.SetText("no weapon")
 		dip.weaponText.textOptions.Color = assets.ColorDudeStrength
+		if dip.whichSelect == 2 {
+			dip.equipmentDetails.SetEquipment(nil)
+		}
 	}
 	if accessory, ok := dip.dude.equipped[EquipmentTypeAccessory]; ok {
 		dip.accessoryText.SetText(accessory.Name())
 		dip.accessoryText.textOptions.Color = accessory.quality.TextColor()
+		if dip.whichSelect == 3 {
+			dip.equipmentDetails.SetEquipment(accessory)
+		}
 	} else {
 		dip.accessoryText.SetText("no accessory")
 		dip.accessoryText.textOptions.Color = assets.ColorDudeWisdom
+		if dip.whichSelect == 3 {
+			dip.equipmentDetails.SetEquipment(nil)
+		}
 	}
-
 }
 
 func (dip *DudeInfoPanel) Layout(o *UIOptions) {
