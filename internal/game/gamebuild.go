@@ -199,7 +199,7 @@ func (s *GameStateBuild) Begin(g *Game) {
 	g.ui.dudePanel.buyButton.onClick = func() {
 		s.BuyDude(g)
 	}
-	g.ui.dudePanel.buyButton.text.SetText(fmt.Sprintf("Random Dude\n%dgp", s.DudeCost()))
+	g.ui.dudePanel.buyButton.text.SetText(fmt.Sprintf("Random Dude\n%dgp", s.DudeCost(len(g.dudes))))
 	g.ui.dudePanel.buyButton.disabled = false
 
 	g.ui.roomPanel.buyButton.onClick = func() {
@@ -453,13 +453,24 @@ func (s *GameStateBuild) RerollRooms(g *Game) {
 	g.UpdateInfo()
 }
 
-func (s *GameStateBuild) DudeCost() int {
-	return 100 + 50*(s.nextStory.level+1)
+// Increase cost of dudes as the game progresses.
+func (s *GameStateBuild) DudeCost(dudeCount int) int {
+	baseCost := 100.0
+	initialDudes := 7
+	maxCost := 10000.0
+	maxDudes := 20
+
+	// Calculate the exponent factor
+	exponent := math.Log(maxCost/baseCost) / float64(maxDudes-initialDudes)
+
+	// Calculate the cost based on the current number of dudes
+	cost := baseCost * math.Exp(exponent*float64(dudeCount-initialDudes))
+	return int(cost)
 }
 
 func (s *GameStateBuild) BuyDude(g *Game) {
 	// COST?
-	cost := s.DudeCost()
+	cost := s.DudeCost(len(g.dudes))
 	if g.gold < cost {
 		g.ui.feedback.Msg(FeedbackBad, fmt.Sprintf("need more gold to purchase a dude! (%d)", cost))
 		return
@@ -477,6 +488,7 @@ func (s *GameStateBuild) BuyDude(g *Game) {
 	profession := RandomProfessionKind()
 	dude := NewDude(profession, level)
 	g.dudes = append(g.dudes, dude)
+	g.ui.dudePanel.buyButton.text.SetText(fmt.Sprintf("Random Dude\n%dgp", s.DudeCost(len(g.dudes))))
 	g.UpdateInfo()
 
 	AddMessage(
