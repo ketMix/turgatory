@@ -65,6 +65,15 @@ func (vg *VGroup) Draw(o *Options) {
 
 	opts.GeoM.Concat(o.DrawImageOptions.GeoM)
 
+	// Do not render if we're out of screen bounds.
+	y := opts.GeoM.Element(1, 2)
+	sy := opts.GeoM.Element(1, 1)
+	h := float64(vg.Height) * sy * 1.25
+
+	if y+h < 0 || y-h*.25 > float64(o.Screen.Bounds().Dy()) {
+		return
+	}
+
 	//for _, img := range vg.Images {
 	img := vg.Images[0]
 	for index := 0; index < vg.Depth; index++ {
