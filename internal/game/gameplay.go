@@ -57,6 +57,11 @@ func (s *GameStatePlay) End(g *Game) {
 	// Clear out any floating text.
 	g.tower.ClearTexts()
 
+	// Clear any lingering enemies
+	for _, d := range g.dudes {
+		d.enemy = nil
+	}
+
 	// Collect gold
 	s.CollectGold(g)
 	// Collect inventory
