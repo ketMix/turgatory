@@ -262,8 +262,6 @@ func (r *Room) Update(req *ActivityRequests) {
 							bossTarget.stats.ModifyStat(StatCowardice, r.boss.stats.strength)
 						}
 						if act != nil {
-							fmt.Println("we got an activity")
-							fmt.Println(act)
 							req.Add(act)
 						}
 					}
@@ -721,6 +719,14 @@ func GetOptionalRooms(storyLevel int, roomCount int) []*RoomDef {
 		room := potentialRooms[rand.Intn(len(potentialRooms))]
 		roomDef := GetRoomDef(room.kind, room.size, false)
 		rooms = append(rooms, roomDef)
+
+		// Remove the room from the list
+		for j, r := range potentialRooms {
+			if r.kind == room.kind && r.size == room.size {
+				potentialRooms = append(potentialRooms[:j], potentialRooms[j+1:]...)
+				break
+			}
+		}
 	}
 	return rooms
 }

@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/kettek/ebijam24/internal/render"
@@ -193,12 +192,8 @@ func (t *Tower) HasAliveDudes() bool {
 	b := false
 	for _, d := range t.dudes {
 		if !d.IsDead() {
-			fmt.Println("Dude is alive: ", d.Name())
-			fmt.Println("Stats: ", d.stats)
 			b = true
 			break
-		} else {
-			fmt.Println("Dude is dead: ", d.Name())
 		}
 	}
 	return b
