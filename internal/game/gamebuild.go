@@ -25,7 +25,7 @@ type GameStateBuild struct {
 
 func (s *GameStateBuild) Begin(g *Game) {
 	g.camera.SetMode(render.CameraModeTower)
-
+	// g.audioController.PlayRoomTracks()
 	// On build phase, full heal all dudes and restore uses
 	for _, d := range g.dudes {
 		d.FullHeal()
@@ -45,6 +45,7 @@ func (s *GameStateBuild) Begin(g *Game) {
 
 	// Just in case
 	g.ui.bossPanel.hidden = true
+	g.selectedDude = nil
 
 	// Generate our new rooms.
 	numOptional := 3 + len(g.tower.Stories)/3

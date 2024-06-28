@@ -307,7 +307,6 @@ func (g *Game) Init() {
 	g.audioController = NewAudioController()
 	g.gold = 0
 	g.equipment = make([]*Equipment, 0)
-	// g.audioController.PlayRoomTracks()
 	g.state = &GameStateStart{}
 	g.state.Begin(g)
 }
