@@ -42,6 +42,10 @@ func (s *GameStateBuild) Begin(g *Game) {
 	if s.nextStory == nil {
 		panic("No next story found!")
 	}
+
+	// Just in case
+	g.ui.bossPanel.hidden = true
+
 	// Generate our new rooms.
 	numOptional := 3 + len(g.tower.Stories)/3
 	required := GetRequiredRooms(s.nextStory.level, 2)
