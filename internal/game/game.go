@@ -128,11 +128,15 @@ func (g *Game) Update() error {
 	if g.tower != nil {
 		for _, story := range g.tower.Stories {
 			if story.open {
+				// Build map of roomkind to max vol
+				roomPanVol := make(map[RoomKind]PanVol)
 				for _, room := range story.rooms {
 					pan, vol := room.getPanVol(g.camera.Rotation(), 1.0) // Replace 1.0 with a calculation based on focused story index vs. current
-					g.audioController.SetPan(room.kind, pan)
-					g.audioController.SetVol(room.kind, vol)
+					if roomPanVol[room.kind].Vol < vol {
+						roomPanVol[room.kind] = PanVol{Pan: pan, Vol: vol}
+					}
 				}
+				g.audioController.SetStoryPanVol(roomPanVol)
 			}
 		}
 		if g.selectedDude != nil {

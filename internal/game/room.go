@@ -311,17 +311,29 @@ func (r *Room) Reset() {
 }
 
 // Determins pan and vol of room track based on camera position
+// Center of camera is 0, left is -1, right is 1
+// Volume is 0.5 when pan is 0, 0 when pan is -1 or 1
 // TODO:
-// - Move this out a bit so we can consolidate duplicate rooms and not set pan/vol twice for same track (take highest)
 // - Determine by not only rotation but camera height, so scrolling up tower changes vol
 func (r *Room) getPanVol(rads float64, multiplier float64) (float64, float64) {
 	cR := rads
 	rR := r.stacks[0].Rotation()
 
-	// Determine pan and vol based on camera and room rotation
-	pan := math.Cos(cR-rR) * 0.5
-	vol := math.Sin(cR-rR) * 0.5
+	// Calculate angle difference
+	angleDiff := math.Mod(cR-rR+math.Pi, 2*math.Pi) - math.Pi
+	angleDiff -= 0.24828171122335682 // oh yeah, we're cooking with gas now
 
+	// Determine pan
+	pan := angleDiff / (math.Pi / 2)
+	pan *= -0.85 // Invert and smooth out the pan a bit
+
+	// Clamp pan to [-1, 1]
+	pan = math.Max(-1, math.Min(1, pan))
+
+	// Determine vol
+	vol := 0.5 * (1 - math.Abs(pan))
+
+	// Multiply vol by multiplier
 	vol *= multiplier
 
 	// Return pan and vol
