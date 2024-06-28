@@ -50,7 +50,7 @@ func (e EnemyKind) Stats() *Stats {
 	case EnemySkelly:
 		return &Stats{strength: 12, defense: 12, totalHp: 60, luck: 6}
 	case EnemyBossRat:
-		return &Stats{strength: 15, defense: 10, totalHp: 250, luck: 5}
+		return &Stats{strength: 10, defense: 10, totalHp: 250, luck: 5}
 	default:
 		return &Stats{strength: 1, defense: 0, totalHp: 1, luck: 1}
 	}
