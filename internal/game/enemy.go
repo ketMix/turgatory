@@ -54,21 +54,21 @@ func (e EnemyKind) BossStack() string {
 func (e EnemyKind) Stats() *Stats {
 	switch e {
 	case EnemyRat:
-		return &Stats{strength: 3, defense: 3, totalHp: 15, luck: 1}
+		return &Stats{strength: 2, defense: 2, totalHp: 15, luck: 1}
 	case EnemySlime:
-		return &Stats{strength: 4, defense: 4, totalHp: 20, luck: 1}
+		return &Stats{strength: 3, defense: 3, totalHp: 20, luck: 1}
 	case EnemySkelly:
-		return &Stats{strength: 5, defense: 5, totalHp: 30, luck: 1}
+		return &Stats{strength: 4, defense: 4, totalHp: 30, luck: 1}
 	case EnemyEbi:
-		return &Stats{strength: 6, defense: 6, totalHp: 40, luck: 1}
+		return &Stats{strength: 5, defense: 5, totalHp: 40, luck: 1}
 	case EnemyBossRat:
-		return &Stats{strength: 6, defense: 6, totalHp: 150, luck: 1}
+		return &Stats{strength: 4, defense: 6, totalHp: 150, luck: 1}
 	case EnemyBossSlime:
-		return &Stats{strength: 8, defense: 8, totalHp: 200, luck: 1}
+		return &Stats{strength: 6, defense: 8, totalHp: 200, luck: 1}
 	case EnemyBossSkelly:
-		return &Stats{strength: 10, defense: 10, totalHp: 300, luck: 1}
+		return &Stats{strength: 8, defense: 10, totalHp: 300, luck: 1}
 	case EnemyBossEbi:
-		return &Stats{strength: 12, defense: 12, totalHp: 400, luck: 1}
+		return &Stats{strength: 10, defense: 12, totalHp: 400, luck: 1}
 	default:
 		return &Stats{strength: 1, defense: 0, totalHp: 1, luck: 1}
 	}
