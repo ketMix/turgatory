@@ -213,8 +213,8 @@ func (s *Story) Draw(o *render.Options) {
 	opts.DrawImageOptions.GeoM.Translate(StoryVGroupWidth/2, StoryVGroupHeight/2)
 
 	// If the story is not yet open, just draw the tower exterior stacks.
+	s.hasRenderedWalls = false
 	if !s.open {
-		s.hasRenderedWalls = false
 		var storyWithWalls *Story
 		for _, story := range s.tower.Stories {
 			if story == s {
