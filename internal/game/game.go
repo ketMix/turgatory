@@ -177,7 +177,10 @@ func (g *Game) CheckUI() (bool, UICheckKind) {
 			return true, UICheckClick
 		}
 		g.selectedDude = nil
+		//g.ui.dudeInfoPanel.HideDetails()
 		g.ui.dudeInfoPanel.SetDude(g.hoveredDude)
+		g.ui.equipmentPanel.showDetails = false
+		g.ui.roomInfoPanel.hidden = true
 		return false, UICheckClick
 	} else {
 		if g.ui.Check(mx, my, UICheckHover) {
@@ -185,6 +188,11 @@ func (g *Game) CheckUI() (bool, UICheckKind) {
 		}
 		g.hoveredDude = nil
 		g.ui.dudeInfoPanel.SetDude(g.selectedDude)
+		/*if g.selectedDude != nil {
+			g.ui.dudeInfoPanel.ShowDetails()
+		} else {
+			g.ui.dudeInfoPanel.HideDetails()
+		}*/
 		return false, UICheckHover
 	}
 	return false, UICheckNone
@@ -204,7 +212,7 @@ func (g *Game) UpdateInfo() {
 	g.ui.gameInfoPanel.goldText.SetText(fmt.Sprintf("Gold: %d", g.gold))
 	g.ui.gameInfoPanel.dudeText.SetText(fmt.Sprintf("Dudes: %d", len(g.dudes)))
 	// Move this if it's too heavy.
-	g.ui.dudePanel2.SetDudes(g.dudes)
+	g.ui.dudePanel.SetDudes(g.dudes)
 }
 
 func (g *Game) Init() {
@@ -213,11 +221,6 @@ func (g *Game) Init() {
 
 	g.ui = NewUI()
 	g.uiOptions = UIOptions{Scale: 2.0}
-	g.ui.dudePanel.onDudeClick = func(d *Dude) {
-		// select dat dude
-		g.selectedDude = d
-		g.ui.dudeInfoPanel.SetDude(d)
-	}
 	g.ui.speedPanel.pauseButton.onCheck = func(kind UICheckKind) {
 		if kind == UICheckClick {
 			g.TogglePause()
@@ -259,15 +262,16 @@ func (g *Game) Init() {
 			}
 		}
 	}
-	g.ui.dudePanel2.onItemClick = func(index int) {
+	g.ui.dudePanel.onItemClick = func(index int) {
 		if index < 0 || index >= len(g.dudes) {
 			return
 		}
 		dude := g.dudes[index]
 		g.selectedDude = dude
+		//g.ui.dudeInfoPanel.ShowDetails()
 		//g.ui.dudeInfoPanel.SetDude(dude)
 	}
-	g.ui.dudePanel2.onItemHover = func(index int) {
+	g.ui.dudePanel.onItemHover = func(index int) {
 		if index < 0 || index >= len(g.dudes) {
 			return
 		}

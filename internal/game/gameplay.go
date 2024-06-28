@@ -30,9 +30,6 @@ func (s *GameStatePlay) Begin(g *Game) {
 	// Add our dudes to the tower!
 	g.tower.AddDudes(g.dudes...)
 
-	// TODO: Set up dude state to spawn outside first story?
-	g.ui.dudePanel.SyncDudes(g.dudes)
-
 	g.camera.SetRotation(math.Pi / 8)
 	g.camera.SetStory(0)
 }

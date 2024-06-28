@@ -496,9 +496,13 @@ func (p *UIPanel) Layout(parent UIElement, o *UIOptions) {
 
 		child.Layout(p, o)
 		if p.flowDirection == DirectionVertical {
-			y += child.Height() + p.spaceBetween
+			if child.Height() > 0 {
+				y += child.Height() + p.spaceBetween
+			}
 		} else {
-			x += child.Width() + p.spaceBetween
+			if child.Width() > 0 {
+				x += child.Width() + p.spaceBetween
+			}
 		}
 	}
 }
@@ -600,6 +604,15 @@ func (p *UIPanel) AddChild(child UIElement) {
 	p.children = append(p.children, child)
 }
 
+func (p *UIPanel) RemoveChild(child UIElement) {
+	for i, c := range p.children {
+		if c == child {
+			p.children = append(p.children[:i], p.children[i+1:]...)
+			return
+		}
+	}
+}
+
 // ======== UIText ========
 type UIText struct {
 	render.Positionable
@@ -670,7 +683,6 @@ func (t *UIText) Draw(o *render.Options) {
 			t.textOptions.GeoM.Translate(t.X()+(t.Width())/2-w/2, y+float64(i)*yStep)
 			render.DrawText(&t.textOptions, line)
 		}
-		//vector.DrawFilledRect(o.Screen, float32(t.X()), float32(t.Y()), float32(t.Width()), float32(t.Height()), color.RGBA{255, 0, 0, 255}, false)
 	} else {
 		t.textOptions.GeoM.Translate(t.X(), t.Y())
 

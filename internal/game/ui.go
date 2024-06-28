@@ -31,7 +31,6 @@ func (o UIOptions) ScreenToCoords(x, y float64) (float64, float64) {
 type UI struct {
 	gameInfoPanel  GameInfoPanel
 	dudePanel      DudePanel
-	dudePanel2     DudePanel2
 	dudeInfoPanel  DudeInfoPanel
 	equipmentPanel EquipmentPanel
 	speedPanel     SpeedPanel
@@ -48,28 +47,6 @@ func NewUI() *UI {
 	ui := &UI{}
 
 	{
-		panelSprite := Must(render.NewSprite("ui/panels"))
-		ui.dudePanel = DudePanel{
-			top:      Must(render.NewSubSprite(panelSprite, 16, 0, 16, 16)),
-			topright: Must(render.NewSubSprite(panelSprite, 32, 0, 16, 16)),
-			mid:      Must(render.NewSubSprite(panelSprite, 16, 16, 16, 16)),
-			midright: Must(render.NewSubSprite(panelSprite, 32, 16, 16, 16)),
-			bot:      Must(render.NewSubSprite(panelSprite, 16, 32, 16, 16)),
-			botright: Must(render.NewSubSprite(panelSprite, 32, 32, 16, 16)),
-		}
-		ui.dudePanel.dudeDetails = &DudeDetails{
-			top:      ui.dudePanel.top,
-			topright: ui.dudePanel.topright,
-			topleft:  Must(render.NewSubSprite(panelSprite, 0, 0, 16, 16)),
-			mid:      ui.dudePanel.mid,
-			midright: ui.dudePanel.midright,
-			midleft:  Must(render.NewSubSprite(panelSprite, 0, 16, 16, 16)),
-			bot:      ui.dudePanel.bot,
-			botright: ui.dudePanel.botright,
-			botleft:  Must(render.NewSubSprite(panelSprite, 0, 32, 16, 16)),
-		}
-	}
-	{
 		panelSprite := Must(render.NewSprite("ui/altPanels"))
 		ui.messagePanel = MessagePanel{
 			maxLines: 8,
@@ -84,7 +61,7 @@ func NewUI() *UI {
 	}
 	ui.gameInfoPanel = MakeGameInfoPanel()
 	ui.speedPanel = MakeSpeedPanel()
-	ui.dudePanel2 = MakeDudePanel2()
+	ui.dudePanel = MakeDudePanel()
 	ui.dudeInfoPanel = MakeDudeInfoPanel()
 	ui.equipmentPanel = MakeEquipmentPanel()
 	ui.roomPanel = MakeRoomPanel()
@@ -100,7 +77,6 @@ func NewUI() *UI {
 
 func (ui *UI) Layout(o *UIOptions) {
 	ui.options = o
-	ui.dudePanel.Layout(o)
 	ui.speedPanel.Layout(nil, o)
 	ui.messagePanel.Layout(o)
 
@@ -131,11 +107,11 @@ func (ui *UI) Layout(o *UIOptions) {
 
 	// Manually position dude panel and equipment panel
 	h := float64(o.Height)/2 - float64(o.Height)/12
-	ui.dudePanel2.panel.SetSize(
+	ui.dudePanel.panel.SetSize(
 		96*o.Scale,
 		h-8*o.Scale,
 	)
-	ui.dudePanel2.panel.SetPosition(
+	ui.dudePanel.panel.SetPosition(
 		8,
 		float64(o.Height)/2-h-8*o.Scale,
 	)
@@ -149,21 +125,25 @@ func (ui *UI) Layout(o *UIOptions) {
 		float64(o.Height)/2+8*o.Scale,
 	)
 
-	ui.dudePanel2.Layout(o)
+	ui.dudePanel.Layout(o)
 
 	ui.dudeInfoPanel.Layout(o)
+
+	h = 64
+	h = 64
+
 	ui.dudeInfoPanel.panel.SetSize(
-		96*o.Scale,
-		128*o.Scale,
+		64*o.Scale,
+		h*o.Scale,
 	)
-	ts := ui.dudeInfoPanel.title.Width() + 6*o.Scale
+	ts := ui.dudeInfoPanel.title.Width() + 8*o.Scale
 	if ts > ui.dudeInfoPanel.panel.Width() {
 		ts = math.Ceil(ts/ui.dudeInfoPanel.panel.center.Width()) * ui.dudeInfoPanel.panel.center.Width()
 		ui.dudeInfoPanel.panel.SetSize(ts, ui.dudeInfoPanel.panel.Height())
 	}
 	ui.dudeInfoPanel.panel.SetPosition(
-		ui.dudePanel2.panel.X()+ui.dudePanel2.panel.Width()+4*o.Scale,
-		ui.dudePanel2.panel.Y(),
+		ui.dudePanel.panel.X()+ui.dudePanel.panel.Width()+4*o.Scale,
+		ui.dudePanel.panel.Y(),
 	)
 
 	ui.equipmentPanel.Layout(o)
@@ -219,7 +199,6 @@ func (ui *UI) Layout(o *UIOptions) {
 
 func (ui *UI) Update(o *UIOptions) {
 	ui.dudePanel.Update(o)
-	ui.dudePanel2.Update(o)
 	ui.dudeInfoPanel.Update(o)
 	ui.equipmentPanel.Update(o)
 	ui.roomPanel.Update(o)
@@ -230,7 +209,7 @@ func (ui *UI) Update(o *UIOptions) {
 }
 
 func (ui *UI) Check(mx, my float64, kind UICheckKind) bool {
-	if ui.dudePanel2.Check(mx, my, kind) {
+	if ui.dudePanel.Check(mx, my, kind) {
 		return true
 	}
 	if ui.equipmentPanel.Check(mx, my, kind) {
@@ -253,7 +232,6 @@ func (ui *UI) Check(mx, my float64, kind UICheckKind) bool {
 func (ui *UI) Draw(o *render.Options) {
 	ui.buttonPanel.Draw(o)
 
-	ui.dudePanel.Draw(o)
 	o.DrawImageOptions.GeoM.Reset()
 	ui.equipmentPanel.Draw(o)
 	o.DrawImageOptions.GeoM.Reset()
@@ -267,7 +245,7 @@ func (ui *UI) Draw(o *render.Options) {
 	ui.roomInfoPanel.Draw(o)
 
 	o.DrawImageOptions.GeoM.Reset()
-	ui.dudePanel2.Draw(o)
+	ui.dudePanel.Draw(o)
 	ui.dudeInfoPanel.Draw(o)
 
 	ui.gameInfoPanel.Draw(o)
@@ -275,427 +253,6 @@ func (ui *UI) Draw(o *render.Options) {
 	ui.bossPanel.Draw(o)
 
 	ui.feedback.Draw(o)
-}
-
-type DudeDetails struct {
-	render.Positionable
-	dude             *Dude
-	width            float64
-	height           float64
-	top              *render.Sprite
-	topleft          *render.Sprite
-	topright         *render.Sprite
-	mid              *render.Sprite
-	midleft          *render.Sprite
-	midright         *render.Sprite
-	bot              *render.Sprite
-	botleft          *render.Sprite
-	botright         *render.Sprite
-	equipmentDetails []*EquipmentDetails
-}
-
-type EquipmentDetails struct {
-	render.Positionable
-	equipmentType EquipmentType
-	equipment     *Equipment
-	height        float64
-	width         float64
-	hovered       bool
-}
-
-type DudePanel struct {
-	render.Originable
-	render.Positionable
-	drawered     bool
-	width        float64
-	height       float64
-	top          *render.Sprite
-	topright     *render.Sprite
-	mid          *render.Sprite
-	midright     *render.Sprite
-	bot          *render.Sprite
-	botright     *render.Sprite
-	drawerInterp render.InterpNumber
-	dudeProfiles []*DudeProfile
-	dudeDetails  *DudeDetails
-	onDudeClick  func(*Dude)
-}
-
-type DudeProfile struct {
-	render.Positionable
-	dude       *Dude
-	stack      *render.Stack
-	hovered    bool
-	height     float64
-	width      float64
-	stackScale float64
-}
-
-func (dp *DudeProfile) Draw(o *render.Options) {
-	x, y := dp.Position()
-	// Save these top options for drawing dude profiles
-	profileOptions := render.Options{
-		Screen: o.Screen,
-		Pitch:  2,
-	}
-	profileOptions.DrawImageOptions.GeoM.Concat(o.DrawImageOptions.GeoM)
-	profileOptions.DrawImageOptions.GeoM.Scale(dp.stackScale, dp.stackScale)
-	profileOptions.DrawImageOptions.GeoM.Translate(x, y)
-	// Also shove 'em to the right a little.
-	profileOptions.DrawImageOptions.GeoM.Translate(dp.width/2, 0)
-	dp.stack.Draw(&profileOptions)
-
-	if dp.hovered {
-		op := &render.TextOptions{
-			Screen: o.Screen,
-			Font:   assets.DisplayFont,
-			Color:  color.White,
-		}
-		op.GeoM.Translate(x+dp.width*2.5, y)
-		render.DrawText(op, dp.dude.Name())
-		op.Font = assets.BodyFont
-		op.GeoM.Reset()
-		op.GeoM.Translate(x+dp.width*2.5, y+assets.DisplayFont.LineHeight-assets.BodyFont.LineHeight/2)
-		render.DrawText(op, fmt.Sprintf("Level %d %s", dp.dude.Level(), dp.dude.Profession()))
-		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-		op.Color = color.RGBA{200, 50, 50, 255}
-		stats := dp.dude.GetCalculatedStats()
-		render.DrawText(op, fmt.Sprintf("HP: %d/%d", stats.currentHp, stats.totalHp))
-		op.Color = color.RGBA{200, 200, 200, 255}
-		op.GeoM.Translate(0, assets.BodyFont.LineHeight*2)
-		render.DrawText(op, fmt.Sprintf("%s strength", PaddedIntString(stats.strength, 4)))
-		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-		render.DrawText(op, fmt.Sprintf("%s agility", PaddedIntString(stats.agility, 4)))
-		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-		render.DrawText(op, fmt.Sprintf("%s defense", PaddedIntString(stats.defense, 4)))
-		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-		render.DrawText(op, fmt.Sprintf("%s wisdom", PaddedIntString(stats.wisdom, 4)))
-		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-		render.DrawText(op, fmt.Sprintf("%s cowardice", PaddedIntString(stats.cowardice, 4)))
-		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-		render.DrawText(op, fmt.Sprintf("%s luck", PaddedIntString(stats.luck, 4)))
-	}
-}
-
-func (dd *DudeDetails) SetDude(dude *Dude) {
-	dd.dude = dude
-	if dude == nil {
-		return
-	}
-
-	// Set equipment details
-	dd.equipmentDetails = []*EquipmentDetails{}
-	// Armor
-	dd.equipmentDetails = append(dd.equipmentDetails, &EquipmentDetails{
-		equipmentType: EquipmentTypeArmor,
-		equipment:     dude.equipped[EquipmentTypeArmor],
-	})
-
-	// Weapon
-	dd.equipmentDetails = append(dd.equipmentDetails, &EquipmentDetails{
-		equipmentType: EquipmentTypeWeapon,
-		equipment:     dude.equipped[EquipmentTypeWeapon],
-	})
-
-	// Accessory
-	dd.equipmentDetails = append(dd.equipmentDetails, &EquipmentDetails{
-		equipmentType: EquipmentTypeAccessory,
-		equipment:     dude.equipped[EquipmentTypeAccessory],
-	})
-}
-
-func (dd *DudeDetails) Layout(o *UIOptions, dp *DudePanel) {
-	// eww
-	scale := o.Scale * 1.1
-	dd.bot.Scale = scale
-	dd.botleft.Scale = scale
-	dd.botright.Scale = scale
-	dd.mid.Scale = scale
-	dd.midleft.Scale = scale
-	dd.midright.Scale = scale
-	dd.top.Scale = scale
-	dd.topleft.Scale = scale
-	dd.topright.Scale = scale
-
-	partWidth, _ := dd.top.Size()
-	dd.width = partWidth * 9
-	dd.height = dd.width * 0.5
-
-	// Position at vertical center + width of dude panel
-	x, y := dp.width+dd.width/3, float64(o.Height/2)-dd.height/2
-	dd.SetPosition(x, y)
-
-	// Layout equipment details
-	for i, ed := range dd.equipmentDetails {
-		ed.Layout(dd, i)
-	}
-}
-
-func (dd *DudeDetails) Draw(o *render.Options) {
-	if dd.dude == nil {
-		return
-	}
-	x, y := dd.Position()
-	pw, ph := dd.top.Size()
-	o.DrawImageOptions.GeoM.Translate(x, y)
-
-	// Calculate parts
-	verticalParts := int(math.Floor(dd.height/ph)) - 2
-	horizontalParts := int(math.Floor(dd.width/pw)) - 2
-
-	// top
-	dd.topleft.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(pw, 0)
-	for x := 0; x < horizontalParts; x++ {
-		dd.top.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(pw, 0)
-	}
-	dd.topright.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(-dd.width+pw, ph)
-
-	// mid
-	for y := 0; y < verticalParts; y++ {
-		dd.midleft.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(pw, 0)
-		for x := 0; x < horizontalParts; x++ {
-			dd.mid.Draw(o)
-			o.DrawImageOptions.GeoM.Translate(pw, 0)
-		}
-		dd.midright.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(-dd.width+pw, ph)
-	}
-
-	// bottom
-	dd.botleft.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(pw, 0)
-	for x := 0; x < horizontalParts; x++ {
-		dd.bot.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(pw, 0)
-	}
-	dd.botright.Draw(o)
-
-	// Use calculated stats for display
-	stats := dd.dude.GetCalculatedStats()
-	// Details
-	op := &render.TextOptions{
-		Screen: o.Screen,
-		Font:   assets.DisplayFont,
-		Color:  color.White,
-	}
-	op.GeoM.Reset()
-	op.GeoM.Translate(x+15, y+10)
-	render.DrawText(op, dd.dude.Name())
-	op.Font = assets.BodyFont
-	op.GeoM.Reset()
-	op.GeoM.Translate(x+15, y+10+assets.DisplayFont.LineHeight-assets.BodyFont.LineHeight/2)
-	render.DrawText(op, fmt.Sprintf("Level %d %s", dd.dude.Level(), dd.dude.Profession()))
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	op.Color = color.RGBA{200, 50, 50, 255}
-	render.DrawText(op, fmt.Sprintf("HP: %d/%d", stats.currentHp, stats.totalHp))
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	op.Color = color.RGBA{255, 215, 0, 255}
-	render.DrawText(op, fmt.Sprintf("%.2f gold", dd.dude.gold))
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-
-	// XP
-	op.Color = color.RGBA{200, 200, 255, 255}
-	render.DrawText(op, fmt.Sprintf("%d/%d XP", dd.dude.xp, dd.dude.NextLevelXP()))
-
-	op.Color = color.RGBA{200, 200, 200, 255}
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight*2)
-	render.DrawText(op, fmt.Sprintf("%s strength", PaddedIntString(stats.strength, 4)))
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s agility", PaddedIntString(stats.agility, 4)))
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s defense", PaddedIntString(stats.defense, 4)))
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s wisdom", PaddedIntString(stats.wisdom, 4)))
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s cowardice", PaddedIntString(stats.cowardice, 4)))
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s luck", PaddedIntString(stats.luck, 4)))
-
-	// Equipment
-	op.GeoM.Reset()
-	op.GeoM.Translate(x+dd.width*0.40, y+10)
-	op.Font = assets.DisplayFont
-	op.Color = color.White
-	render.DrawText(op, "Equipment")
-	op.GeoM.Translate(0, assets.DisplayFont.LineHeight)
-
-	hoveredEquipment := (*Equipment)(nil)
-	for _, ed := range dd.equipmentDetails {
-		ed.Draw(o)
-		if ed.hovered {
-			hoveredEquipment = ed.equipment
-		}
-	}
-
-	if hoveredEquipment != nil {
-		drawEquipmentDescription(o, dd, hoveredEquipment)
-	}
-}
-
-func drawEquipmentDescription(o *render.Options, dd *DudeDetails, hoveredEquipment *Equipment) {
-	x, y := dd.Position()
-
-	// hasPerk := hoveredEquipment.perk != nil
-
-	// Draw equipment description below
-	o.DrawImageOptions.GeoM.Reset()
-	o.DrawImageOptions.GeoM.Translate(x, y+dd.height-20)
-
-	// top
-	dd.topleft.Draw(o)
-	pw, ph := dd.top.Size()
-	o.DrawImageOptions.GeoM.Translate(pw, 0)
-	horizontalParts := int(math.Floor(dd.width/pw)) - 2
-	for x := 0; x < horizontalParts; x++ {
-		dd.top.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(pw, 0)
-	}
-	dd.topright.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(-dd.width+pw, ph)
-
-	// mid
-	dd.midleft.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(pw, 0)
-	for x := 0; x < horizontalParts; x++ {
-		dd.mid.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(pw, 0)
-	}
-	dd.midright.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(-dd.width+pw, ph)
-
-	// bottom
-	dd.botleft.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(pw, 0)
-	for x := 0; x < horizontalParts; x++ {
-		dd.bot.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(pw, 0)
-	}
-	dd.botright.Draw(o)
-
-	// Details
-	op := &render.TextOptions{
-		Screen: o.Screen,
-		Font:   assets.DisplayFont,
-		Color:  color.White,
-	}
-
-	// LEFT SIDE
-	op.GeoM.Reset()
-	op.GeoM.Translate(x+15, y+dd.height-10)
-	op.Font = assets.DisplayFont
-	op.Color = hoveredEquipment.quality.TextColor()
-	render.DrawText(op, hoveredEquipment.Name())
-
-	op.GeoM.Translate(0, assets.DisplayFont.LineHeight+1)
-
-	op.Font = assets.BodyFont
-	if hoveredEquipment.perk != nil {
-		op.GeoM.Translate(10, 0)
-		op.Color = hoveredEquipment.perk.Quality().TextColor()
-		render.DrawText(op, "of "+hoveredEquipment.perk.Name())
-		op.GeoM.Translate(0, assets.DisplayFont.LineHeight+1)
-		op.GeoM.Translate(-10, 0)
-	} else {
-		op.GeoM.Translate(0, assets.DisplayFont.LineHeight+1)
-	}
-
-	// Draw equipment description
-	op.Color = color.RGBA{200, 200, 200, 255}
-	render.DrawText(op, hoveredEquipment.Description())
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-
-	// Draw equipment perks
-	if hoveredEquipment.perk != nil {
-		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-		op.Color = hoveredEquipment.perk.Quality().TextColor()
-		render.DrawText(op, hoveredEquipment.perk.Description())
-		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-		render.DrawText(op, fmt.Sprintf("Uses: %d/%d", hoveredEquipment.uses, hoveredEquipment.totalUses))
-	}
-
-	// RIGHT SIDE
-	// Draw equipment type
-	op.GeoM.Reset()
-	op.GeoM.Translate(x+dd.width-100, y+dd.height-10)
-	op.Color = color.RGBA{200, 200, 200, 255}
-	render.DrawText(op, fmt.Sprintf("Level %d %s", hoveredEquipment.stats.level, hoveredEquipment.Type().String()))
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-
-	// Draw Stats
-	op.Color = color.RGBA{200, 200, 200, 255}
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s strength", PaddedIntString(hoveredEquipment.stats.strength, 4)))
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s agility", PaddedIntString(hoveredEquipment.stats.agility, 4)))
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s defense", PaddedIntString(hoveredEquipment.stats.defense, 4)))
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s wisdom", PaddedIntString(hoveredEquipment.stats.wisdom, 4)))
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s cowardice", PaddedIntString(hoveredEquipment.stats.cowardice, 4)))
-	op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-	render.DrawText(op, fmt.Sprintf("%s luck", PaddedIntString(hoveredEquipment.stats.luck, 4)))
-
-}
-
-func (ed *EquipmentDetails) Layout(dd *DudeDetails, i int) {
-	ed.height = (assets.BodyFont.LineHeight + 2) * 3
-	ed.width = dd.width * 0.45
-
-	ddX, ddY := dd.Position()
-	yOffset := ed.height * float64(i+1)
-	edX, edY := ddX+ed.width, ddY+yOffset
-	ed.SetPosition(edX, edY)
-}
-
-func (ed *EquipmentDetails) Update(o *UIOptions) {
-	ed.hovered = false
-	x, y := ed.Position()
-	mx, my := IntToFloat2(ebiten.CursorPosition())
-	if InBounds(x, y, ed.width, ed.height, mx, my) {
-		ed.hovered = true
-	} else {
-		ed.hovered = false
-	}
-}
-
-func (ed *EquipmentDetails) Draw(o *render.Options) {
-	// Details
-	op := &render.TextOptions{
-		Screen: o.Screen,
-		Font:   assets.DisplayFont,
-		Color:  color.White,
-	}
-
-	op.GeoM.Translate(ed.Position())
-	op.Font = assets.BodyFont
-	op.Color = color.RGBA{200, 200, 200, 255}
-
-	render.DrawText(op, ed.equipmentType.String())
-	op.GeoM.Translate(10, assets.BodyFont.LineHeight+1)
-	equipment := ed.equipment
-
-	if equipment != nil {
-		op.Color = equipment.quality.TextColor()
-		render.DrawText(op, equipment.Name())
-		op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-		if equipment.perk != nil {
-			op.GeoM.Translate(10, 0)
-			op.Color = equipment.perk.Quality().TextColor()
-			render.DrawText(op, equipment.perk.Name())
-			op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-			op.GeoM.Translate(-10, 0)
-		} else {
-			op.GeoM.Translate(0, assets.BodyFont.LineHeight+1)
-		}
-	} else {
-		op.GeoM.Translate(0, (assets.BodyFont.LineHeight+1)*2)
-	}
-	op.GeoM.Translate(-10, 0)
 }
 
 func PaddedIntString(i int, pad int) string {
@@ -711,141 +268,6 @@ func InBounds(x, y, width, height, mx, my float64) bool {
 		return true
 	}
 	return false
-}
-
-func (dp *DudePanel) Layout(o *UIOptions) {
-	// eww
-	dp.bot.Scale = o.Scale
-	dp.botright.Scale = o.Scale
-	dp.mid.Scale = o.Scale
-	dp.midright.Scale = o.Scale
-	dp.top.Scale = o.Scale
-	dp.topright.Scale = o.Scale
-
-	partWidth, partHeight := dp.top.Size()
-	dp.width = partWidth * 2
-	dp.height = float64(o.Height - o.Height/3)
-
-	// Position at vertical center.
-	dp.SetPosition(0, float64(o.Height/2)-dp.height/2)
-
-	// Position dude faces
-	dpx, dpy := dp.Position()
-	dpy += partHeight / 2 // Pad the top a bit
-	y := 0.0
-	for _, p := range dp.dudeProfiles {
-		p.SetPosition(dpx, dpy+y)
-		p.stackScale = o.Scale + 1
-		p.width = float64(p.stack.Width()) * p.stackScale
-		p.height = float64(p.stack.Height()) * p.stackScale * 1.5
-
-		y += p.height + 4
-	}
-
-	dp.dudeDetails.Layout(o, dp)
-}
-
-func (dp *DudePanel) Update(o *UIOptions) {
-	dp.drawerInterp.Update()
-
-	dpx, dpy := dp.Position()
-	mx, my := IntToFloat2(ebiten.CursorPosition())
-
-	maxX := dpx + dp.width
-	maxY := dpy + dp.height
-
-	if mx > dpx && mx < maxX && my > dpy && my < maxY {
-		if dp.drawered {
-			dp.drawered = false
-			dp.drawerInterp.Set(0, 3)
-		}
-	} else {
-		if !dp.drawered {
-			dp.drawered = true
-			dp.drawerInterp.Set(-(dp.width - dp.width/4), 3)
-		}
-	}
-
-	selectedDude := false
-	for _, p := range dp.dudeProfiles {
-		px, py := p.Position()
-		if InBounds(px, py, dp.width, p.height, mx, my) {
-			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-				selectedDude = true
-				dp.dudeDetails.SetDude(p.dude)
-				if dp.onDudeClick != nil {
-					dp.onDudeClick(p.dude)
-				}
-			}
-			p.hovered = true
-		} else {
-			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-				if !selectedDude {
-					dp.dudeDetails.SetDude(nil)
-				}
-			}
-			p.hovered = false
-		}
-	}
-
-	for _, ed := range dp.dudeDetails.equipmentDetails {
-		ed.Update(o)
-	}
-}
-
-func (dp *DudePanel) Draw(o *render.Options) {
-	pw, ph := dp.top.Size()
-	o.DrawImageOptions.GeoM.Translate(dp.drawerInterp.Current, 0)
-	o.DrawImageOptions.GeoM.Translate(dp.Position())
-	// top
-	dp.top.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(pw, 0)
-	dp.topright.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(0, ph)
-	o.DrawImageOptions.GeoM.Translate(-pw, 0)
-
-	// mid
-	parts := int(math.Floor(dp.height/ph)) - 2
-	for y := 0; y < parts; y++ {
-		dp.mid.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(pw, 0)
-		dp.midright.Draw(o)
-		o.DrawImageOptions.GeoM.Translate(-pw, 0)
-		o.DrawImageOptions.GeoM.Translate(0, ph)
-	}
-	// bottom
-	dp.bot.Draw(o)
-	o.DrawImageOptions.GeoM.Translate(pw, 0)
-	dp.botright.Draw(o)
-
-	// Draw dudes, but offset also by the drawerInterp
-	o.DrawImageOptions.GeoM.Reset()
-	o.DrawImageOptions.GeoM.Translate(dp.drawerInterp.Current, 0)
-	for _, p := range dp.dudeProfiles {
-		p.Draw(o)
-	}
-
-	o.DrawImageOptions.GeoM.Reset()
-
-	// Draw dude details
-	dp.dudeDetails.Draw(o)
-}
-
-func (dp *DudePanel) SyncDudes(dudes []*Dude) {
-	dp.dudeProfiles = nil // Reset them dude profiles
-	for _, dude := range dudes {
-		stack := render.CopyStack(dude.stack)
-		stack.SetPosition(0, 0)
-		stack.SetOriginToCenter()
-		stack.SetRotation(math.Pi/2 - math.Pi/4)
-
-		dp.dudeProfiles = append(dp.dudeProfiles, &DudeProfile{
-			dude:   dude,
-			stack:  stack,
-			width:  float64(stack.Width()),
-			height: float64(stack.Height()) * 2, // x2 for slice pitch of 1
-		})
-	}
 }
 
 type SpeedPanel struct {
@@ -1253,7 +675,7 @@ func (gip *GameInfoPanel) Draw(o *render.Options) {
 	gip.panel.Draw(o)
 }
 
-type DudePanel2 struct {
+type DudePanel struct {
 	panel       *UIPanel
 	list        *UIItemList
 	count       *UIText
@@ -1266,8 +688,8 @@ type DudePanel2 struct {
 	onBuyClick  func()
 }
 
-func MakeDudePanel2() DudePanel2 {
-	dp := DudePanel2{
+func MakeDudePanel() DudePanel {
+	dp := DudePanel{
 		panel: NewUIPanel(PanelStyleInteractive),
 		title: NewUIText("Dudes", assets.DisplayFont, assets.ColorHeading),
 		list:  NewUIItemList(DirectionVertical),
@@ -1288,7 +710,7 @@ func MakeDudePanel2() DudePanel2 {
 	return dp
 }
 
-func (dp *DudePanel2) SetDudes(dudes []*Dude) {
+func (dp *DudePanel) SetDudes(dudes []*Dude) {
 	dp.list.Clear()
 	dp.dudeSprites = nil
 	dp.dudes = nil
@@ -1313,7 +735,7 @@ func (dp *DudePanel2) SetDudes(dudes []*Dude) {
 	dp.count.text = fmt.Sprintf("%d", len(dudes))
 }
 
-func (dp *DudePanel2) DudeToImage(dude *Dude) *UIImage {
+func (dp *DudePanel) DudeToImage(dude *Dude) *UIImage {
 	stack := render.CopyStack(dude.stack)
 
 	img := ebiten.NewImage(int(float64(stack.Width())*1.25), int(float64(stack.Height())*2))
@@ -1352,7 +774,7 @@ func (dp *DudePanel2) DudeToImage(dude *Dude) *UIImage {
 	return NewUIImage(profileOptions.Screen)
 }
 
-func (dp *DudePanel2) Layout(o *UIOptions) {
+func (dp *DudePanel) Layout(o *UIOptions) {
 	dp.panel.padding = 6 * o.Scale
 	dp.list.SetSize(dp.panel.Width(), dp.panel.Height()-dp.panel.padding*2-dp.title.Height())
 	for _, ds := range dp.dudeSprites {
@@ -1371,7 +793,7 @@ func (dp *DudePanel2) Layout(o *UIOptions) {
 	dp.buyButton.SetPosition(dp.panel.X()+dp.panel.Width()/2-dp.buyButton.Width()/2, dp.panel.Y()+dp.panel.Height()-10*o.Scale)
 }
 
-func (dp *DudePanel2) Update(o *UIOptions) {
+func (dp *DudePanel) Update(o *UIOptions) {
 	for i, d := range dp.dudes {
 		if d.dirtyEquipment {
 			dp.dudeSprites[i] = dp.DudeToImage(d)
@@ -1381,7 +803,7 @@ func (dp *DudePanel2) Update(o *UIOptions) {
 	dp.panel.Update(o)
 }
 
-func (dp *DudePanel2) Check(mx, my float64, kind UICheckKind) bool {
+func (dp *DudePanel) Check(mx, my float64, kind UICheckKind) bool {
 	if dp.panel.Check(mx, my, kind) {
 		return true
 	}
@@ -1394,7 +816,7 @@ func (dp *DudePanel2) Check(mx, my float64, kind UICheckKind) bool {
 	return false
 }
 
-func (dp *DudePanel2) Draw(o *render.Options) {
+func (dp *DudePanel) Draw(o *render.Options) {
 	dp.buyButton.Draw(o)
 	dp.panel.Draw(o)
 	dp.count.Draw(o)
@@ -1437,17 +859,27 @@ func MakeDudeInfoPanel() DudeInfoPanel {
 		hidden:    false,
 	}
 	dip.panel.AddChild(dip.title)
+	dip.title.ignoreScale = true
 	//dip.panel.AddChild(dip.description)
 
 	dip.panel.AddChild(dip.level)
+	dip.level.ignoreScale = true
 	dip.panel.AddChild(dip.xp)
+	dip.xp.ignoreScale = true
 	dip.panel.AddChild(dip.hp)
+	dip.hp.ignoreScale = true
 	dip.panel.AddChild(dip.strength)
+	dip.strength.ignoreScale = true
 	dip.panel.AddChild(dip.agility)
+	dip.agility.ignoreScale = true
 	dip.panel.AddChild(dip.defense)
+	dip.defense.ignoreScale = true
 	dip.panel.AddChild(dip.wisdom)
+	dip.wisdom.ignoreScale = true
 	dip.panel.AddChild(dip.cowardice)
+	dip.cowardice.ignoreScale = true
 	dip.panel.AddChild(dip.luck)
+	dip.luck.ignoreScale = true
 
 	dip.panel.sizeChildren = true
 	//dip.panel.centerChildren = true
@@ -1485,7 +917,7 @@ func (dip *DudeInfoPanel) SyncDude() {
 
 func (dip *DudeInfoPanel) Layout(o *UIOptions) {
 	dip.panel.padding = 6 * o.Scale
-	dip.panel.spaceBetween = -3 * o.Scale
+	dip.panel.spaceBetween = -2 * o.Scale
 	dip.panel.Layout(nil, o)
 }
 
@@ -1519,6 +951,10 @@ type EquipmentPanel struct {
 	equipment   []*Equipment
 	title       *UIText
 	buyButton   *ButtonPanel
+	showDetails bool
+
+	details *EquipmentDetailsPanel
+
 	onBuyClick  func()
 	onItemClick func(index int)
 	onItemHover func(index int)
@@ -1526,9 +962,10 @@ type EquipmentPanel struct {
 
 func MakeEquipmentPanel() EquipmentPanel {
 	ep := EquipmentPanel{
-		panel: NewUIPanel(PanelStyleInteractive),
-		title: NewUIText("Loot", assets.DisplayFont, assets.ColorHeading),
-		list:  NewUIItemList(DirectionVertical),
+		panel:   NewUIPanel(PanelStyleInteractive),
+		title:   NewUIText("Loot", assets.DisplayFont, assets.ColorHeading),
+		list:    NewUIItemList(DirectionVertical),
+		details: NewEquipmentDetailsPanel(),
 	}
 	btn := MakeButtonPanel(assets.BodyFont, PanelStyleButtonAttached)
 	ep.buyButton = &btn
@@ -1572,10 +1009,21 @@ func (ep *EquipmentPanel) Layout(o *UIOptions) {
 	ep.buyButton.SetPosition(ep.panel.X()+ep.panel.Width()/2-ep.buyButton.Width()/2, ep.panel.Y()+ep.panel.Height()-10*o.Scale)
 
 	ep.panel.Layout(nil, o)
+	ep.details.Layout(o)
+	ep.details.panel.SetSize(128*o.Scale, 96*o.Scale)
+	ep.details.panel.SetPosition(ep.panel.X()+ep.panel.Width()+6*o.Scale, ep.panel.Y())
+
+	// Dynamically size our details panel.
+	newHeight := (ep.details.luck.Y() + ep.details.luck.Height()) - ep.details.panel.Y()
+	newHeight = math.Ceil(newHeight/ep.details.panel.center.Height()) * ep.details.panel.center.Height()
+	ep.details.panel.SetSize(128*o.Scale, newHeight)
 }
 
 func (ep *EquipmentPanel) Update(o *UIOptions) {
 	ep.panel.Update(o)
+	if ep.showDetails {
+		ep.details.Update(o)
+	}
 }
 
 func (ep *EquipmentPanel) Check(mx, my float64, kind UICheckKind) bool {
@@ -1590,12 +1038,197 @@ func (ep *EquipmentPanel) Check(mx, my float64, kind UICheckKind) bool {
 		}
 		return true
 	}
+	if ep.showDetails && ep.details.Check(mx, my, kind) {
+		return true
+	}
 	return false
 }
 
 func (ep *EquipmentPanel) Draw(o *render.Options) {
 	ep.buyButton.Draw(o)
 	ep.panel.Draw(o)
+	if ep.showDetails {
+		ep.details.Draw(o)
+	}
+}
+
+type EquipmentDetailsPanel struct {
+	panel           *UIPanel
+	title           *UIText
+	description     *UIText
+	level           *UIText
+	equipment       *Equipment
+	perk            *UIText
+	perkDescription *UIText
+	uses            *UIText
+
+	agility   *UIText
+	strength  *UIText
+	defense   *UIText
+	wisdom    *UIText
+	cowardice *UIText
+	luck      *UIText
+
+	swapButton  *ButtonPanel
+	sellButton  *ButtonPanel
+	onSwapClick func()
+	onSellClick func()
+
+	hidden bool
+}
+
+func NewEquipmentDetailsPanel() *EquipmentDetailsPanel {
+	edp := &EquipmentDetailsPanel{
+		panel:           NewUIPanel(PanelStyleTransparent),
+		title:           NewUIText("My Steeze", assets.DisplayFont, assets.ColorHeading),
+		description:     NewUIText("", assets.BodyFont, assets.ColorItemDescription),
+		level:           NewUIText("", assets.BodyFont, assets.ColorItemLevel),
+		perk:            NewUIText("", assets.BodyFont, assets.ColorItemPerk),
+		perkDescription: NewUIText("", assets.BodyFont, assets.ColorItemPerkDescription),
+		uses:            NewUIText("", assets.BodyFont, assets.ColorItemUses),
+		agility:         NewUIText("", assets.BodyFont, assets.ColorDudeAgility),
+		strength:        NewUIText("", assets.BodyFont, assets.ColorDudeStrength),
+		defense:         NewUIText("", assets.BodyFont, assets.ColorDudeDefense),
+		wisdom:          NewUIText("", assets.BodyFont, assets.ColorDudeWisdom),
+		cowardice:       NewUIText("", assets.BodyFont, assets.ColorDudeCowardice),
+		luck:            NewUIText("", assets.BodyFont, assets.ColorDudeLuck),
+	}
+	{
+		btn := MakeButtonPanel(assets.BodyFont, PanelStyleButtonAttached)
+		edp.sellButton = &btn
+		edp.sellButton.text.center = true
+		edp.sellButton.text.SetText("Sell for\ngp")
+		edp.sellButton.onClick = func() {
+			if edp.onSellClick != nil {
+				edp.onSellClick()
+			}
+		}
+	}
+	{
+		btn := MakeButtonPanel(assets.BodyFont, PanelStyleButtonAttached)
+		edp.swapButton = &btn
+		edp.swapButton.text.center = true
+		edp.swapButton.text.SetText("Swap to\nDude")
+		edp.swapButton.onClick = func() {
+			if edp.onSwapClick != nil {
+				edp.onSwapClick()
+			}
+		}
+	}
+
+	edp.title.ignoreScale = true
+	edp.description.ignoreScale = true
+	edp.level.ignoreScale = true
+	edp.perk.ignoreScale = true
+	edp.perkDescription.ignoreScale = true
+	edp.uses.ignoreScale = true
+	edp.agility.ignoreScale = true
+	edp.strength.ignoreScale = true
+	edp.defense.ignoreScale = true
+	edp.wisdom.ignoreScale = true
+	edp.cowardice.ignoreScale = true
+	edp.luck.ignoreScale = true
+	edp.panel.AddChild(edp.title)
+	edp.panel.AddChild(edp.level)
+	edp.panel.AddChild(edp.perk)
+	edp.panel.AddChild(edp.uses)
+	edp.panel.AddChild(edp.description)
+	edp.panel.AddChild(edp.perkDescription)
+	edp.panel.AddChild(edp.agility)
+	edp.panel.AddChild(edp.strength)
+	edp.panel.AddChild(edp.defense)
+	edp.panel.AddChild(edp.wisdom)
+	edp.panel.AddChild(edp.cowardice)
+	edp.panel.AddChild(edp.luck)
+	edp.panel.sizeChildren = true
+	return edp
+}
+
+func (edp *EquipmentDetailsPanel) SetEquipment(equipment *Equipment) {
+	edp.equipment = equipment
+	if equipment != nil {
+		edp.title.SetText(equipment.Name())
+		edp.title.textOptions.Color = equipment.quality.TextColor()
+		edp.description.SetText(equipment.Description())
+		edp.level.SetText(fmt.Sprintf("Level %d %s", equipment.stats.level, equipment.Type()))
+
+		edp.uses.SetText(fmt.Sprintf("%d/%d uses", equipment.uses, equipment.totalUses))
+
+		if equipment.perk != nil {
+			edp.perk.SetText(equipment.perk.Name())
+			edp.perk.textOptions.Color = equipment.perk.Quality().TextColor()
+			edp.perkDescription.SetText(equipment.perk.Description())
+		} else {
+			edp.perk.SetText("")
+			edp.perkDescription.SetText("")
+		}
+
+		edp.agility.SetText(fmt.Sprintf("%s agility", PaddedIntString(equipment.stats.agility, 4)))
+		edp.strength.SetText(fmt.Sprintf("%s strength", PaddedIntString(equipment.stats.strength, 4)))
+		edp.defense.SetText(fmt.Sprintf("%s defense", PaddedIntString(equipment.stats.defense, 4)))
+		edp.wisdom.SetText(fmt.Sprintf("%s wisdom", PaddedIntString(equipment.stats.wisdom, 4)))
+		edp.cowardice.SetText(fmt.Sprintf("%s cowardice", PaddedIntString(equipment.stats.cowardice, 4)))
+		edp.luck.SetText(fmt.Sprintf("%s luck", PaddedIntString(equipment.stats.luck, 4)))
+
+		edp.sellButton.text.SetText(fmt.Sprintf("Sell for\n%.0fgp", equipment.GoldValue()))
+
+		edp.hidden = false
+	} else {
+		edp.hidden = true
+	}
+}
+
+func (edp *EquipmentDetailsPanel) Layout(o *UIOptions) {
+	if edp.hidden {
+		return
+	}
+
+	edp.panel.padding = 6 * o.Scale
+	edp.panel.spaceBetween = -1 * o.Scale
+	edp.panel.Layout(nil, o)
+
+	edp.sellButton.SetSize(edp.panel.Width(), 48)
+	edp.sellButton.Layout(nil, o)
+	edp.sellButton.text.SetPosition(edp.sellButton.text.X(), edp.sellButton.text.Y()+4*o.Scale)
+	edp.sellButton.SetPosition(edp.panel.X(), edp.panel.Y()+edp.panel.Height()-10*o.Scale)
+
+	edp.swapButton.SetSize(edp.panel.Width(), 48)
+	edp.swapButton.Layout(nil, o)
+	edp.swapButton.text.SetPosition(edp.swapButton.text.X(), edp.swapButton.text.Y()+4*o.Scale)
+	edp.swapButton.SetPosition(edp.panel.X()+edp.panel.Width()-edp.swapButton.Width(), edp.panel.Y()+edp.panel.Height()-10*o.Scale)
+}
+
+func (edp *EquipmentDetailsPanel) Update(o *UIOptions) {
+	if edp.hidden {
+		return
+	}
+
+	edp.panel.Update(o)
+}
+
+func (edp *EquipmentDetailsPanel) Check(mx, my float64, kind UICheckKind) bool {
+	if edp.hidden {
+		return false
+	}
+	if edp.panel.Check(mx, my, kind) {
+		return true
+	}
+	if edp.sellButton.Check(mx, my, kind) {
+		return true
+	}
+	if edp.swapButton.Check(mx, my, kind) {
+		return true
+	}
+	return false
+}
+
+func (edp *EquipmentDetailsPanel) Draw(o *render.Options) {
+	if edp.hidden {
+		return
+	}
+	edp.sellButton.Draw(o)
+	edp.swapButton.Draw(o)
+	edp.panel.Draw(o)
 }
 
 type FeedbackPopup struct {

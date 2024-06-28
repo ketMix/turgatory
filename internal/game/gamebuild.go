@@ -21,6 +21,8 @@ type GameStateBuild struct {
 	placingRoom      *RoomDef
 	placingIndex     int
 	readyAttempts    int
+	//
+	selectedEquipment int
 }
 
 func (s *GameStateBuild) Begin(g *Game) {
@@ -74,11 +76,47 @@ func (s *GameStateBuild) Begin(g *Game) {
 	g.ui.equipmentPanel.buyButton.text.SetText(fmt.Sprintf("Random Loot\n%dgp", s.EquipmentCost()))
 	g.ui.equipmentPanel.buyButton.disabled = false
 
-	g.ui.dudePanel2.buyButton.onClick = func() {
+	g.ui.equipmentPanel.onItemClick = func(which int) {
+		g.ui.equipmentPanel.list.selected = which
+		s.selectedEquipment = which
+		g.ui.equipmentPanel.details.SetEquipment(g.equipment[which])
+		g.ui.equipmentPanel.showDetails = true
+	}
+	g.ui.equipmentPanel.details.onSellClick = func() {
+		if s.selectedEquipment >= len(g.equipment) {
+			return
+		}
+		eq := g.equipment[s.selectedEquipment]
+		s.SellEquipment(g, eq)
+		g.ui.equipmentPanel.SetEquipment(g.equipment)
+		if s.selectedEquipment >= len(g.equipment) {
+			s.selectedEquipment--
+		}
+		if s.selectedEquipment >= 0 {
+			g.ui.equipmentPanel.onItemClick(s.selectedEquipment)
+		} else {
+			g.ui.equipmentPanel.details.SetEquipment(nil)
+		}
+	}
+	g.ui.equipmentPanel.details.onSwapClick = func() {
+		if g.selectedDude == nil {
+			g.ui.feedback.Msg(FeedbackBad, "select a dude to swap equipment with!")
+			return
+		}
+
+		if s.selectedEquipment >= len(g.equipment) {
+			return
+		}
+		eq := g.equipment[s.selectedEquipment]
+
+		fmt.Println("swap", eq.Name(), "to", g.selectedDude.Name())
+	}
+
+	g.ui.dudePanel.buyButton.onClick = func() {
 		s.BuyDude(g)
 	}
-	g.ui.dudePanel2.buyButton.text.SetText(fmt.Sprintf("Random Dude\n%dgp", s.DudeCost()))
-	g.ui.dudePanel2.buyButton.disabled = false
+	g.ui.dudePanel.buyButton.text.SetText(fmt.Sprintf("Random Dude\n%dgp", s.DudeCost()))
+	g.ui.dudePanel.buyButton.disabled = false
 
 	g.ui.roomPanel.buyButton.onClick = func() {
 		s.RerollRooms(g)
@@ -139,7 +177,7 @@ func (s *GameStateBuild) End(g *Game) {
 	g.ui.buttonPanel.hidden = true
 	g.ui.roomInfoPanel.hidden = true
 	g.ui.roomPanel.buyButton.disabled = true
-	g.ui.dudePanel2.buyButton.disabled = true
+	g.ui.dudePanel.buyButton.disabled = true
 	g.ui.equipmentPanel.buyButton.disabled = true
 }
 func (s *GameStateBuild) Update(g *Game) GameState {
@@ -377,16 +415,21 @@ func (s *GameStateBuild) SellEquipment(g *Game, e *Equipment) {
 	if e == nil {
 		return
 	}
-	value := int(e.GoldValue())
-	g.gold += value
+	found := false
 	for i, eq := range g.equipment {
 		if eq == e {
 			g.equipment = append(g.equipment[:i], g.equipment[i+1:]...)
+			found = true
 			break
 		}
 	}
+	if !found {
+		return
+	}
+	value := int(e.GoldValue())
+	g.gold += value
 	AddMessage(MessageLoot, fmt.Sprintf("Sold %s for %d gold.", e.Name(), value))
 	// Trigger on sell event
 	e.Activate(EventSell{equipment: e})
-
+	g.UpdateInfo()
 }
