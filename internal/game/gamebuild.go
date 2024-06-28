@@ -174,7 +174,7 @@ func (s *GameStateBuild) Update(g *Game) GameState {
 			}
 
 			// FIXME: This ain't right.
-			cy -= float64(s.nextStory.level) * 10 * g.camera.Zoom()
+			cy -= float64(s.nextStory.level) * g.camera.GetMultiplier() * g.camera.Zoom()
 
 			r := math.Atan2(my-cy, mx-cx) - g.camera.Rotation()
 			roomIndex := s.nextStory.RoomIndexFromAngle(r)

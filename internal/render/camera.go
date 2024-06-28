@@ -42,13 +42,25 @@ func (c *Camera) Story() int {
 func (c *Camera) SetStory(level int) {
 	switch c.Mode {
 	case CameraModeTower:
-		c.SetPosition(c.x.Target, -100+float64(level)*18.5*c.zoom.Target)
+		c.SetPosition(c.x.Target, -100+float64(level)*c.GetMultiplier()*c.zoom.Target)
 	case CameraModeStack:
-		c.SetPosition(c.x.Target, float64(level)*9.32*c.zoom.Target)
+		c.SetPosition(c.x.Target, float64(level)*c.GetMultiplier()*c.zoom.Target)
 	case CameraModeSuperZoom:
-		c.SetPosition(c.x.Target, 90+float64(level)*3.5*c.zoom.Target)
+		c.SetPosition(c.x.Target, 90+float64(level)*c.GetMultiplier()*c.zoom.Target)
 	}
 	c.lastLevel = level
+}
+
+func (c *Camera) GetMultiplier() float64 {
+	switch c.Mode {
+	case CameraModeTower:
+		return 18.5
+	case CameraModeStack:
+		return 9.32
+	case CameraModeSuperZoom:
+		return 3.5
+	}
+	return 0
 }
 
 func (c *Camera) SetMode(mode CameraMode) {
