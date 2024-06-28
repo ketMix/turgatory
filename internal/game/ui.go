@@ -1325,7 +1325,7 @@ func (edp *EquipmentDetailsPanel) SetEquipment(equipment *Equipment) {
 		edp.cowardice.SetText(fmt.Sprintf("%s cowardice", PaddedIntString(equipment.stats.cowardice, 4)))
 		edp.luck.SetText(fmt.Sprintf("%s luck", PaddedIntString(equipment.stats.luck, 4)))
 
-		edp.sellButton.text.SetText(fmt.Sprintf("Sell for\n%.0fgp", equipment.GoldValue()))
+		edp.sellButton.text.SetText(fmt.Sprintf("Sell for\n%dgp", equipment.GoldValue()))
 
 		edp.hidden = false
 	} else {
