@@ -207,7 +207,7 @@ func NewRoom(size RoomSize, kind RoomKind, required bool) *Room {
 }
 
 // Update updates the stuff in the room.
-func (r *Room) Update(req *ActivityRequests) {
+func (r *Room) Update(req *ActivityRequests, g *Game) {
 	r.stacks.Update()
 	if r.boss != nil {
 		r.boss.RoomUpdate(r)
@@ -225,12 +225,12 @@ func (r *Room) Update(req *ActivityRequests) {
 		if r.boss != nil {
 			if r.boss.IsDead() {
 				aliveDudes := 0
-				for _, d := range r.story.dudes {
+				for _, d := range g.dudes {
 					if !d.IsDead() {
 						aliveDudes++
 					}
 				}
-				goldPerDude := r.boss.Gold() / float64(aliveDudes)
+				goldPerDude := int(r.boss.Gold() / aliveDudes)
 				xp := r.boss.XP() / aliveDudes
 				AddMessage(
 					MessageGood,
@@ -238,7 +238,7 @@ func (r *Room) Update(req *ActivityRequests) {
 				)
 				AddMessage(
 					MessageLoot,
-					fmt.Sprintf("All dudes have earned %d XP and %f gold ", xp, goldPerDude),
+					fmt.Sprintf("All dudes have earned %d XP and %d gold ", xp, goldPerDude),
 				)
 				r.boss = nil
 				r.killedBoss = true
@@ -262,8 +262,6 @@ func (r *Room) Update(req *ActivityRequests) {
 							bossTarget.stats.ModifyStat(StatCowardice, r.boss.stats.strength)
 						}
 						if act != nil {
-							fmt.Println("we got an activity")
-							fmt.Println(act)
 							req.Add(act)
 						}
 					}
@@ -280,7 +278,7 @@ func (r *Room) Update(req *ActivityRequests) {
 		} else {
 			// If all dudes are waiting, trigger boss fight
 			aliveDudes := 0
-			for _, d := range r.story.dudes {
+			for _, d := range g.dudes {
 				if !d.IsDead() {
 					aliveDudes++
 				}
@@ -558,7 +556,7 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 		case Treasure:
 			// Add gold
 			goldAmount := (r.story.level + 1) * rand.Intn(10*int(r.size))
-			e.dude.Trigger(EventGoldGain{dude: e.dude, amount: float64(goldAmount)})
+			e.dude.Trigger(EventGoldGain{dude: e.dude, amount: goldAmount})
 		case Library:
 			// Level up a random equipment perk or add one
 			maxQuality := PerkQuality(r.story.level/2 + 1)
@@ -721,6 +719,14 @@ func GetOptionalRooms(storyLevel int, roomCount int) []*RoomDef {
 		room := potentialRooms[rand.Intn(len(potentialRooms))]
 		roomDef := GetRoomDef(room.kind, room.size, false)
 		rooms = append(rooms, roomDef)
+
+		// Remove the room from the list
+		for j, r := range potentialRooms {
+			if r.kind == room.kind && r.size == room.size {
+				potentialRooms = append(potentialRooms[:j], potentialRooms[j+1:]...)
+				break
+			}
+		}
 	}
 	return rooms
 }

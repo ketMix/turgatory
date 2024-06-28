@@ -122,7 +122,7 @@ func (e EventSell) String() string {
 // EventGoldGain occurs when a dude gains gold
 type EventGoldGain struct {
 	dude   *Dude
-	amount float64
+	amount int
 }
 
 func (e EventGoldGain) String() string {
@@ -132,7 +132,7 @@ func (e EventGoldGain) String() string {
 // EventGoldGain occurs when a dude gains gold
 type EventGoldLoss struct {
 	dude   *Dude
-	amount float64
+	amount int
 }
 
 func (e EventGoldLoss) String() string {

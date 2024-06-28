@@ -134,7 +134,7 @@ func GetRoomCost(kind RoomKind, size RoomSize, level int) int {
 			cost = 500
 		}
 	case Well:
-		cost = 250
+		cost = 125
 	case Treasure:
 		switch size {
 		case Small:

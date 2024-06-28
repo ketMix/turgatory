@@ -83,7 +83,7 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 		s.updateTicker++
 		if s.updateTicker > g.speed {
 			var req ActivityRequests
-			g.tower.Update(&req)
+			g.tower.Update(&req, g)
 			for _, u := range req {
 				switch u := u.(type) {
 				case DudeDeadActivity:
@@ -178,12 +178,12 @@ func (s *GameStatePlay) Draw(g *Game, screen *ebiten.Image) {
 
 // For all dudes, remove their gold and add it to the player's gold.
 func (s *GameStatePlay) CollectGold(g *Game) {
-	gold := 0.0
+	gold := 0
 	for _, dude := range g.dudes {
 		gold += dude.gold
 		dude.gold = 0
 	}
-	g.gold += int(gold)
+	g.gold += gold
 
 	g.ui.feedback.Msg(FeedbackGood, fmt.Sprintf("%d gold snarfed from yer dudes", int(gold)))
 	AddMessage(MessageLoot, fmt.Sprintf("Collected %d gold from dudes.", int(gold)))
