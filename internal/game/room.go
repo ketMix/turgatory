@@ -423,7 +423,7 @@ func (r *Room) RollLoot(luck int) *Equipment {
 	}
 
 	// Determine if we get equipment at all
-	if rand.Intn(100) > ((luck + 1) * 15) {
+	if rand.Intn(100) > ((luck + 1) * 20) {
 		return nil
 	}
 
