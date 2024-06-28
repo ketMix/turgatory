@@ -876,7 +876,7 @@ func (d *Dude) Cursify(roomLevel int) {
 		goldLoss := roomLevel * 5
 		d.Trigger(EventGoldLoss{dude: d, amount: goldLoss})
 		//fmt.Println(d.name, "lost", goldLoss, "gold")
-		t := MakeFloatingTextFromDude(d, fmt.Sprintf("-%.0fgp", goldLoss), color.NRGBA{255, 255, 0, 200}, 40, 0.5)
+		t := MakeFloatingTextFromDude(d, fmt.Sprintf("-%dgp", goldLoss), color.NRGBA{255, 255, 0, 200}, 40, 0.5)
 		d.story.AddText(t)
 
 		// If gold is negative, set to 0
@@ -886,7 +886,7 @@ func (d *Dude) Cursify(roomLevel int) {
 
 		AddMessage(
 			MessageBad,
-			fmt.Sprintf("%s lost %.0fgp", d.name, goldLoss),
+			fmt.Sprintf("%s lost %dgp", d.name, goldLoss),
 		)
 	}
 
