@@ -670,12 +670,25 @@ func (d *Dude) Unequip(t EquipmentType) *Equipment {
 
 func (d *Dude) AddToInventory(eq *Equipment) {
 	d.inventory = append(d.inventory, eq)
-	if d.equipped[eq.Type()] == nil {
-		d.Equip(eq)
+
+	shouldEquip := false
+	equipped := d.equipped[eq.Type()]
+	if equipped == nil {
+		shouldEquip = true
+	} else {
+		// If equipped item does not have perk
+		// and new item is better, equip it
+		if equipped.perk == nil && eq.LevelWithQuality() > equipped.LevelWithQuality() {
+			shouldEquip = true
+		}
 	}
 
-	//fmt.Println(d.name, "added", eq.Name(), "to inventory")
-	d.floatingText(fmt.Sprintf("+%s", eq.Name()), color.NRGBA{200, 200, 50, 128}, 100, 1.0)
+	if shouldEquip {
+		d.Equip(eq)
+	} else {
+		//fmt.Println(d.name, "added", eq.Name(), "to inventory")
+		d.floatingText(fmt.Sprintf("+%s", eq.Name()), color.NRGBA{200, 200, 50, 128}, 100, 1.0)
+	}
 }
 
 func (d *Dude) Inventory() []*Equipment {

@@ -404,6 +404,10 @@ func (e *Equipment) RestoreUses() bool {
 	return true
 }
 
+func (e *Equipment) LevelWithQuality() int {
+	return e.stats.level + int(e.quality)*5
+}
+
 func GetEquipmentNamesWithTypes(equipmentTypes []EquipmentType) []*string {
 	equipmentStrings := make([]string, len(equipmentTypes))
 	for i, et := range equipmentTypes {
