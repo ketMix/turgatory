@@ -111,6 +111,14 @@ func (s *GameStateBuild) Begin(g *Game) {
 
 		fmt.Println("swap", eq.Name(), "to", g.selectedDude.Name())
 	}
+	g.ui.dudeInfoPanel.equipmentDetails.sellButton.hidden = false
+	g.ui.dudeInfoPanel.equipmentDetails.onSellClick = func() {
+		fmt.Println("argh, sell equipment")
+	}
+	g.ui.dudeInfoPanel.equipmentDetails.swapButton.hidden = false
+	g.ui.dudeInfoPanel.equipmentDetails.onSwapClick = func() {
+		fmt.Println("argh, swap equipment")
+	}
 
 	g.ui.dudePanel.buyButton.onClick = func() {
 		s.BuyDude(g)
@@ -179,6 +187,8 @@ func (s *GameStateBuild) End(g *Game) {
 	g.ui.roomPanel.buyButton.disabled = true
 	g.ui.dudePanel.buyButton.disabled = true
 	g.ui.equipmentPanel.buyButton.disabled = true
+	g.ui.dudeInfoPanel.equipmentDetails.sellButton.hidden = true
+	g.ui.dudeInfoPanel.equipmentDetails.swapButton.hidden = true
 }
 func (s *GameStateBuild) Update(g *Game) GameState {
 	if s.readyAttempts >= 2 {

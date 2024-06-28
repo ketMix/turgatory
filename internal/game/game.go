@@ -179,6 +179,11 @@ func (g *Game) CheckUI() (bool, UICheckKind) {
 		g.selectedDude = nil
 		//g.ui.dudeInfoPanel.HideDetails()
 		g.ui.dudeInfoPanel.SetDude(g.hoveredDude)
+		if g.hoveredDude == nil {
+			g.ui.dudeInfoPanel.showDetails = false
+		} else {
+			g.ui.dudeInfoPanel.showDetails = true
+		}
 		g.ui.equipmentPanel.showDetails = false
 		g.ui.roomInfoPanel.hidden = true
 		return false, UICheckClick
@@ -188,6 +193,11 @@ func (g *Game) CheckUI() (bool, UICheckKind) {
 		}
 		g.hoveredDude = nil
 		g.ui.dudeInfoPanel.SetDude(g.selectedDude)
+		if g.selectedDude != nil {
+			g.ui.dudeInfoPanel.showDetails = true
+		} else {
+			g.ui.dudeInfoPanel.showDetails = false
+		}
 		/*if g.selectedDude != nil {
 			g.ui.dudeInfoPanel.ShowDetails()
 		} else {
@@ -268,6 +278,7 @@ func (g *Game) Init() {
 		}
 		dude := g.dudes[index]
 		g.selectedDude = dude
+		g.ui.dudeInfoPanel.showDetails = true
 		//g.ui.dudeInfoPanel.ShowDetails()
 		//g.ui.dudeInfoPanel.SetDude(dude)
 	}

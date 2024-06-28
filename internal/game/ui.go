@@ -31,7 +31,7 @@ func (o UIOptions) ScreenToCoords(x, y float64) (float64, float64) {
 type UI struct {
 	gameInfoPanel  GameInfoPanel
 	dudePanel      DudePanel
-	dudeInfoPanel  DudeInfoPanel
+	dudeInfoPanel  *DudeInfoPanel
 	equipmentPanel EquipmentPanel
 	speedPanel     SpeedPanel
 	messagePanel   MessagePanel
@@ -62,7 +62,7 @@ func NewUI() *UI {
 	ui.gameInfoPanel = MakeGameInfoPanel()
 	ui.speedPanel = MakeSpeedPanel()
 	ui.dudePanel = MakeDudePanel()
-	ui.dudeInfoPanel = MakeDudeInfoPanel()
+	ui.dudeInfoPanel = NewDudeInfoPanel()
 	ui.equipmentPanel = MakeEquipmentPanel()
 	ui.roomPanel = MakeRoomPanel()
 	ui.roomInfoPanel = MakeRoomInfoPanel()
@@ -210,6 +210,9 @@ func (ui *UI) Update(o *UIOptions) {
 
 func (ui *UI) Check(mx, my float64, kind UICheckKind) bool {
 	if ui.dudePanel.Check(mx, my, kind) {
+		return true
+	}
+	if ui.dudeInfoPanel.Check(mx, my, kind) {
 		return true
 	}
 	if ui.equipmentPanel.Check(mx, my, kind) {
@@ -840,27 +843,87 @@ type DudeInfoPanel struct {
 	cowardice *UIText
 	luck      *UIText
 
+	equipmentPanel *UIPanel
+	armorText      *UIText
+	weaponText     *UIText
+	accessoryText  *UIText
+
+	equipmentDetails *EquipmentDetailsPanel
+	showDetails      bool
+
+	whichSelect int
+
+	small  bool
 	hidden bool
 }
 
-func MakeDudeInfoPanel() DudeInfoPanel {
-	dip := DudeInfoPanel{
-		panel:     NewUIPanel(PanelStyleTransparent),
-		title:     NewUIText("Mah Dude", assets.DisplayFont, assets.ColorDudeTitle),
-		level:     NewUIText("Level 0 sucker", assets.BodyFont, assets.ColorDudeLevel),
-		xp:        NewUIText("0/0 xp", assets.BodyFont, assets.ColorDudeXP),
-		hp:        NewUIText("0/0 hp", assets.BodyFont, assets.ColorDudeHP),
-		strength:  NewUIText("0 strength", assets.BodyFont, assets.ColorDudeStrength),
-		agility:   NewUIText("0 agility", assets.BodyFont, assets.ColorDudeAgility),
-		defense:   NewUIText("0 defense", assets.BodyFont, assets.ColorDudeDefense),
-		wisdom:    NewUIText("0 wisdom", assets.BodyFont, assets.ColorDudeWisdom),
-		cowardice: NewUIText("0 cowardice", assets.BodyFont, assets.ColorDudeCowardice),
-		luck:      NewUIText("0 luck", assets.BodyFont, assets.ColorDudeLuck),
-		hidden:    false,
+func NewDudeInfoPanel() *DudeInfoPanel {
+	dip := &DudeInfoPanel{
+		panel:            NewUIPanel(PanelStyleTransparent),
+		title:            NewUIText("Mah Dude", assets.DisplayFont, assets.ColorDudeTitle),
+		level:            NewUIText("Level 0 sucker", assets.BodyFont, assets.ColorDudeLevel),
+		xp:               NewUIText("0/0 xp", assets.BodyFont, assets.ColorDudeXP),
+		hp:               NewUIText("0/0 hp", assets.BodyFont, assets.ColorDudeHP),
+		strength:         NewUIText("0 strength", assets.BodyFont, assets.ColorDudeStrength),
+		agility:          NewUIText("0 agility", assets.BodyFont, assets.ColorDudeAgility),
+		defense:          NewUIText("0 defense", assets.BodyFont, assets.ColorDudeDefense),
+		wisdom:           NewUIText("0 wisdom", assets.BodyFont, assets.ColorDudeWisdom),
+		cowardice:        NewUIText("0 cowardice", assets.BodyFont, assets.ColorDudeCowardice),
+		luck:             NewUIText("0 luck", assets.BodyFont, assets.ColorDudeLuck),
+		equipmentPanel:   NewUIPanel(PanelStyleInteractive),
+		armorText:        NewUIText("    nakie", assets.BodyFont, assets.ColorDudeDefense),
+		weaponText:       NewUIText("    fists", assets.BodyFont, assets.ColorDudeStrength),
+		accessoryText:    NewUIText("    nada", assets.BodyFont, assets.ColorDudeWisdom),
+		equipmentDetails: NewEquipmentDetailsPanel(true),
+		hidden:           false,
 	}
 	dip.panel.AddChild(dip.title)
 	dip.title.ignoreScale = true
 	//dip.panel.AddChild(dip.description)
+
+	txt := NewUIText("Equipment", assets.DisplayFont, assets.ColorHeading)
+	txt.ignoreScale = true
+	dip.equipmentPanel.sizeChildren = true
+	dip.equipmentPanel.AddChild(txt)
+	dip.armorText.ignoreScale = true
+	dip.weaponText.ignoreScale = true
+	dip.accessoryText.ignoreScale = true
+	dip.armorText.onCheck = func(kind UICheckKind) {
+		if kind == UICheckClick {
+			dip.whichSelect = 1
+			if armor, ok := dip.dude.equipped[EquipmentTypeArmor]; ok {
+				dip.equipmentDetails.SetEquipment(armor)
+			} else {
+				dip.equipmentDetails.SetEquipment(nil)
+			}
+		}
+	}
+	dip.weaponText.onCheck = func(kind UICheckKind) {
+		if kind == UICheckClick {
+			dip.whichSelect = 2
+			if weapon, ok := dip.dude.equipped[EquipmentTypeWeapon]; ok {
+				dip.equipmentDetails.SetEquipment(weapon)
+			} else {
+				dip.equipmentDetails.SetEquipment(nil)
+			}
+		}
+	}
+	dip.accessoryText.onCheck = func(kind UICheckKind) {
+		if kind == UICheckClick {
+			dip.whichSelect = 3
+			if accessory, ok := dip.dude.equipped[EquipmentTypeAccessory]; ok {
+				dip.equipmentDetails.SetEquipment(accessory)
+			} else {
+				dip.equipmentDetails.SetEquipment(nil)
+			}
+		}
+	}
+	dip.equipmentPanel.AddChild(dip.armorText)
+	dip.equipmentPanel.AddChild(dip.weaponText)
+	dip.equipmentPanel.AddChild(dip.accessoryText)
+
+	dip.equipmentDetails.swapButton.text.SetText("Snarf\nLoot")
+	dip.equipmentDetails.hidden = true
 
 	dip.panel.AddChild(dip.level)
 	dip.level.ignoreScale = true
@@ -913,12 +976,50 @@ func (dip *DudeInfoPanel) SyncDude() {
 	dip.wisdom.SetText(fmt.Sprintf("%s wisdom", PaddedIntString(stats.wisdom, 4)))
 	dip.cowardice.SetText(fmt.Sprintf("%s cowardice", PaddedIntString(stats.cowardice, 4)))
 	dip.luck.SetText(fmt.Sprintf("%s luck", PaddedIntString(stats.luck, 4)))
+
+	if armor, ok := dip.dude.equipped[EquipmentTypeArmor]; ok {
+		dip.armorText.SetText(armor.Name())
+		dip.armorText.textOptions.Color = armor.quality.TextColor()
+	} else {
+		dip.armorText.SetText("no armor")
+		dip.armorText.textOptions.Color = assets.ColorDudeDefense
+	}
+	if weapon, ok := dip.dude.equipped[EquipmentTypeWeapon]; ok {
+		dip.weaponText.SetText(weapon.Name())
+		dip.weaponText.textOptions.Color = weapon.quality.TextColor()
+	} else {
+		dip.weaponText.SetText("no weapon")
+		dip.weaponText.textOptions.Color = assets.ColorDudeStrength
+	}
+	if accessory, ok := dip.dude.equipped[EquipmentTypeAccessory]; ok {
+		dip.accessoryText.SetText(accessory.Name())
+		dip.accessoryText.textOptions.Color = accessory.quality.TextColor()
+	} else {
+		dip.accessoryText.SetText("no accessory")
+		dip.accessoryText.textOptions.Color = assets.ColorDudeWisdom
+	}
+
 }
 
 func (dip *DudeInfoPanel) Layout(o *UIOptions) {
 	dip.panel.padding = 6 * o.Scale
 	dip.panel.spaceBetween = -2 * o.Scale
 	dip.panel.Layout(nil, o)
+	// Eh... laziness time.
+	dip.equipmentPanel.SetSize(dip.panel.Size())
+	dip.equipmentPanel.padding = 6 * o.Scale
+	dip.equipmentPanel.spaceBetween = -2 * o.Scale
+	dip.equipmentPanel.SetPosition(dip.panel.X()+dip.panel.Width(), dip.panel.Y())
+	dip.equipmentPanel.Layout(nil, o)
+
+	dip.equipmentDetails.Layout(o)
+	dip.equipmentDetails.panel.SetSize(128*o.Scale, 96*o.Scale)
+	dip.equipmentDetails.panel.SetPosition(dip.panel.X(), dip.panel.Y()+dip.panel.Height())
+
+	// Dynamically size our equipmentDetails panel.
+	newHeight := (dip.equipmentDetails.luck.Y() + dip.equipmentDetails.luck.Height()) - dip.equipmentDetails.panel.Y()
+	newHeight = math.Ceil(newHeight/dip.equipmentDetails.panel.center.Height()) * dip.equipmentDetails.panel.center.Height()
+	dip.equipmentDetails.panel.SetSize(128*o.Scale, newHeight)
 }
 
 func (dip *DudeInfoPanel) Update(o *UIOptions) {
@@ -929,13 +1030,28 @@ func (dip *DudeInfoPanel) Update(o *UIOptions) {
 			dip.dude.dirtyStats = false
 		}
 	}
+	if dip.showDetails {
+		dip.equipmentPanel.Update(o)
+		dip.equipmentDetails.Update(o)
+	}
 }
 
 func (dip *DudeInfoPanel) Check(mx, my float64, kind UICheckKind) bool {
 	if dip.hidden {
 		return false
 	}
-	return dip.panel.Check(mx, my, kind)
+	if dip.panel.Check(mx, my, kind) {
+		return true
+	}
+	if dip.showDetails {
+		if dip.equipmentPanel.Check(mx, my, kind) {
+			return true
+		}
+		if dip.equipmentDetails.Check(mx, my, kind) {
+			return true
+		}
+	}
+	return false
 }
 
 func (dip *DudeInfoPanel) Draw(o *render.Options) {
@@ -943,6 +1059,24 @@ func (dip *DudeInfoPanel) Draw(o *render.Options) {
 		return
 	}
 	dip.panel.Draw(o)
+	if dip.showDetails {
+		dip.equipmentPanel.Draw(o)
+		// Time to be hackie :)
+		if dip.whichSelect == 1 {
+			x, y := dip.armorText.Position()
+			w, h := dip.armorText.Size()
+			vector.StrokeRect(o.Screen, float32(x), float32(y), float32(w), float32(h), 1, assets.ColorDudeDefense, false)
+		} else if dip.whichSelect == 2 {
+			x, y := dip.weaponText.Position()
+			w, h := dip.weaponText.Size()
+			vector.StrokeRect(o.Screen, float32(x), float32(y), float32(w), float32(h), 1, assets.ColorDudeStrength, false)
+		} else if dip.whichSelect == 3 {
+			x, y := dip.accessoryText.Position()
+			w, h := dip.accessoryText.Size()
+			vector.StrokeRect(o.Screen, float32(x), float32(y), float32(w), float32(h), 1, assets.ColorDudeWisdom, false)
+		}
+		dip.equipmentDetails.Draw(o)
+	}
 }
 
 type EquipmentPanel struct {
@@ -965,7 +1099,7 @@ func MakeEquipmentPanel() EquipmentPanel {
 		panel:   NewUIPanel(PanelStyleInteractive),
 		title:   NewUIText("Loot", assets.DisplayFont, assets.ColorHeading),
 		list:    NewUIItemList(DirectionVertical),
-		details: NewEquipmentDetailsPanel(),
+		details: NewEquipmentDetailsPanel(true),
 	}
 	btn := MakeButtonPanel(assets.BodyFont, PanelStyleButtonAttached)
 	ep.buyButton = &btn
@@ -1011,7 +1145,7 @@ func (ep *EquipmentPanel) Layout(o *UIOptions) {
 	ep.panel.Layout(nil, o)
 	ep.details.Layout(o)
 	ep.details.panel.SetSize(128*o.Scale, 96*o.Scale)
-	ep.details.panel.SetPosition(ep.panel.X()+ep.panel.Width()+6*o.Scale, ep.panel.Y())
+	ep.details.panel.SetPosition(ep.panel.X()+ep.panel.Width()+4*o.Scale, ep.panel.Y())
 
 	// Dynamically size our details panel.
 	newHeight := (ep.details.luck.Y() + ep.details.luck.Height()) - ep.details.panel.Y()
@@ -1061,6 +1195,7 @@ type EquipmentDetailsPanel struct {
 	perk            *UIText
 	perkDescription *UIText
 	uses            *UIText
+	small           bool
 
 	agility   *UIText
 	strength  *UIText
@@ -1077,7 +1212,7 @@ type EquipmentDetailsPanel struct {
 	hidden bool
 }
 
-func NewEquipmentDetailsPanel() *EquipmentDetailsPanel {
+func NewEquipmentDetailsPanel(small bool) *EquipmentDetailsPanel {
 	edp := &EquipmentDetailsPanel{
 		panel:           NewUIPanel(PanelStyleTransparent),
 		title:           NewUIText("My Steeze", assets.DisplayFont, assets.ColorHeading),
@@ -1092,12 +1227,14 @@ func NewEquipmentDetailsPanel() *EquipmentDetailsPanel {
 		wisdom:          NewUIText("", assets.BodyFont, assets.ColorDudeWisdom),
 		cowardice:       NewUIText("", assets.BodyFont, assets.ColorDudeCowardice),
 		luck:            NewUIText("", assets.BodyFont, assets.ColorDudeLuck),
+		small:           small,
 	}
 	{
 		btn := MakeButtonPanel(assets.BodyFont, PanelStyleButtonAttached)
 		edp.sellButton = &btn
 		edp.sellButton.text.center = true
 		edp.sellButton.text.SetText("Sell for\ngp")
+		edp.sellButton.text.ignoreScale = edp.small
 		edp.sellButton.onClick = func() {
 			if edp.onSellClick != nil {
 				edp.onSellClick()
@@ -1109,6 +1246,7 @@ func NewEquipmentDetailsPanel() *EquipmentDetailsPanel {
 		edp.swapButton = &btn
 		edp.swapButton.text.center = true
 		edp.swapButton.text.SetText("Swap to\nDude")
+		edp.swapButton.text.ignoreScale = edp.small
 		edp.swapButton.onClick = func() {
 			if edp.onSwapClick != nil {
 				edp.onSwapClick()
@@ -1189,13 +1327,23 @@ func (edp *EquipmentDetailsPanel) Layout(o *UIOptions) {
 
 	edp.sellButton.SetSize(edp.panel.Width(), 48)
 	edp.sellButton.Layout(nil, o)
-	edp.sellButton.text.SetPosition(edp.sellButton.text.X(), edp.sellButton.text.Y()+4*o.Scale)
-	edp.sellButton.SetPosition(edp.panel.X(), edp.panel.Y()+edp.panel.Height()-10*o.Scale)
+	if edp.small {
+		edp.sellButton.text.SetPosition(edp.sellButton.text.X(), edp.sellButton.text.Y()+7*o.Scale)
+		edp.sellButton.SetPosition(edp.panel.X(), edp.panel.Y()+edp.panel.Height()-10*o.Scale)
+	} else {
+		edp.sellButton.text.SetPosition(edp.sellButton.text.X(), edp.sellButton.text.Y()+4*o.Scale)
+		edp.sellButton.SetPosition(edp.panel.X(), edp.panel.Y()+edp.panel.Height()-10*o.Scale)
+	}
 
 	edp.swapButton.SetSize(edp.panel.Width(), 48)
 	edp.swapButton.Layout(nil, o)
-	edp.swapButton.text.SetPosition(edp.swapButton.text.X(), edp.swapButton.text.Y()+4*o.Scale)
-	edp.swapButton.SetPosition(edp.panel.X()+edp.panel.Width()-edp.swapButton.Width(), edp.panel.Y()+edp.panel.Height()-10*o.Scale)
+	if edp.small {
+		edp.swapButton.text.SetPosition(edp.swapButton.text.X(), edp.swapButton.text.Y()+7*o.Scale)
+		edp.swapButton.SetPosition(edp.panel.X()+edp.panel.Width()-edp.swapButton.Width(), edp.panel.Y()+edp.panel.Height()-10*o.Scale)
+	} else {
+		edp.swapButton.text.SetPosition(edp.swapButton.text.X(), edp.swapButton.text.Y()+4*o.Scale)
+		edp.swapButton.SetPosition(edp.panel.X()+edp.panel.Width()-edp.swapButton.Width(), edp.panel.Y()+edp.panel.Height()-10*o.Scale)
+	}
 }
 
 func (edp *EquipmentDetailsPanel) Update(o *UIOptions) {
@@ -1321,6 +1469,11 @@ func (bp *ButtonPanel) doSize(o *UIOptions) {
 	// lol size according to highest divisible
 	width := math.Ceil(bp.text.Width()/bp.panel.left.Width())*bp.panel.left.Width() + bp.panel.left.Width() + bp.panel.right.Width()
 	height := math.Ceil(bp.text.Height()/bp.panel.top.Height()) * bp.panel.top.Height()
+
+	if height < 48 {
+		height = 48
+	}
+
 	bp.panel.SetSize(width, height)
 
 	bp.panel.Layout(nil, o)
