@@ -667,7 +667,7 @@ func GetOptionalRooms(storyLevel int, roomCount int) []*RoomDef {
 	}
 
 	rooms := make([]*RoomDef, 0)
-	for i := 0; i < roomCount; {
+	for i := 0; i < roomCount; i++ {
 		room := potentialRooms[rand.Intn(len(potentialRooms))]
 		roomDef := GetRoomDef(room.kind, room.size)
 		rooms = append(rooms, roomDef)
