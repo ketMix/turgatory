@@ -41,12 +41,12 @@ func (t *Track) SetPan(pan float64) {
 }
 
 type AudioController struct {
-	audioContext    *audio.Context
-	tracks          map[RoomKind]*Track
-	backgroundTrack *Track
-	sfx             map[string]*Track
-	tracksPaused    bool
-	sfxPaused       bool
+	audioContext     *audio.Context
+	tracks           map[RoomKind]*Track
+	backgroundTracks []*Track
+	sfx              map[string]*Track
+	tracksPaused     bool
+	sfxPaused        bool
 }
 type PanVol struct {
 	Pan float64
@@ -88,33 +88,38 @@ func NewAudioController() *AudioController {
 	}
 
 	// Add background track
-	stream, err := assets.LoadSound("room", "background")
-	if err != nil {
-		fmt.Println("Error loading background track ", err)
-	}
+	trackNames := []string{"bass", "kick"}
+	backgroundTracks := make([]*Track, 0)
+	for _, name := range trackNames {
+		stream, err := assets.LoadSound("room", name)
+		if err != nil {
+			fmt.Println("Error loading background tracks ", err)
+		}
 
-	panstream := NewStereoPanStream(audio.NewInfiniteLoop(stream, stream.Length()))
-	panstream.SetPan(0.0)
-	player, err := audioContext.NewPlayer(panstream)
-	player.SetVolume(1)
-	if err != nil {
-		fmt.Println("Error creating player for background track ", err)
-	}
+		panstream := NewStereoPanStream(audio.NewInfiniteLoop(stream, stream.Length()))
+		panstream.SetPan(0.0)
+		player, err := audioContext.NewPlayer(panstream)
+		player.SetVolume(1)
+		if err != nil {
+			fmt.Println("Error creating player for background track ", err)
+		}
 
-	backgroundTrack := &Track{
-		player:    player,
-		panstream: panstream,
-		volume:    0,
-		pan:       0,
+		backgroundTrack := &Track{
+			player:    player,
+			panstream: panstream,
+			volume:    0,
+			pan:       0,
+		}
+		backgroundTracks = append(backgroundTracks, backgroundTrack)
 	}
 
 	return &AudioController{
-		audioContext:    audioContext,
-		tracks:          tracks,
-		backgroundTrack: backgroundTrack,
-		sfx:             make(map[string]*Track),
-		tracksPaused:    true,
-		sfxPaused:       false,
+		audioContext:     audioContext,
+		tracks:           tracks,
+		backgroundTracks: backgroundTracks,
+		sfx:              make(map[string]*Track),
+		tracksPaused:     true,
+		sfxPaused:        false,
 	}
 }
 
@@ -123,14 +128,18 @@ func (a *AudioController) PlayRoomTracks() {
 	for _, track := range a.tracks {
 		track.Play()
 	}
-	a.backgroundTrack.Play()
+	for _, track := range a.backgroundTracks {
+		track.Play()
+	}
 }
 
 func (a *AudioController) PauseRoomTracks() {
 	for _, track := range a.tracks {
 		track.Pause()
 	}
-	a.backgroundTrack.Pause()
+	for _, track := range a.backgroundTracks {
+		track.Pause()
+	}
 	a.tracksPaused = true
 }
 
