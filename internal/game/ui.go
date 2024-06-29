@@ -1321,9 +1321,9 @@ func (ep *EquipmentPanel) Layout(o *UIOptions) {
 	ep.details.panel.SetPosition(ep.panel.X()+ep.panel.Width()+4*o.Scale, ep.panel.Y())
 
 	// Dynamically size our details panel.
-	newHeight := (ep.details.luck.Y() + ep.details.luck.Height()) - ep.details.panel.Y()
-	newHeight = math.Ceil(newHeight/ep.details.panel.center.Height()) * ep.details.panel.center.Height()
-	ep.details.panel.SetSize(128*o.Scale, newHeight)
+	//newHeight := (ep.details.luck.Y() + ep.details.luck.Height()) - ep.details.panel.Y()
+	//newHeight = math.Ceil(newHeight/ep.details.panel.center.Height()) * ep.details.panel.center.Height()
+	//ep.details.panel.SetSize(128*o.Scale, newHeight)
 }
 
 func (ep *EquipmentPanel) Update(o *UIOptions) {
