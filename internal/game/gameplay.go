@@ -109,7 +109,8 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 				switch u := u.(type) {
 				case DudeDeadActivity:
 					g.UpdateInfo()
-					if !g.tower.HasAliveDudes() {
+					aliveDudes := g.GetAliveDudes()
+					if len(aliveDudes) == 0 {
 						return &GameStateLose{}
 					}
 				case TowerCompleteActivity:
