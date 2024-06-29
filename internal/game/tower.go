@@ -166,13 +166,13 @@ func (t *Tower) AddDude(d *Dude) {
 	}
 	story := t.Stories[0]
 	story.AddDude(d)
-	d.activity = FirstEntering
+	d.activity = Centering
 	//d.stack.HeightOffset = 20
-	enter := TowerEntrance - d.variation
-	if enter < TowerEntrance+0.1 {
-		enter = TowerEntrance
+	enter := RoomPath - d.variation
+	if enter < RoomPath+0.1 {
+		enter = RoomPath
 	}
-	d.SetPosition(story.PositionFromCenter(math.Pi/2, enter))
+	d.SetPosition(story.PositionFromCenter(math.Pi/2-math.Pi/12, enter))
 	t.dudes = append(t.dudes, d)
 }
 
