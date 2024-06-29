@@ -182,6 +182,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) DrawTower(screen *ebiten.Image) {
+	if g.tower == nil {
+		return
+	}
 	options := render.Options{Screen: screen, Overlay: g.overlay, Camera: &g.camera}
 	// Transform our options via the camera.
 	g.camera.Transform(&options)
@@ -234,7 +237,11 @@ func (g *Game) CheckUI() (bool, UICheckKind) {
 }
 
 func (g *Game) UpdateInfo() {
-	g.ui.gameInfoPanel.storyText.SetText(fmt.Sprintf("Stories: %d", len(g.tower.Stories)-1))
+	if g.tower.targetStories == -1 {
+		g.ui.gameInfoPanel.storyText.SetText(fmt.Sprintf("Stories: %d", len(g.tower.Stories)-1))
+	} else {
+		g.ui.gameInfoPanel.storyText.SetText(fmt.Sprintf("Stories: %d/%d", len(g.tower.Stories)-1, g.tower.targetStories))
+	}
 	g.ui.gameInfoPanel.goldText.SetText(fmt.Sprintf("Gold: %d", g.gold))
 
 	aliveDudes := g.GetAliveDudes()
@@ -313,7 +320,7 @@ func (g *Game) Init() {
 	g.audioController = NewAudioController()
 	g.gold = 0
 	g.equipment = make([]*Equipment, 0)
-	g.state = &GameStateStart{}
+	g.state = &GameStatePre{}
 	g.state.Begin(g)
 }
 

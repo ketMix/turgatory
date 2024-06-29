@@ -1603,6 +1603,7 @@ type ButtonPanel struct {
 	disabled bool
 	hovered  bool
 	onClick  func()
+	onHover  func()
 }
 
 func MakeButtonPanel(font assets.Font, style PanelStyle) ButtonPanel {
@@ -1659,6 +1660,9 @@ func (bp *ButtonPanel) Check(mx, my float64, kind UICheckKind) bool {
 		}
 		if kind == UICheckHover {
 			bp.hovered = true
+			if bp.onHover != nil {
+				bp.onHover()
+			}
 			return true
 		}
 	} else {

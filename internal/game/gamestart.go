@@ -38,7 +38,11 @@ func (s *GameStateStart) Begin(g *Game) {
 	story := NewStory()
 	story.Open()
 	tower.AddStory(story)
-	tower.targetStories = 8
+	if s.length == -1 {
+		tower.targetStories = -1
+	} else {
+		tower.targetStories = 3 + s.length*3
+	}
 
 	g.tower = tower
 	g.camera.SetMode(render.CameraModeTower)
