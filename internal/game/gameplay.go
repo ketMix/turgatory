@@ -110,21 +110,32 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 				case DudeDeadActivity:
 					g.UpdateInfo()
 					aliveDudes := g.GetAliveDudes()
+
+					// If the game has no more alive dudes, we lose
 					if len(aliveDudes) == 0 {
 						return &GameStateLose{}
-					}
-				case TowerCompleteActivity:
-					s.returningDudes = append(s.returningDudes, u.dude)
-					g.tower.RemoveDude(u.dude)
-					if !g.tower.HasAliveDudes() {
-						return &GameStateWin{}
-					}
-				case TowerLeaveActivity:
-					s.returningDudes = append(s.returningDudes, u.dude)
-					if !g.tower.HasAliveDudes() {
-						// No more alive dudes! Switch game state, yo.
+					} else if !g.tower.HasAliveDudes() {
+						// However, if the game has alive and the tower does not, continue
 						g.tower.ClearBodies()
 						return &GameStateBuild{}
+					}
+				case TowerCompleteActivity:
+					if !u.dude.IsDead() {
+						s.returningDudes = append(s.returningDudes, u.dude)
+						g.tower.RemoveDude(u.dude)
+						if !g.tower.HasAliveDudes() {
+							return &GameStateWin{}
+						}
+					}
+				case TowerLeaveActivity:
+					if !u.dude.IsDead() {
+						s.returningDudes = append(s.returningDudes, u.dude)
+						g.tower.RemoveDude(u.dude)
+						if !g.tower.HasAliveDudes() {
+							// No more alive dudes! Switch game state, yo.
+							g.tower.ClearBodies()
+							return &GameStateBuild{}
+						}
 					}
 				case RoomStartBossActivity:
 					g.ui.feedback.Msg(FeedbackBad, "a boss -- can ur dudes make it??")
@@ -209,6 +220,9 @@ func (s *GameStatePlay) CollectGold(g *Game) {
 		gold += dude.gold
 		dude.gold = 0
 	}
+	if gold == 0 {
+		return
+	}
 	g.gold += gold
 
 	g.ui.feedback.Msg(FeedbackGood, fmt.Sprintf("%d gold snarfed from yer dudes", int(gold)))
@@ -223,6 +237,9 @@ func (s *GameStatePlay) CollectInventory(g *Game) {
 		count += len(dude.inventory)
 		g.equipment = append(g.equipment, dude.inventory...)
 		dude.inventory = make([]*Equipment, 0)
+	}
+	if count == 0 {
+		return
 	}
 	AddMessage(MessageLoot, fmt.Sprintf("Collected %d items from dudes.", count))
 	g.ui.equipmentPanel.SetEquipment(g.equipment)

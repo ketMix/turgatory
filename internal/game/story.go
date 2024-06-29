@@ -187,6 +187,9 @@ func (s *Story) Update(req *ActivityRequests, g *Game) {
 		case TowerLeaveActivity:
 			// Pass it up.
 			req.Add(u)
+		case DudeDeadActivity:
+			// Pass it up.
+			req.Add(u)
 		}
 		if success {
 			u.Apply()

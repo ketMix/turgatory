@@ -40,7 +40,7 @@ func (t *Tower) Update(req *ActivityRequests, g *Game) {
 			req.Add(u)
 		case StoryEnterNextActivity:
 			// We can always allow this to happen since the logic is triggered in RoomEnterActivity with index 7.
-			if u.story.level == len(t.Stories)-1 {
+			if u.story.level == t.targetStories-2 {
 				req.Add(TowerCompleteActivity{dude: u.dude})
 			} else {
 				nextStory := t.Stories[u.story.level+1]
@@ -197,14 +197,12 @@ func (t *Tower) AddDudes(dudes ...*Dude) {
 }
 
 func (t *Tower) HasAliveDudes() bool {
-	b := false
 	for _, d := range t.dudes {
 		if !d.IsDead() {
-			b = true
-			break
+			return true
 		}
 	}
-	return b
+	return false
 }
 
 func (t *Tower) ClearBodies() {

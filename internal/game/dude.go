@@ -279,7 +279,9 @@ func (d *Dude) Update(story *Story, req *ActivityRequests) {
 				d.stack.Transparency = 1
 				d.shadow.Transparency = 1
 				d.SetActivity(Idle)
-				req.Add(TowerLeaveActivity{dude: d})
+				if !d.IsDead() {
+					req.Add(TowerLeaveActivity{dude: d})
+				}
 			} else {
 				r := story.AngleFromCenter(cx, cy)
 				nx, ny := story.PositionFromCenter(r, distance-0.005*100)
@@ -387,9 +389,9 @@ func (d *Dude) Trigger(e Event) Activity {
 			return DudeDeadActivity{dude: d}
 		}
 	case EventCombatRoom:
-		// Just in case
+		// Can't fight if u ded
 		if d.IsDead() {
-			return DudeDeadActivity{dude: d}
+			return nil
 		}
 		// Attack enemy if there is one
 		if d.enemy != nil {
@@ -407,9 +409,9 @@ func (d *Dude) Trigger(e Event) Activity {
 				)
 				d.Trigger(EventDudeCrit{dude: d, enemy: d.enemy, amount: damage})
 			}
-			isDead := d.enemy.Damage(d.stats.strength)
+			enemyKilled := d.enemy.Damage(d.stats.strength)
 
-			if isDead {
+			if enemyKilled {
 				xp := d.enemy.XP()
 				gold := d.enemy.Gold()
 				d.Trigger(EventGoldGain{dude: d, amount: gold})
@@ -575,6 +577,10 @@ func (d *Dude) GetDamage() (int, bool) {
 }
 
 func (d *Dude) ApplyDamage(amount int) (int, bool) {
+	if d.IsDead() {
+		return 0, false
+	}
+
 	// Luck and agility can cause dodge
 	stats := d.GetCalculatedStats()
 	baseChance := 0.05                                   // 5% base dodge chance
@@ -977,10 +983,11 @@ func (d *Dude) Cursify(roomLevel int) {
 	}
 }
 
-func (d *Dude) TrapDamage(roomLevel int) {
+func (d *Dude) TrapDamage(roomLevel int) Activity {
 	// he's dead jim
 	if d.IsDead() {
-		return
+		d.SetActivity(Ded)
+		return DudeDeadActivity{dude: d}
 	}
 	// Chance based on agility
 	agilityRoll := rand.Intn(d.stats.agility + 1)
@@ -994,7 +1001,7 @@ func (d *Dude) TrapDamage(roomLevel int) {
 			MessageNeutral,
 			fmt.Sprintf("%s dodged damage from a trap", d.name),
 		)
-		return
+		return nil
 	}
 
 	// Damage based on room level
@@ -1008,8 +1015,13 @@ func (d *Dude) TrapDamage(roomLevel int) {
 		)
 		d.dirtyStats = true
 	}
+	if d.IsDead() {
+		d.SetActivity(Ded)
+		return DudeDeadActivity{dude: d}
+	}
+	return nil
 }
 
 func (d *Dude) IsDead() bool {
-	return d.stats.currentHp <= 0
+	return d.stats.currentHp <= 0 || d.activity == Ded
 }
