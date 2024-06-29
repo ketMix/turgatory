@@ -24,10 +24,17 @@ type GameStateBuild struct {
 	//
 	selectedEquipment int
 	shownBossWarning  bool
+	titleFadeOutTick  int
 }
 
 func (s *GameStateBuild) Begin(g *Game) {
-	g.audioController.PlayRoomTracks()
+	// Fade out
+	s.titleFadeOutTick = 0
+
+	if !g.playedTitleSong {
+		s.titleFadeOutTick = AUDIO_FADE_IN_TICK
+		g.playedTitleSong = true
+	}
 
 	// Add feedback if next floor is boss
 	if len(g.tower.Stories)%2 == 0 && !s.shownBossWarning {
@@ -276,6 +283,13 @@ func (s *GameStateBuild) End(g *Game) {
 	g.ui.dudeInfoPanel.equipmentDetails.swapButton.hidden = true
 }
 func (s *GameStateBuild) Update(g *Game) GameState {
+	if s.titleFadeOutTick >= 0 {
+		s.titleFadeOutTick--
+		g.audioController.SetTitleTrackVolPercent(float64(s.titleFadeOutTick) / AUDIO_FADE_IN_TICK)
+		// Fade in background tracks
+		g.audioController.SetBackgroundTrackVolPercent(1.0 - float64(s.titleFadeOutTick)/AUDIO_FADE_IN_TICK)
+	}
+
 	if g.autoplay {
 		if s.nextStory != nil {
 			if s.nextStory.level%3 == 0 {

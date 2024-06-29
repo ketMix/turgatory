@@ -16,8 +16,11 @@ type GameStatePre struct {
 	info     *UIText
 
 	//
-	gameLength int
+	gameLength   int
+	titleVolTick int
 }
+
+const AUDIO_FADE_IN_TICK = 60
 
 func (s *GameStatePre) Begin(g *Game) {
 	// TODO: Hide UI crap.
@@ -66,11 +69,23 @@ func (s *GameStatePre) Begin(g *Game) {
 
 	// Init inventory
 	g.equipment = make([]*Equipment, 0)
+
+	// Init audio tick
+	g.audioController.PlayRoomTracks()
+	g.audioController.MuteAll()
+	g.playedTitleSong = false
+	s.titleVolTick = 0
 }
+
 func (s *GameStatePre) End(g *Game) {
 	g.ui.Reveal()
 }
 func (s *GameStatePre) Update(g *Game) GameState {
+	if s.titleVolTick < AUDIO_FADE_IN_TICK {
+		s.titleVolTick++
+		g.audioController.SetTitleTrackVolPercent(float64(s.titleVolTick) / AUDIO_FADE_IN_TICK)
+	}
+
 	w, h := float64(g.uiOptions.Width), float64(g.uiOptions.Height)
 
 	s.short.Layout(nil, &g.uiOptions)

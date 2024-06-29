@@ -43,6 +43,7 @@ func (t *Track) SetPan(pan float64) {
 type AudioController struct {
 	audioContext     *audio.Context
 	tracks           map[RoomKind]*Track
+	titleTrack       *Track
 	backgroundTracks []*Track
 	sfx              map[string]*Track
 	tracksPaused     bool
@@ -53,7 +54,7 @@ type PanVol struct {
 	Vol float64
 }
 
-const VOL_MULT = 2.0
+const VOL_MULT = 1.75
 
 func NewAudioController() *AudioController {
 	audioContext := audio.NewContext(44100)
@@ -101,7 +102,7 @@ func NewAudioController() *AudioController {
 		panstream := NewStereoPanStream(audio.NewInfiniteLoop(stream, stream.Length()))
 		panstream.SetPan(0.0)
 		player, err := audioContext.NewPlayer(panstream)
-		player.SetVolume(VOL_MULT)
+		player.SetVolume(0)
 		if err != nil {
 			fmt.Println("Error creating player for background track ", err)
 		}
@@ -115,11 +116,28 @@ func NewAudioController() *AudioController {
 		backgroundTracks = append(backgroundTracks, backgroundTrack)
 	}
 
+	// Add title track
+	stream, err := assets.LoadSound("title", "title")
+	if err != nil {
+		fmt.Println("Error loading title track ", err)
+	}
+	titlePlayer, err := audioContext.NewPlayer(audio.NewInfiniteLoop(stream, stream.Length()))
+	if err != nil {
+		fmt.Println("Error creating player for title track ", err)
+	}
+	titleTrack := &Track{
+		player: titlePlayer,
+		volume: 0,
+		pan:    0,
+	}
+	titleTrack.SetVolume(0)
+
 	return &AudioController{
 		audioContext:     audioContext,
 		tracks:           tracks,
 		backgroundTracks: backgroundTracks,
 		sfx:              make(map[string]*Track),
+		titleTrack:       titleTrack,
 		tracksPaused:     true,
 		sfxPaused:        false,
 	}
@@ -133,6 +151,7 @@ func (a *AudioController) PlayRoomTracks() {
 	for _, track := range a.backgroundTracks {
 		track.Play()
 	}
+	a.titleTrack.Play()
 }
 
 func (a *AudioController) PauseRoomTracks() {
@@ -142,7 +161,18 @@ func (a *AudioController) PauseRoomTracks() {
 	for _, track := range a.backgroundTracks {
 		track.Pause()
 	}
+	a.titleTrack.Pause()
 	a.tracksPaused = true
+}
+
+func (a *AudioController) SetTitleTrackVolPercent(perc float64) {
+	a.titleTrack.SetVolume(perc * VOL_MULT)
+}
+
+func (a *AudioController) SetBackgroundTrackVolPercent(volume float64) {
+	for _, track := range a.backgroundTracks {
+		track.SetVolume(volume * VOL_MULT)
+	}
 }
 
 func (a *AudioController) SetVol(roomKind RoomKind, volume float64) {
@@ -154,6 +184,19 @@ func (a *AudioController) SetVol(roomKind RoomKind, volume float64) {
 func (a *AudioController) SetPan(roomKind RoomKind, pan float64) {
 	if track, ok := a.tracks[roomKind]; ok {
 		track.SetPan(pan)
+	}
+}
+
+func (a *AudioController) MuteAll() {
+	for _, track := range a.tracks {
+		track.SetVolume(0)
+	}
+	for _, track := range a.backgroundTracks {
+		track.SetVolume(0)
+	}
+	a.titleTrack.SetVolume(0)
+	for _, sfx := range a.sfx {
+		sfx.SetVolume(0)
 	}
 }
 

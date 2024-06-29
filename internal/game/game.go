@@ -32,6 +32,7 @@ type Game struct {
 	gold                  int
 	equipment             []*Equipment
 	autoplay              bool
+	playedTitleSong       bool
 }
 
 type GameState interface {
@@ -143,7 +144,9 @@ func (g *Game) Update() error {
 				}
 			}
 		}
-		g.audioController.SetStoryPanVol(roomPanVol)
+		if g.playedTitleSong {
+			g.audioController.SetStoryPanVol(roomPanVol)
+		}
 	}
 
 	return nil
