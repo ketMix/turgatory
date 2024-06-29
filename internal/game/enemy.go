@@ -34,9 +34,9 @@ func (e EnemyKind) String() string {
 	case EnemyBossRat:
 		return "Boss Rat"
 	case EnemyBossSlime:
-		return "Boss Slime"
+		return "Boss Slimer"
 	case EnemyBossSkelly:
-		return "Boss Skelly"
+		return "Boss Undeath"
 	case EnemyBossEbi:
 		return "Boss Ebi"
 	default:
@@ -48,6 +48,12 @@ func (e EnemyKind) BossStack() string {
 	switch e {
 	case EnemyBossRat:
 		return "bossrat"
+	case EnemySlime:
+		return "bossslime"
+	case EnemySkelly:
+		return "bossskull"
+	case EnemyBossEbi:
+		return "bossebi"
 	default:
 		return ""
 	}
