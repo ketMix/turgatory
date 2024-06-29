@@ -495,11 +495,13 @@ func GetRandomPerk(quality PerkQuality) IPerk {
 		PerkHealOnRoomEnter{perk},
 		PerkHealOnSell{perk},
 		PerkHealOnGoldGain{perk},
-		PerkHealOnGoldLoss{perk},
 		PerkHealOnDodge{perk},
 		PerkHealOnCrit{perk},
-		PerkStickyFingers{perk},
 		PerkGoldBoost{perk},
+
+		// Curse dependent perks
+		// PerkStickyFingers{perk},
+		// PerkHealOnGoldLoss{perk},
 	}
 
 	// Randomly select a perk

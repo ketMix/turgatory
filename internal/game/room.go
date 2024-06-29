@@ -611,13 +611,15 @@ func GetRequiredRooms(storyLevel int, roomCount int) []*RoomDef {
 			potentialCombatRooms,
 			RoomTemplate{kind: Combat, size: Medium},
 			RoomTemplate{kind: Combat, size: Medium},
+			RoomTemplate{kind: Combat, size: Medium},
 		)
 		potentialOtherRooms = append(
 			potentialOtherRooms,
 			RoomTemplate{kind: Combat, size: Medium},
 			RoomTemplate{kind: Trap, size: Medium},
 			RoomTemplate{kind: Trap, size: Medium},
-			RoomTemplate{kind: Curse, size: Medium},
+			RoomTemplate{kind: Trap, size: Medium},
+			// RoomTemplate{kind: Curse, size: Medium},
 		)
 	}
 
@@ -626,14 +628,19 @@ func GetRequiredRooms(storyLevel int, roomCount int) []*RoomDef {
 			potentialCombatRooms,
 			RoomTemplate{kind: Combat, size: Large},
 			RoomTemplate{kind: Combat, size: Large},
+			RoomTemplate{kind: Combat, size: Large},
+			RoomTemplate{kind: Combat, size: Large},
 		)
 		potentialOtherRooms = append(
 			potentialOtherRooms,
 			RoomTemplate{kind: Combat, size: Large},
 			RoomTemplate{kind: Trap, size: Large},
 			RoomTemplate{kind: Trap, size: Large},
-			RoomTemplate{kind: Curse, size: Medium},
-			RoomTemplate{kind: Curse, size: Medium},
+			RoomTemplate{kind: Trap, size: Large},
+			RoomTemplate{kind: Trap, size: Large},
+			RoomTemplate{kind: Trap, size: Large},
+			// RoomTemplate{kind: Curse, size: Medium},
+			// RoomTemplate{kind: Curse, size: Medium},
 		)
 	}
 
@@ -642,13 +649,17 @@ func GetRequiredRooms(storyLevel int, roomCount int) []*RoomDef {
 			potentialCombatRooms,
 			RoomTemplate{kind: Combat, size: Huge},
 			RoomTemplate{kind: Combat, size: Huge},
+			RoomTemplate{kind: Combat, size: Huge},
+			RoomTemplate{kind: Combat, size: Huge},
 		)
 		potentialOtherRooms = append(
 			potentialOtherRooms,
 			RoomTemplate{kind: Combat, size: Huge},
 			RoomTemplate{kind: Trap, size: Huge},
 			RoomTemplate{kind: Trap, size: Huge},
-			RoomTemplate{kind: Curse, size: Medium},
+			RoomTemplate{kind: Trap, size: Huge},
+			RoomTemplate{kind: Trap, size: Huge},
+			// RoomTemplate{kind: Curse, size: Medium},
 		)
 	}
 
@@ -712,6 +723,7 @@ func GetOptionalRooms(storyLevel int, roomSpace int) []*RoomDef {
 	if level > 6 {
 		potentialRooms = append(
 			potentialRooms,
+			RoomTemplate{kind: Armory, size: Large},
 			RoomTemplate{kind: HealingShrine, size: Large},
 			RoomTemplate{kind: Treasure, size: Large},
 		)
