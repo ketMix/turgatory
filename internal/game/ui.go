@@ -596,10 +596,12 @@ func (rp *RoomPanel) Draw(o *render.Options) {
 }
 
 type RoomInfoPanel struct {
-	panel       *UIPanel
-	title       *UIText
-	description *UIText
-	cost        *UIText
+	panel        *UIPanel
+	title        *UIText
+	description  *UIText
+	cost         *UIText
+	required     *UIText
+	showRequired bool
 
 	hidden bool
 }
@@ -610,6 +612,7 @@ func MakeRoomInfoPanel() RoomInfoPanel {
 		title:       NewUIText("Room Info", assets.DisplayFont, assets.ColorHeading),
 		description: NewUIText("Description", assets.BodyFont, assets.ColorRoomDescription),
 		cost:        NewUIText("Cost: 0", assets.BodyFont, assets.ColorRoomCost),
+		required:    NewUIText("REQUIRED", assets.BodyFont, assets.ColorGameOver),
 		hidden:      true,
 	}
 	rip.panel.AddChild(rip.title)
@@ -623,6 +626,8 @@ func MakeRoomInfoPanel() RoomInfoPanel {
 func (rip *RoomInfoPanel) Layout(o *UIOptions) {
 	rip.panel.padding = 6 * o.Scale
 	rip.panel.Layout(nil, o)
+	rip.required.Layout(nil, o)
+	rip.required.SetPosition(rip.panel.X()+rip.panel.Width()-rip.required.Width()-rip.panel.padding, rip.panel.Y()+rip.panel.Height()-rip.required.Height()-rip.panel.padding)
 }
 
 func (rip *RoomInfoPanel) Update(o *UIOptions) {
@@ -641,6 +646,9 @@ func (rip *RoomInfoPanel) Draw(o *render.Options) {
 		return
 	}
 	rip.panel.Draw(o)
+	if rip.showRequired {
+		rip.required.Draw(o)
+	}
 }
 
 type GameInfoPanel struct {

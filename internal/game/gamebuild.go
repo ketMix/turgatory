@@ -71,6 +71,7 @@ func (s *GameStateBuild) Begin(g *Game) {
 		g.ui.roomInfoPanel.title.SetText(fmt.Sprintf("%s %s room", selected.size.String(), selected.kind.String()))
 		g.ui.roomInfoPanel.description.SetText(selected.GetDescription())
 		g.ui.roomInfoPanel.cost.SetText(fmt.Sprintf("Cost: %d", GetRoomCost(selected.kind, selected.size, s.nextStory.level)))
+		g.ui.roomInfoPanel.showRequired = selected.required
 	}
 
 	g.ui.equipmentPanel.buyButton.onClick = func() {
