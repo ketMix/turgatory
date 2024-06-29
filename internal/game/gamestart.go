@@ -1,8 +1,6 @@
 package game
 
 import (
-	"math/rand"
-
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/ebijam24/internal/render"
 )
@@ -16,19 +14,14 @@ func (s *GameStateStart) Begin(g *Game) {
 	if s.length == 0 {
 		s.length = 3
 	}
+
 	// Give the player a reasonable amount of GOLD
-	g.gold = 700
+	g.gold = 1000
 
 	professions := []ProfessionKind{Knight, Vagabond, Ranger, Cleric}
-	dudeLimit := len(professions)
+	dudeLimit := len(professions) * 2
 	for i := 0; i < dudeLimit; i++ {
 		pk := professions[i%len(professions)]
-		dude := NewDude(pk, 1)
-		s.newDudes = append(s.newDudes, dude)
-	}
-	// Add some more randomized dudes.
-	for i := 0; i < 3; i++ {
-		pk := professions[rand.Intn(len(professions))]
 		dude := NewDude(pk, 1)
 		s.newDudes = append(s.newDudes, dude)
 	}

@@ -456,7 +456,7 @@ func (s *GameStateBuild) RerollRooms(g *Game) {
 // Increase cost of dudes as the game progresses.
 func (s *GameStateBuild) DudeCost(dudeCount int) int {
 	baseCost := 100.0
-	initialDudes := 7
+	initialDudes := 8
 	maxCost := 10000.0
 	maxDudes := 20
 
@@ -485,7 +485,7 @@ func (s *GameStateBuild) BuyDude(g *Game) {
 	level /= len(g.dudes)
 
 	// Random profession ??
-	profession := RandomProfessionKind()
+	profession := WeightedRandomProfessionKind(g.dudes)
 	dude := NewDude(profession, level)
 	g.dudes = append(g.dudes, dude)
 	g.ui.dudePanel.buyButton.text.SetText(fmt.Sprintf("Random Dude\n%dgp", s.DudeCost(len(g.dudes))))
