@@ -1,6 +1,8 @@
 package game
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 // ProfessionKind is an enumeration of the different kinds of Professions a dude can have
 type ProfessionKind string
@@ -46,6 +48,46 @@ type Profession struct {
 func RandomProfessionKind() ProfessionKind {
 	professions := []ProfessionKind{Vagabond, Knight, Cleric, Ranger}
 	return professions[rand.Intn(len(professions))]
+}
+
+// WeightedRandomProfessionKind returns a profession kind based on the dudes' professions
+// The lower the frequency of a profession, the higher the weight
+func WeightedRandomProfessionKind(dudes []*Dude) ProfessionKind {
+	professionCount := make(map[ProfessionKind]int)
+
+	// Count the number of each profession
+	for _, d := range dudes {
+		professionCount[d.profession]++
+	}
+
+	// Calculate weights (lower frequency = higher weight)
+	professions := []ProfessionKind{Vagabond, Knight, Cleric, Ranger}
+	// Calculate weights (lower frequency = much higher weight)
+	weights := make([]float64, len(professions))
+	for i, profession := range professions {
+		count := professionCount[profession]
+		if count == 0 {
+			weights[i] = 1.0
+		} else {
+			weights[i] = 1.0 / float64(count*count)
+		}
+	}
+
+	// Create a cumulative weight array
+	cumulativeWeights := make([]float64, len(professions))
+	cumulativeWeights[0] = weights[0]
+	for i := 1; i < len(professions); i++ {
+		cumulativeWeights[i] = cumulativeWeights[i-1] + weights[i]
+	}
+
+	// Select a profession based on the weights
+	randomValue := rand.Float64() * cumulativeWeights[len(cumulativeWeights)-1]
+	for i, cumulativeWeight := range cumulativeWeights {
+		if randomValue < cumulativeWeight {
+			return professions[i]
+		}
+	}
+	return professions[0] // Fallback, should not reach here
 }
 
 func NewProfession(kind ProfessionKind, level int) *Profession {

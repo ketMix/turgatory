@@ -13,3 +13,9 @@ Defense reduces damage taken.
 Agility increases move speed and crit chance.
 Luck increases loot quality and crit chance.
 Hiring dudes is irreversible. Watch your gold!
+Hiring dudes is more expensive the more dudes you have.
+Equipment is more expensive at higher stories but potentially higher quality.
+Armor and weapons can be found in the armory.
+The armory increases your equipment levels which increases their stats.
+The library enchants or upgrades perks on your equipment.
+Dudes will autoequip better equipment if their current one does not have a perk.
