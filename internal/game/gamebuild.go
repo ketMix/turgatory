@@ -27,7 +27,7 @@ type GameStateBuild struct {
 }
 
 func (s *GameStateBuild) Begin(g *Game) {
-	// g.audioController.PlayRoomTracks()
+	g.audioController.PlayRoomTracks()
 
 	// Add feedback if next floor is boss
 	if len(g.tower.Stories)%2 == 0 && !s.shownBossWarning {
