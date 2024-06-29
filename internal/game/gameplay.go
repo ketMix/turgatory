@@ -68,6 +68,16 @@ func (s *GameStatePlay) End(g *Game) {
 	s.CollectInventory(g)
 }
 func (s *GameStatePlay) Update(g *Game) GameState {
+	if g.autoplay {
+		if g.selectedDude == nil || g.selectedDude.IsDead() {
+			for _, d := range g.dudes {
+				if !d.IsDead() {
+					g.selectedDude = d
+					break
+				}
+			}
+		}
+	}
 	s.titleTimer++
 
 	if handled, kind := g.CheckUI(); !handled {

@@ -293,16 +293,18 @@ func InBounds(x, y, width, height, mx, my float64) bool {
 type SpeedPanel struct {
 	render.Positionable
 	render.Sizeable
-	cameraButton *UIButton
-	pauseButton  *UIButton
-	speedButton  *UIButton
-	musicButton  *UIButton
-	soundButton  *UIButton
-	buttons      []UIElement
+	autoplayButton *UIButton
+	cameraButton   *UIButton
+	pauseButton    *UIButton
+	speedButton    *UIButton
+	musicButton    *UIButton
+	soundButton    *UIButton
+	buttons        []UIElement
 }
 
 func MakeSpeedPanel() SpeedPanel {
 	sp := SpeedPanel{}
+	sp.autoplayButton = NewUIButton("autoplay-no", "autoplay off")
 	sp.musicButton = NewUIButton("music", "music on")
 	sp.soundButton = NewUIButton("sound", "sound on")
 	sp.pauseButton = NewUIButton("play", "playing")
@@ -313,6 +315,7 @@ func MakeSpeedPanel() SpeedPanel {
 	sp.buttons = append(sp.buttons, sp.cameraButton)
 	sp.buttons = append(sp.buttons, sp.pauseButton)
 	sp.buttons = append(sp.buttons, sp.speedButton)
+	sp.buttons = append(sp.buttons, sp.autoplayButton)
 	return sp
 }
 

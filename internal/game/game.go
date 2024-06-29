@@ -31,6 +31,7 @@ type Game struct {
 	speed                 int
 	gold                  int
 	equipment             []*Equipment
+	autoplay              bool
 }
 
 type GameState interface {
@@ -269,6 +270,18 @@ func (g *Game) Init() {
 	g.ui.speedPanel.cameraButton.onCheck = func(kind UICheckKind) {
 		if kind == UICheckClick {
 			g.AdjustCamera()
+		}
+	}
+	g.ui.speedPanel.autoplayButton.onCheck = func(kind UICheckKind) {
+		if kind == UICheckClick {
+			g.autoplay = !g.autoplay
+		}
+		if g.autoplay {
+			g.ui.speedPanel.autoplayButton.SetImage("autoplay")
+			g.ui.speedPanel.autoplayButton.tooltip = "autoplay on"
+		} else {
+			g.ui.speedPanel.autoplayButton.SetImage("autoplay-no")
+			g.ui.speedPanel.autoplayButton.tooltip = "autoplay off"
 		}
 	}
 	g.ui.speedPanel.musicButton.onCheck = func(kind UICheckKind) {

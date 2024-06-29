@@ -267,6 +267,35 @@ func (s *GameStateBuild) End(g *Game) {
 	g.ui.dudeInfoPanel.equipmentDetails.swapButton.hidden = true
 }
 func (s *GameStateBuild) Update(g *Game) GameState {
+	if g.autoplay {
+		if s.nextStory != nil {
+			if s.nextStory.level%3 == 0 {
+				s.BuyDude(g)
+			}
+		}
+		j := 0
+		attempts := 0
+		for i := 0; i < len(s.availableRooms); {
+			s.focusedRoom = s.nextStory.rooms[j]
+			s.placingIndex = i
+			s.placingRoom = s.availableRooms[i]
+			size := s.placingRoom.size
+			switch s.TryPlaceRoom(g) {
+			case PlaceResultSuccess:
+				j += int(size)
+				attempts = 0
+			case PlaceResultFail:
+			case PlaceResultBroke:
+			case PlaceResultTake:
+				j -= int(s.focusedRoom.size)
+			}
+			attempts++
+			if j >= 7 || attempts > 10 {
+				break
+			}
+		}
+		s.readyAttempts = 2
+	}
 	if s.readyAttempts >= 2 {
 		return &GameStatePlay{}
 	}
@@ -373,7 +402,16 @@ func adjustSelectionIndex(index int, max int) int {
 	return index
 }
 
-func (s *GameStateBuild) TryPlaceRoom(g *Game) {
+type PlaceResult int
+
+const (
+	PlaceResultSuccess PlaceResult = iota
+	PlaceResultFail
+	PlaceResultBroke
+	PlaceResultTake
+)
+
+func (s *GameStateBuild) TryPlaceRoom(g *Game) PlaceResult {
 	if s.focusedRoom != nil {
 		if s.placingRoom == nil {
 			g.ui.feedback.Msg(FeedbackGeneric, "select a room to place :)")
@@ -392,13 +430,16 @@ func (s *GameStateBuild) TryPlaceRoom(g *Game) {
 				g.UpdateInfo()
 				g.ui.feedback.Msg(FeedbackGood, fmt.Sprintf("%s %s sold!", s.focusedRoom.size.String(), s.focusedRoom.kind.String()))
 				s.nextStory.RemoveRoom(s.focusedRoom.index)
+				return PlaceResultTake
 			} else {
 				if g.gold-GetRoomCost(s.placingRoom.kind, s.placingRoom.size, s.nextStory.level) < 0 {
 					g.ui.feedback.Msg(FeedbackBad, "ur broke lol")
+					return PlaceResultBroke
 				} else {
 					room := NewRoom(s.placingRoom.size, s.placingRoom.kind, s.placingRoom.required)
 					if err := s.nextStory.PlaceRoom(room, s.focusedRoom.index); err != nil {
 						g.ui.feedback.Msg(FeedbackBad, err.Error())
+						return PlaceResultFail
 					} else {
 						// it worked!11!
 						g.gold -= GetRoomCost(s.placingRoom.kind, s.placingRoom.size, s.nextStory.level)
@@ -418,11 +459,13 @@ func (s *GameStateBuild) TryPlaceRoom(g *Game) {
 						if s.placingIndex < len(s.availableRooms) {
 							g.ui.roomPanel.onItemClick(s.placingIndex)
 						}
+						return PlaceResultSuccess
 					}
 				}
 			}
 		}
 	}
+	return PlaceResultFail
 }
 
 func (s *GameStateBuild) RollRooms(g *Game) {
