@@ -14,7 +14,7 @@ const (
 
 type Camera struct {
 	Originable
-	Rotateable
+	//Rotateable
 
 	x InterpNumber
 	y InterpNumber
@@ -23,6 +23,7 @@ type Camera struct {
 	zoom       InterpNumber
 	Mode       CameraMode
 	textOffset InterpNumber
+	rotate     InterpNumber
 	lastLevel  int
 }
 
@@ -84,6 +85,7 @@ func (c *Camera) Update() {
 	c.y.Update()
 	c.zoom.Update()
 	c.textOffset.Update()
+	c.rotate.Update()
 }
 
 func (c *Camera) Transform(options *Options) {
@@ -182,4 +184,26 @@ func (c *Camera) SetTextOffset(offset float64) {
 
 func (c *Camera) TextOffset() float64 {
 	return c.textOffset.Current
+}
+
+func (c *Camera) Rotation() float64 {
+	return c.rotate.Current
+}
+
+func (c *Camera) SetRotation(rotation float64) {
+	dr := math.Abs(c.rotate.Current - rotation)
+	targetTicks := 20.0
+
+	drTicks := dr / targetTicks
+
+	c.rotate.Set(rotation, drTicks)
+}
+
+func (c *Camera) SetRotationAt(rotation float64, speed float64) {
+	dr := math.Abs(c.rotate.Current - rotation)
+	targetTicks := speed
+
+	drTicks := dr / targetTicks
+
+	c.rotate.Set(rotation, drTicks)
 }

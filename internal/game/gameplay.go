@@ -90,7 +90,7 @@ func (s *GameStatePlay) Update(g *Game) GameState {
 		if g.selectedDude.story != nil {
 			g.camera.SetStory(g.selectedDude.story.level)
 			r := g.selectedDude.trueRotation
-			g.camera.SetRotation(-r)
+			g.camera.SetRotationAt(-r, 1)
 		}
 	}
 

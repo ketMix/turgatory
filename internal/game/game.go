@@ -75,14 +75,14 @@ func (g *Game) Update() error {
 	}*/
 
 	if ebiten.IsKeyPressed(ebiten.KeyQ) || ebiten.IsKeyPressed(ebiten.KeyLeft) {
-		g.camera.SetRotation(g.camera.Rotation() - 0.01)
+		g.camera.SetRotationAt(g.camera.Rotation()-0.05, 1)
 	} else if ebiten.IsKeyPressed(ebiten.KeyE) || ebiten.IsKeyPressed(ebiten.KeyRight) {
-		g.camera.SetRotation(g.camera.Rotation() + 0.01)
+		g.camera.SetRotationAt(g.camera.Rotation()+0.05, 1)
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyW) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyW) || inpututil.IsKeyJustPressed(ebiten.KeyUp) {
 		g.camera.SetStory(g.camera.Story() + 1)
-	} else if inpututil.IsKeyJustPressed(ebiten.KeyS) {
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyS) || inpututil.IsKeyJustPressed(ebiten.KeyDown) {
 		g.camera.SetStory(g.camera.Story() - 1)
 	}
 
@@ -303,6 +303,27 @@ func (g *Game) Init() {
 			}
 		}
 	}
+	g.ui.controlsPanel.rotateCCWButton.onCheck = func(kind UICheckKind) {
+		if kind == UICheckClick {
+			g.camera.SetRotation(g.camera.Rotation() + math.Pi/4)
+		}
+	}
+	g.ui.controlsPanel.rotateCWButton.onCheck = func(kind UICheckKind) {
+		if kind == UICheckClick {
+			g.camera.SetRotation(g.camera.Rotation() - math.Pi/4)
+		}
+	}
+	g.ui.controlsPanel.upButton.onCheck = func(kind UICheckKind) {
+		if kind == UICheckClick {
+			g.camera.SetStory(g.camera.Story() + 1)
+		}
+	}
+	g.ui.controlsPanel.downButton.onCheck = func(kind UICheckKind) {
+		if kind == UICheckClick {
+			g.camera.SetStory(g.camera.Story() - 1)
+		}
+	}
+
 	g.ui.dudePanel.onItemClick = func(index int) {
 		if index < 0 || index >= len(g.dudes) {
 			return

@@ -43,6 +43,7 @@ type UI struct {
 	hint           HintPopup
 	buttonPanel    ButtonPanel
 	bossPanel      BossPanel
+	controlsPanel  ControlsPanel
 }
 
 func NewUI() *UI {
@@ -72,6 +73,8 @@ func NewUI() *UI {
 	ui.hint = MakeHintPopup()
 	ui.buttonPanel = MakeButtonPanel(assets.DisplayFont, PanelStyleButton)
 	ui.buttonPanel.Disable()
+
+	ui.controlsPanel = MakeControlsPanel()
 
 	ui.bossPanel = MakeBossPanel()
 
@@ -199,6 +202,12 @@ func (ui *UI) Layout(o *UIOptions) {
 	)
 	ui.buttonPanel.Layout(nil, o)
 
+	ui.controlsPanel.SetPosition(
+		float64(o.Width)/2,
+		ui.buttonPanel.Y()+ui.buttonPanel.Height()+4*o.Scale,
+	)
+	ui.controlsPanel.Layout(nil, o)
+
 	ui.bossPanel.panel.SetSize(
 		float64(o.Width)/3,
 		24*o.Scale,
@@ -217,6 +226,7 @@ func (ui *UI) Update(o *UIOptions) {
 	ui.equipmentPanel.Update(o)
 	ui.roomPanel.Update(o)
 	ui.speedPanel.Update(o)
+	ui.controlsPanel.Update(o)
 	ui.messagePanel.Update(o)
 	ui.feedback.Update(o)
 	ui.buttonPanel.Update(o)
@@ -244,6 +254,10 @@ func (ui *UI) Check(mx, my float64, kind UICheckKind) bool {
 	if ui.buttonPanel.Check(mx, my, kind) {
 		return true
 	}
+
+	if ui.controlsPanel.Check(mx, my, kind) {
+		return true
+	}
 	return false
 }
 
@@ -254,6 +268,7 @@ func (ui *UI) Draw(o *render.Options) {
 	ui.equipmentPanel.Draw(o)
 	o.DrawImageOptions.GeoM.Reset()
 	ui.speedPanel.Draw(o)
+	ui.controlsPanel.Draw(o)
 	o.DrawImageOptions.GeoM.Reset()
 	ui.messagePanel.Draw(o)
 
@@ -363,6 +378,68 @@ func (sp *SpeedPanel) Check(mx, my float64, kind UICheckKind) bool {
 
 func (sp *SpeedPanel) Draw(o *render.Options) {
 	for _, b := range sp.buttons {
+		b.Draw(o)
+	}
+}
+
+type ControlsPanel struct {
+	render.Positionable
+	render.Sizeable
+
+	rotateCCWButton *UIButton
+	rotateCWButton  *UIButton
+	upButton        *UIButton
+	downButton      *UIButton
+	buttons         []UIElement
+}
+
+func MakeControlsPanel() ControlsPanel {
+	p := ControlsPanel{}
+	p.rotateCCWButton = NewUIButton("rotate-ccw", "rotate ccw")
+	p.rotateCWButton = NewUIButton("rotate-cw", "rotate cw")
+	p.upButton = NewUIButton("up", "up")
+	p.downButton = NewUIButton("down", "down")
+	p.buttons = append(p.buttons, p.rotateCWButton)
+	p.buttons = append(p.buttons, p.upButton)
+	p.buttons = append(p.buttons, p.downButton)
+	p.buttons = append(p.buttons, p.rotateCCWButton)
+	return p
+}
+
+func (p *ControlsPanel) Layout(parent UIElement, o *UIOptions) {
+	maxWidth := 0.0
+	for _, b := range p.buttons {
+		b.Layout(p, o)
+		maxWidth += b.Width()
+	}
+	x := p.X() - maxWidth/2
+	for _, b := range p.buttons {
+		b.SetPosition(x, p.Y())
+		x += b.Width()
+	}
+}
+
+func (p *ControlsPanel) Update(o *UIOptions) {
+	for _, b := range p.buttons {
+		b.Update(o)
+	}
+}
+
+func (p *ControlsPanel) Check(mx, my float64, kind UICheckKind) bool {
+	inBounds := InBounds(p.X(), p.Y(), p.Width(), p.Height(), mx, my)
+	if kind == UICheckHover && !inBounds {
+		return false
+	}
+	for _, b := range p.buttons {
+		if b.Check(mx, my, kind) {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *ControlsPanel) Draw(o *render.Options) {
+	for _, b := range p.buttons {
 		b.Draw(o)
 	}
 }
