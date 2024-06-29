@@ -126,9 +126,10 @@ func (b *UIButton) Draw(o *render.Options) {
 	o.DrawImageOptions.GeoM.Reset()
 	if b.tooltip != "" && b.showTooltip {
 		op := &render.TextOptions{
-			Screen: o.Screen,
-			Font:   assets.DisplayFont,
-			Color:  color.NRGBA{184, 152, 93, 200},
+			Screen:     o.Screen,
+			Font:       assets.DisplayFont,
+			Color:      color.NRGBA{184, 152, 93, 200},
+			ColorScale: o.DrawImageOptions.ColorScale,
 		}
 		if b.smallTooltip {
 			op.Font = assets.BodyFont
@@ -672,7 +673,7 @@ func (t *UIText) Check(mx, my float64, kind UICheckKind) bool {
 func (t *UIText) Draw(o *render.Options) {
 	t.textOptions.Screen = o.Screen
 	t.textOptions.GeoM.Reset()
-
+	t.textOptions.ColorScale = o.DrawImageOptions.ColorScale
 	t.textOptions.GeoM.Scale(t.scale, t.scale)
 
 	if t.center {

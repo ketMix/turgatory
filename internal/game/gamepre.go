@@ -21,6 +21,7 @@ type GameStatePre struct {
 
 func (s *GameStatePre) Begin(g *Game) {
 	// TODO: Hide UI crap.
+	g.ui.Hide()
 
 	// Always turn off autoplay (maybe???)
 	g.SetAutoplay(false)
@@ -67,6 +68,7 @@ func (s *GameStatePre) Begin(g *Game) {
 	g.equipment = make([]*Equipment, 0)
 }
 func (s *GameStatePre) End(g *Game) {
+	g.ui.Reveal()
 }
 func (s *GameStatePre) Update(g *Game) GameState {
 	w, h := float64(g.uiOptions.Width), float64(g.uiOptions.Height)

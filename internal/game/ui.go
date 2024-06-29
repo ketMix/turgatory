@@ -30,6 +30,8 @@ func (o UIOptions) ScreenToCoords(x, y float64) (float64, float64) {
 }
 
 type UI struct {
+	hide           bool
+	ticks          int
 	gameInfoPanel  GameInfoPanel
 	dudePanel      DudePanel
 	dudeInfoPanel  *DudeInfoPanel
@@ -81,7 +83,20 @@ func NewUI() *UI {
 	return ui
 }
 
+func (ui *UI) Hide() {
+	ui.hide = true
+}
+
+func (ui *UI) Reveal() {
+	ui.hide = false
+	ui.ticks = 300
+}
+
 func (ui *UI) Layout(o *UIOptions) {
+	if ui.hide {
+		return
+	}
+
 	ui.options = o
 	ui.speedPanel.Layout(nil, o)
 	ui.messagePanel.Layout(o)
@@ -221,6 +236,10 @@ func (ui *UI) Layout(o *UIOptions) {
 }
 
 func (ui *UI) Update(o *UIOptions) {
+	if ui.hide {
+		return
+	}
+
 	ui.dudePanel.Update(o)
 	ui.dudeInfoPanel.Update(o)
 	ui.equipmentPanel.Update(o)
@@ -234,6 +253,9 @@ func (ui *UI) Update(o *UIOptions) {
 }
 
 func (ui *UI) Check(mx, my float64, kind UICheckKind) bool {
+	if ui.hide {
+		return false
+	}
 	if ui.dudePanel.Check(mx, my, kind) {
 		return true
 	}
@@ -262,6 +284,17 @@ func (ui *UI) Check(mx, my float64, kind UICheckKind) bool {
 }
 
 func (ui *UI) Draw(o *render.Options) {
+	if ui.hide {
+		return
+	} else if ui.ticks > 0 {
+		ui.ticks--
+		if ui.ticks < 200 {
+			o.DrawImageOptions.ColorScale.ScaleAlpha(float32(1.0 - float64(ui.ticks)/200.0))
+		} else {
+			return
+		}
+	}
+
 	ui.buttonPanel.Draw(o)
 
 	o.DrawImageOptions.GeoM.Reset()
@@ -568,9 +601,10 @@ func (mp *MessagePanel) Draw(o *render.Options) {
 		message := messages[messageIndex]
 
 		tOp := &render.TextOptions{
-			Screen: o.Screen,
-			Font:   assets.BodyFont,
-			Color:  message.kind.Color(),
+			Screen:     o.Screen,
+			Font:       assets.BodyFont,
+			Color:      message.kind.Color(),
+			ColorScale: o.DrawImageOptions.ColorScale,
 		}
 
 		_, h := text.Measure(message.text, assets.BodyFont.Face, assets.BodyFont.LineHeight)
