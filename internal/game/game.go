@@ -76,16 +76,20 @@ func (g *Game) Update() error {
 
 	if ebiten.IsKeyPressed(ebiten.KeyQ) || ebiten.IsKeyPressed(ebiten.KeyLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
 		g.camera.SetRotationAt(g.camera.Rotation()-0.05, 1)
+		g.selectedDude = nil
 	} else if ebiten.IsKeyPressed(ebiten.KeyE) || ebiten.IsKeyPressed(ebiten.KeyRight) || ebiten.IsKeyPressed(ebiten.KeyD) {
 		g.camera.SetRotationAt(g.camera.Rotation()+0.05, 1)
+		g.selectedDude = nil
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyW) || inpututil.IsKeyJustPressed(ebiten.KeyUp) {
 		if g.tower != nil && g.camera.Story() < len(g.tower.Stories)-2 {
 			g.camera.SetStory(g.camera.Story() + 1)
+			g.selectedDude = nil
 		}
 	} else if inpututil.IsKeyJustPressed(ebiten.KeyS) || inpututil.IsKeyJustPressed(ebiten.KeyDown) {
 		g.camera.SetStory(g.camera.Story() - 1)
+		g.selectedDude = nil
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.Key1) {
