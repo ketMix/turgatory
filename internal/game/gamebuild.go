@@ -445,7 +445,9 @@ func (s *GameStateBuild) TryPlaceRoom(g *Game) PlaceResult {
 				return PlaceResultTake
 			} else {
 				if g.gold-GetRoomCost(s.placingRoom.kind, s.placingRoom.size, s.nextStory.level) < 0 {
-					g.ui.feedback.Msg(FeedbackBad, "ur broke lol")
+					if !g.autoplay {
+						g.ui.feedback.Msg(FeedbackBad, "ur broke lol")
+					}
 					return PlaceResultBroke
 				} else {
 					room := NewRoom(s.placingRoom.size, s.placingRoom.kind, s.placingRoom.required)
