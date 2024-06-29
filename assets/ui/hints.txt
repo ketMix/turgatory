@@ -13,3 +13,5 @@ Defense reduces damage taken.
 Agility increases move speed and crit chance.
 Luck increases loot quality and crit chance.
 Hiring dudes is irreversible. Watch your gold!
+Hiring dudes is more expensive the more dudes you have.
+Equipment is more expensive at higher stories but potentially higher quality.
