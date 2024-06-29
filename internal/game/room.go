@@ -507,8 +507,13 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 			// Add enemy based on room size
 			enemyName := r.kind.GetRoomEnemy(r.size, r.story.level)
 			enemyStack, err := render.NewStack("enemies/"+r.size.String(), "", "")
-			// Randomize which enemy flavor it is
-			enemyStack.SetStack(enemyStack.Stacks()[rand.Intn(len(enemyStack.Stacks()))])
+			if r.size == Huge {
+				// If it's huge, set it to ebi.
+				enemyStack.SetStack("ebi")
+			} else {
+				// Randomize which enemy flavor it is
+				enemyStack.SetStack(enemyStack.Stacks()[rand.Intn(len(enemyStack.Stacks()))])
+			}
 			if err != nil {
 				fmt.Println("Error creating enemy stack", err)
 			} else {
