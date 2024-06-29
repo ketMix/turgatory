@@ -53,6 +53,8 @@ type PanVol struct {
 	Vol float64
 }
 
+const VOL_MULT = 2.0
+
 func NewAudioController() *AudioController {
 	audioContext := audio.NewContext(44100)
 	tracks := make(map[RoomKind]*Track)
@@ -99,7 +101,7 @@ func NewAudioController() *AudioController {
 		panstream := NewStereoPanStream(audio.NewInfiniteLoop(stream, stream.Length()))
 		panstream.SetPan(0.0)
 		player, err := audioContext.NewPlayer(panstream)
-		player.SetVolume(1)
+		player.SetVolume(VOL_MULT)
 		if err != nil {
 			fmt.Println("Error creating player for background track ", err)
 		}
@@ -145,7 +147,7 @@ func (a *AudioController) PauseRoomTracks() {
 
 func (a *AudioController) SetVol(roomKind RoomKind, volume float64) {
 	if track, ok := a.tracks[roomKind]; ok {
-		track.SetVolume(volume)
+		track.SetVolume(volume * VOL_MULT)
 	}
 }
 
