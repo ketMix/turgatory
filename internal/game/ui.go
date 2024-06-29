@@ -395,10 +395,14 @@ type ControlsPanel struct {
 
 func MakeControlsPanel() ControlsPanel {
 	p := ControlsPanel{}
-	p.rotateCCWButton = NewUIButton("rotate-ccw", "rotate ccw")
-	p.rotateCWButton = NewUIButton("rotate-cw", "rotate cw")
-	p.upButton = NewUIButton("up", "up")
-	p.downButton = NewUIButton("down", "down")
+	p.rotateCCWButton = NewUIButton("rotate-ccw", "rotate cw (E/D)")
+	p.rotateCCWButton.smallTooltip = true
+	p.rotateCWButton = NewUIButton("rotate-cw", "rotate ccw (Q/A)")
+	p.rotateCWButton.smallTooltip = true
+	p.upButton = NewUIButton("up", "up (W/^)")
+	p.upButton.smallTooltip = true
+	p.downButton = NewUIButton("down", "down (S/v)")
+	p.downButton.smallTooltip = true
 	p.buttons = append(p.buttons, p.rotateCWButton)
 	p.buttons = append(p.buttons, p.upButton)
 	p.buttons = append(p.buttons, p.downButton)

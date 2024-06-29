@@ -41,6 +41,9 @@ func (c *Camera) Story() int {
 }
 
 func (c *Camera) SetStory(level int) {
+	if level < 0 {
+		level = 0
+	}
 	switch c.Mode {
 	case CameraModeTower:
 		c.SetPosition(c.x.Target, -65+float64(level)*c.GetMultiplier()*c.zoom.Target)
