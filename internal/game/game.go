@@ -2,6 +2,8 @@ package game
 
 import (
 	"fmt"
+	"image/color"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -145,6 +147,19 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	// Adjust background based upon level.
+	if g.tower != nil {
+		c := float64(g.camera.Story()) / float64(g.tower.targetStories) / 4
+		c = math.Min(0.9, math.Max(0, c))
+		clr := color.NRGBA{
+			R: 2 + uint8(135*c),
+			G: 2 + uint8(105*c),
+			B: 2 + uint8(105*c),
+			A: 255,
+		}
+		screen.Fill(clr)
+	}
+
 	// Clear overlay.
 	g.overlay.Clear()
 
