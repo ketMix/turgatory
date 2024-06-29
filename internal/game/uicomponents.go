@@ -39,13 +39,14 @@ const (
 type UIButton struct {
 	render.Positionable
 	render.Sizeable
-	noBackdrop  bool
-	baseSprite  *render.Sprite
-	sprite      *render.Sprite
-	onCheck     func(kind UICheckKind)
-	wobbler     float64
-	tooltip     string
-	showTooltip bool
+	noBackdrop   bool
+	baseSprite   *render.Sprite
+	sprite       *render.Sprite
+	onCheck      func(kind UICheckKind)
+	wobbler      float64
+	tooltip      string
+	showTooltip  bool
+	smallTooltip bool
 }
 
 func NewUIButton(name string, tooltip string) *UIButton {
@@ -129,7 +130,10 @@ func (b *UIButton) Draw(o *render.Options) {
 			Font:   assets.DisplayFont,
 			Color:  color.NRGBA{184, 152, 93, 200},
 		}
-		width, _ := text.Measure(b.tooltip, assets.DisplayFont.Face, assets.BodyFont.LineHeight)
+		if b.smallTooltip {
+			op.Font = assets.BodyFont
+		}
+		width, _ := text.Measure(b.tooltip, op.Font.Face, assets.BodyFont.LineHeight)
 		x, y := b.Position()
 		w, h := b.sprite.Size()
 		x += w
