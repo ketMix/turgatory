@@ -198,7 +198,7 @@ func (p PerkStatBoost) amount() int {
 	if p.stat == StatMaxHP {
 		return int(p.quality) * 10
 	}
-	return int(p.quality) + 1
+	return (int(p.quality) + 1) * 3
 }
 
 func (p PerkStatBoost) Name() string {
