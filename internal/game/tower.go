@@ -35,24 +35,26 @@ func (t *Tower) Update(req *ActivityRequests, g *Game) {
 			// Propagate the dead dude up to the game.
 			req.Add(u)
 		case TowerLeaveActivity:
+			nextStory := u.dude.story.level + 1
 			t.RemoveDude(u.dude)
-			// Send it up to the game so it can do logic to see if all dudes are gone.
-			req.Add(u)
-		case StoryEnterNextActivity:
-			// We can always allow this to happen since the logic is triggered in RoomEnterActivity with index 7.
-			if u.story.level == t.targetStories-2 {
+			if nextStory == t.targetStories {
 				req.Add(TowerCompleteActivity{dude: u.dude})
 			} else {
-				nextStory := t.Stories[u.story.level+1]
-
-				if u.dude.room != nil {
-					u.dude.room.RemoveDudeFromCenter(u.dude)
-					u.dude.room.RemoveDude(u.dude)
-					u.dude.room = nil
-				}
-				u.story.RemoveDude(u.dude)
-				nextStory.AddDude(u.dude)
+				// Send it up to the game so it can do logic to see if all dudes are gone.
+				req.Add(u)
 			}
+
+		case StoryEnterNextActivity:
+			// We can always allow this to happen since the logic is triggered in RoomEnterActivity with index 7.
+			nextStory := t.Stories[u.story.level+1]
+
+			if u.dude.room != nil {
+				u.dude.room.RemoveDudeFromCenter(u.dude)
+				u.dude.room.RemoveDude(u.dude)
+				u.dude.room = nil
+			}
+			u.story.RemoveDude(u.dude)
+			nextStory.AddDude(u.dude)
 		case RoomCombatActivity:
 			if act := u.dude.Trigger(EventCombatRoom{room: u.room, dude: u.dude}); act != nil {
 				req.Add(act)
@@ -170,6 +172,18 @@ func (t *Tower) AddDude(d *Dude) {
 }
 
 func (t *Tower) RemoveDude(d *Dude) {
+	// Finally remove from our own slice.
+	removedDude := false
+	for i, dude := range t.dudes {
+		if dude == d {
+			t.dudes = append(t.dudes[:i], t.dudes[i+1:]...)
+			removedDude = true
+		}
+	}
+	if !removedDude {
+		return
+	}
+
 	// Remove dude from any rooms.
 	if d.room != nil {
 		d.room.RemoveDudeFromCenter(d)
@@ -180,13 +194,6 @@ func (t *Tower) RemoveDude(d *Dude) {
 	if d.story != nil {
 		d.story.RemoveDude(d)
 		d.story = nil
-	}
-	// Finally remove from our own slice.
-	for i, dude := range t.dudes {
-		if dude == d {
-			t.dudes = append(t.dudes[:i], t.dudes[i+1:]...)
-			return
-		}
 	}
 }
 
