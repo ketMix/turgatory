@@ -345,7 +345,7 @@ func (s *GameStateBuild) Draw(g *Game, screen *ebiten.Image) {
 		opts := render.TextOptions{
 			Screen: screen,
 			Font:   assets.DisplayFont,
-			Color:  assets.ColorState,
+			Color:  assets.ColorTitle,
 		}
 		opts.GeoM.Scale(4, 4)
 

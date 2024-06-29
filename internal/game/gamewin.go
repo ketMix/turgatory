@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
@@ -24,12 +25,50 @@ func (s *GameStateWin) End(g *Game) {
 
 func (s *GameStateWin) Update(g *Game) GameState {
 	s.wobbler += 0.05
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		return &GameStatePre{}
+	}
 	g.camera.SetRotation(g.camera.Rotation() + 0.005)
 	return nil
 }
 
 func (s *GameStateWin) Draw(g *Game, screen *ebiten.Image) {
 	s.DrawRainbow(screen, "U   WINNE!1!")
+
+	opts := &render.TextOptions{
+		Screen: screen,
+		Font:   assets.DisplayFont,
+		Color:  color.Black,
+	}
+
+	opts.Color = assets.ColorDudeTitle
+	opts.Font = assets.BodyFont
+	y := 0.0
+	{
+		opts.GeoM.Reset()
+		opts.GeoM.Scale(4, 4)
+
+		w, h := text.Measure("ur dudes escaped :))", opts.Font.Face, opts.Font.LineHeight)
+		w *= 4
+		h *= 4
+
+		opts.GeoM.Translate(float64(screen.Bounds().Dx()/2)-w/2, float64(screen.Bounds().Dy()/2)+10*4)
+		y = float64(screen.Bounds().Dy()/2) + 20*4
+		render.DrawText(opts, "ur dudes escaped :))")
+	}
+
+	{
+		opts.GeoM.Reset()
+		opts.GeoM.Scale(4, 4)
+
+		w, h := text.Measure("Press SPACE to try again!", opts.Font.Face, opts.Font.LineHeight)
+		w *= 4
+		h *= 4
+
+		opts.GeoM.Translate(float64(screen.Bounds().Dx()/2)-w/2, y+h)
+		render.DrawText(opts, "Press SPACE to try again!")
+	}
+
 }
 
 func (s *GameStateWin) DrawRainbow(screen *ebiten.Image, t string) {

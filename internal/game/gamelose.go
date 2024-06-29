@@ -25,7 +25,7 @@ func (s *GameStateLose) End(g *Game) {
 func (s *GameStateLose) Update(g *Game) GameState {
 	s.wobbler += 0.05
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		return &GameStateStart{}
+		return &GameStatePre{}
 	}
 	return nil
 }

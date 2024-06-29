@@ -5,6 +5,7 @@ import "image/color"
 var (
 	ColorState               = color.NRGBA{184, 152, 93, 200}
 	ColorHeading             = color.NRGBA{200, 140, 100, 200}
+	ColorTitle               = color.NRGBA{255, 255, 255, 200}
 	ColorGameOver            = color.NRGBA{255, 52, 33, 200}
 	ColorSelected            = color.NRGBA{152, 184, 93, 100}
 	ColorHovered             = color.NRGBA{102, 134, 43, 50}
