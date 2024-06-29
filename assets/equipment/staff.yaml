@@ -4,6 +4,6 @@ type: weapon
 professions: 
  - cleric
 stats: 
-  strength: 1
-  wisdom: 1
+  strength: 3
+  wisdom: 2
 perk: Heal On Room Enter

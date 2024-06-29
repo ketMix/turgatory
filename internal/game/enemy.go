@@ -56,7 +56,7 @@ func (e EnemyKind) BossStack() string {
 func (e EnemyKind) Stats() *Stats {
 	switch e {
 	case EnemyRat:
-		return &Stats{strength: 3, defense: 3, totalHp: 30}
+		return &Stats{strength: 6, defense: 6, totalHp: 30}
 	case EnemySlime:
 		return &Stats{strength: 6, defense: 6, totalHp: 50}
 	case EnemySkelly:
@@ -64,11 +64,11 @@ func (e EnemyKind) Stats() *Stats {
 	case EnemyEbi:
 		return &Stats{strength: 12, defense: 12, totalHp: 200}
 	case EnemyBossRat:
-		return &Stats{strength: 10, defense: 25, totalHp: 1000}
+		return &Stats{strength: 10, defense: 20, totalHp: 750}
 	case EnemyBossSlime:
-		return &Stats{strength: 30, defense: 50, totalHp: 1500}
+		return &Stats{strength: 20, defense: 30, totalHp: 1250}
 	case EnemyBossSkelly:
-		return &Stats{strength: 30, defense: 35, totalHp: 2000} // level two by default so double these
+		return &Stats{strength: 25, defense: 25, totalHp: 2000} // level two by default so double these
 	case EnemyBossEbi:
 		return &Stats{strength: 40, defense: 40, totalHp: 2000} // level three by default so triple these
 	default:
