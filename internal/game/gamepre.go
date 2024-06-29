@@ -62,6 +62,9 @@ func (s *GameStatePre) Begin(g *Game) {
 	s.infinite.text.SetText("endless")
 
 	s.info = NewUIText("beep boop", assets.BodyFont, assets.ColorStory)
+
+	// Init inventory
+	g.equipment = make([]*Equipment, 0)
 }
 func (s *GameStatePre) End(g *Game) {
 }

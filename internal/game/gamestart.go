@@ -16,7 +16,7 @@ func (s *GameStateStart) Begin(g *Game) {
 	}
 
 	// Give the player a reasonable amount of GOLD
-	g.gold = 1000
+	g.gold = 750
 
 	professions := []ProfessionKind{Knight, Vagabond, Ranger, Cleric}
 	dudeLimit := len(professions) * 2
@@ -39,7 +39,6 @@ func (s *GameStateStart) Begin(g *Game) {
 
 	g.tower = tower
 	g.camera.SetMode(render.CameraModeTower)
-	g.equipment = make([]*Equipment, 0)
 	g.ui.hint.Show()
 }
 func (s *GameStateStart) End(g *Game) {
