@@ -28,7 +28,7 @@ func main() {
 		Run("run")
 	Task("build-web").
 		Env("GOOS=js", "GOARCH=wasm").
-		Exec("go", "build", "-o", "web/game.wasm", "./cmd/game").
+		Exec("go", "build", "-o", "web/ebijam24.wasm", "./cmd/game").
 		Exec("go", "env", "GOROOT").
 		Result(func(i interface{}) {
 			goRoot := strings.TrimSpace(i.(string))
