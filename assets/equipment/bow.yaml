@@ -4,5 +4,5 @@ professions:
  - ranger
 type: weapon
 stats: 
-  strength: 1
-  agility: 2
+  strength: 3
+  agility: 4

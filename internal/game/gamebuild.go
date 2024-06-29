@@ -482,6 +482,30 @@ func (s *GameStateBuild) RollRooms(g *Game) {
 	g.ui.roomPanel.SetRoomDefs(s.availableRooms)
 }
 
+// Re-roll optional rooms and keep any required rooms
+func (s *GameStateBuild) RerollOptionalRooms(g *Game) {
+	numOptional := 0
+	for _, room := range s.availableRooms {
+		if !room.required {
+			numOptional += int(room.size)
+		}
+	}
+	rooms := make([]*RoomDef, 0)
+	for _, room := range s.availableRooms {
+		if room.required {
+			rooms = append(rooms, room)
+		}
+	}
+
+	optional := GetOptionalRooms(s.nextStory.level, numOptional)
+	rooms = append(rooms, optional...)
+	s.availableRooms = rooms
+	s.availableRooms = SortRooms(s.availableRooms)
+
+	// Update room panel.
+	g.ui.roomPanel.SetRoomDefs(s.availableRooms)
+}
+
 func (s *GameStateBuild) RerollCost() int {
 	return 25 + 75*(s.nextStory.level+1)
 }
@@ -493,7 +517,7 @@ func (s *GameStateBuild) RerollRooms(g *Game) {
 		return
 	}
 	g.gold -= cost
-	s.RollRooms(g)
+	s.RerollOptionalRooms(g)
 	g.UpdateInfo()
 }
 

@@ -2,6 +2,6 @@ name: Dagger
 description: You can dag him if you want too
 type: weapon
 stats: 
-  strength: 1
-  agility: 1
+  strength: 2
+  agility: 2
   confidence: 3

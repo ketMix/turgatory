@@ -234,7 +234,7 @@ func (e *Equipment) ChangeQuality(delta int) {
 		}
 	}
 
-	e.uses += delta
+	e.uses += delta * 2
 	if e.uses > e.totalUses {
 		e.uses = e.totalUses
 	}
@@ -254,13 +254,13 @@ func (e *Equipment) ChangeQuality(delta int) {
 
 	// Here we are always 1 or -1 delta
 	e.quality = EquipmentQuality(int(e.quality) + delta)
-	e.totalUses += delta
-	if e.totalUses < 1 {
-		e.totalUses = 1
+	e.totalUses += delta * 2
+	if e.totalUses < 0 {
+		e.totalUses = 0
 	}
 	// If we increased total use, increase uses
 	if delta > 0 {
-		e.uses++
+		e.uses += delta * 2
 	}
 
 }

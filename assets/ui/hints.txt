@@ -20,3 +20,4 @@ Armor and weapons can be found in the armory.
 The armory increases your equipment levels which increases their stats.
 The library enchants or upgrades perks on your equipment.
 Dudes will autoequip better equipment if their current one does not have a perk.
+Keep your party plentiful! More dudes means more damage to bosses.

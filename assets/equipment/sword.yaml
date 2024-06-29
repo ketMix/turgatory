@@ -2,5 +2,5 @@ name: Sword
 description: Hunk of metal attached to a stick
 type: weapon
 stats: 
-  strength: 2
+  strength: 4
   confidence: 5
