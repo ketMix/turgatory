@@ -22,6 +22,7 @@ type Story struct {
 	tower            *Tower
 	hasRenderedWalls bool
 	hasClouds        bool
+	isLast           bool
 }
 
 // StoryHeight is the height of a story in da tower.
@@ -54,7 +55,7 @@ func NewStoryWithSize(size int) *Story {
 	room := NewRoom(Small, Stairs, true)
 	PanicIfErr(story.PlaceRoom(room, 7))
 
-	for i := 0; i < 4; i++ {
+	/*for i := 0; i < 4; i++ {
 		stack := Must(render.NewStack("walls/pie", "template", ""))
 		stack.SetRotation(float64(i) * (math.Pi / 2))
 
@@ -64,7 +65,7 @@ func NewStoryWithSize(size int) *Story {
 		stack.SetPosition(x, y)
 
 		story.stacks.Add(stack)
-	}
+	}*/
 
 	// Add our walls.
 	for j := 0; j < 3; j++ {
@@ -237,32 +238,40 @@ func (s *Story) Draw(o *render.Options) {
 		s.hasRenderedWalls = true
 	} else {
 		s.vgroup.Clear()
-		s.hasRenderedWalls = false
-		// Conditionally render the walls based upon rotation.
-		for _, stack := range s.walls {
-			r := stack.Rotation() + o.TowerRotation
-			r += math.Pi / 2
-
-			// Ensure r is constrained from 0 to 2*math.Pi
-			for r < 0 {
-				r += math.Pi * 2
+		if s.isLast {
+			for i, stack := range s.walls {
+				if i > 8*2 {
+					stack.Draw(opts)
+				}
 			}
-			for r >= math.Pi*2 {
-				r -= math.Pi * 2
+		} else {
+			s.hasRenderedWalls = false
+			// Conditionally render the walls based upon rotation.
+			for _, stack := range s.walls {
+				r := stack.Rotation() + o.TowerRotation
+				r += math.Pi / 2
+
+				// Ensure r is constrained from 0 to 2*math.Pi
+				for r < 0 {
+					r += math.Pi * 2
+				}
+				for r >= math.Pi*2 {
+					r -= math.Pi * 2
+				}
+
+				min := math.Pi / 4
+				max := math.Pi * 4 / 4
+
+				opts.DrawImageOptions.ColorScale.Reset()
+
+				if r >= min && r < max {
+					continue
+				} else if r >= min-math.Pi/4 && r < max+math.Pi/4 {
+					opts.DrawImageOptions.ColorScale.ScaleAlpha(0.25)
+				}
+
+				stack.Draw(opts)
 			}
-
-			min := math.Pi / 4
-			max := math.Pi * 4 / 4
-
-			opts.DrawImageOptions.ColorScale.Reset()
-
-			if r >= min && r < max {
-				continue
-			} else if r >= min-math.Pi/4 && r < max+math.Pi/4 {
-				opts.DrawImageOptions.ColorScale.ScaleAlpha(0.25)
-			}
-
-			stack.Draw(opts)
 		}
 		opts.DrawImageOptions.ColorScale.Reset()
 
@@ -525,6 +534,7 @@ func (s *Story) AddClouds() {
 
 			stack.SetStaxie("walls/clouds")
 			stack.SetStack("base")
+
 			stack.ColorScale.Reset()
 			stack.ColorScale.Scale(1, clr, clr, 1)
 			stack.SliceColorMin = 0.1
@@ -533,6 +543,9 @@ func (s *Story) AddClouds() {
 	s.hasClouds = true
 }
 func (s *Story) RemoveClouds() {
+	if s.isLast {
+		return
+	}
 	for i := 1; i < 3; i++ {
 		for j := 0; j < 8; j++ {
 			stack := s.walls[i*8+j]

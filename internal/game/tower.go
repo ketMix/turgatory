@@ -149,6 +149,11 @@ func (t *Tower) AddStory(s *Story) {
 	t.Stories = append(t.Stories, s)
 	s.tower = t
 
+	// FIXME: This needs to be set if the target story is the last one!
+	/*if t.targetStories-1 == len(t.Stories) {
+		s.isLast = true
+	}*/
+
 	s.AddClouds()
 }
 
