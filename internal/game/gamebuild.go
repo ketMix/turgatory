@@ -27,6 +27,12 @@ type GameStateBuild struct {
 
 func (s *GameStateBuild) Begin(g *Game) {
 	// g.audioController.PlayRoomTracks()
+
+	// Add feedback if next floor is boss
+	if len(g.tower.Stories)%2 == 0 {
+		g.ui.feedback.Msg(FeedbackWarning, "get ready... the story after this is a boss!")
+	}
+
 	// On build phase, full heal all dudes and restore uses
 	for _, d := range g.dudes {
 		d.FullHeal()
@@ -310,6 +316,7 @@ func (s *GameStateBuild) Update(g *Game) GameState {
 	s.titleTimer++
 
 	if handled, kind := g.CheckUI(); !handled {
+		// Check for mouse hover and click.
 		if kind == UICheckHover {
 			mx, my := IntToFloat2(ebiten.CursorPosition())
 
@@ -333,24 +340,26 @@ func (s *GameStateBuild) Update(g *Game) GameState {
 			r := math.Atan2(my-cy, mx-cx) - g.camera.Rotation()
 			roomIndex := s.nextStory.RoomIndexFromAngle(r)
 
-			// Highlight all rooms equal to size of placing.
-			for _, room := range s.highlightedRooms {
-				room.highlight = false
-			}
-			if s.placingRoom != nil {
-				s.highlightedRooms = nil
-				for i := roomIndex; i < roomIndex+int(s.placingRoom.size) && i < 7; i++ {
-					s.nextStory.rooms[i].highlight = true
-					s.highlightedRooms = append(s.highlightedRooms, s.nextStory.rooms[i])
+			if g.ui.interactable {
+				// Highlight all rooms equal to size of placing.
+				for _, room := range s.highlightedRooms {
+					room.highlight = false
 				}
-			}
+				if s.placingRoom != nil {
+					s.highlightedRooms = nil
+					for i := roomIndex; i < roomIndex+int(s.placingRoom.size) && i < 7; i++ {
+						s.nextStory.rooms[i].highlight = true
+						s.highlightedRooms = append(s.highlightedRooms, s.nextStory.rooms[i])
+					}
+				}
 
-			// Ensure focusing our actual target root room.
-			if s.focusedRoom != nil {
-				s.focusedRoom.highlight = false
+				// Ensure focusing our actual target root room.
+				if s.focusedRoom != nil {
+					s.focusedRoom.highlight = false
+				}
+				s.focusedRoom = s.nextStory.rooms[roomIndex]
+				s.focusedRoom.highlight = true
 			}
-			s.focusedRoom = s.nextStory.rooms[roomIndex]
-			s.focusedRoom.highlight = true
 
 		} else if kind == UICheckClick {
 			s.TryPlaceRoom(g)

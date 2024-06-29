@@ -30,7 +30,8 @@ func (o UIOptions) ScreenToCoords(x, y float64) (float64, float64) {
 }
 
 type UI struct {
-	hide           bool
+	hidden         bool
+	interactable   bool
 	ticks          int
 	gameInfoPanel  GameInfoPanel
 	dudePanel      DudePanel
@@ -84,16 +85,16 @@ func NewUI() *UI {
 }
 
 func (ui *UI) Hide() {
-	ui.hide = true
+	ui.hidden = true
 }
 
 func (ui *UI) Reveal() {
-	ui.hide = false
-	ui.ticks = 300
+	ui.hidden = false
+	ui.ticks = 250
 }
 
 func (ui *UI) Layout(o *UIOptions) {
-	if ui.hide {
+	if ui.hidden {
 		return
 	}
 
@@ -236,7 +237,7 @@ func (ui *UI) Layout(o *UIOptions) {
 }
 
 func (ui *UI) Update(o *UIOptions) {
-	if ui.hide {
+	if ui.hidden {
 		return
 	}
 
@@ -253,9 +254,11 @@ func (ui *UI) Update(o *UIOptions) {
 }
 
 func (ui *UI) Check(mx, my float64, kind UICheckKind) bool {
-	if ui.hide {
+	// No interaction until fully visible
+	if ui.hidden || !ui.interactable {
 		return false
 	}
+
 	if ui.dudePanel.Check(mx, my, kind) {
 		return true
 	}
@@ -284,7 +287,7 @@ func (ui *UI) Check(mx, my float64, kind UICheckKind) bool {
 }
 
 func (ui *UI) Draw(o *render.Options) {
-	if ui.hide {
+	if ui.hidden {
 		return
 	} else if ui.ticks > 0 {
 		ui.ticks--
@@ -293,6 +296,8 @@ func (ui *UI) Draw(o *render.Options) {
 		} else {
 			return
 		}
+	} else if ui.ticks <= 0 {
+		ui.interactable = true
 	}
 
 	ui.buttonPanel.Draw(o)
@@ -552,6 +557,7 @@ func (mp *MessagePanel) Draw(o *render.Options) {
 	op := &render.Options{
 		Screen: o.Screen,
 	}
+	op.DrawImageOptions.ColorScale = o.DrawImageOptions.ColorScale
 	//op.DrawImageOptions.GeoM.Translate(0, mp.drawerInterp.Current)
 	op.DrawImageOptions.GeoM.Translate(x, y)
 
