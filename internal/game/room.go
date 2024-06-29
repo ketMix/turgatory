@@ -110,14 +110,20 @@ func (r *RoomKind) GetRoomEnemy(roomSize RoomSize, storyLevel int) EnemyKind {
 }
 
 // Equipment you can find in room
-// hmm, kinda defeats the current structure of equipment in yaml if we have to add new equipment here
 func (r *RoomKind) Equipment() []*string {
+	var types []EquipmentType = nil
 	switch *r {
 	case Armory:
-		types := []EquipmentType{EquipmentTypeWeapon, EquipmentTypeArmor}
-		return GetEquipmentNamesWithTypes(types)
+		types = []EquipmentType{EquipmentTypeWeapon, EquipmentTypeArmor}
+	case Library:
 	case Treasure:
-		types := []EquipmentType{EquipmentTypeAccessory}
+		types = []EquipmentType{EquipmentTypeAccessory}
+	case Boss:
+		types = []EquipmentType{EquipmentTypeWeapon, EquipmentTypeArmor, EquipmentTypeAccessory}
+	case Combat:
+		types = []EquipmentType{EquipmentTypeWeapon, EquipmentTypeArmor, EquipmentTypeAccessory}
+	}
+	if types != nil {
 		return GetEquipmentNamesWithTypes(types)
 	}
 	return nil
