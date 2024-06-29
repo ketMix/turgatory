@@ -498,7 +498,29 @@ func (s *GameStateBuild) BuyDude(g *Game) {
 }
 
 func (s *GameStateBuild) EquipmentCost() int {
-	return 25 + 50*(s.nextStory.level+1)
+	baseCost := 50.0   // Cost on floor 0
+	costAt5 := 500.0   // Cost on floor 5
+	costAt10 := 1000.0 // Cost on floor 10
+	floor5 := 5        // Floor level 5
+	floor10 := 10      // Floor level 10
+	currentStory := s.nextStory.level
+	// Calculate the exponent factor between floor 0 and floor 5
+	exponent1 := math.Log(costAt5/baseCost) / float64(floor5)
+
+	// Calculate the exponent factor between floor 5 and floor 10
+	exponent2 := math.Log(costAt10/costAt5) / float64(floor10-floor5)
+
+	var cost float64
+
+	if s.nextStory.level <= floor5 {
+		// Calculate the cost for floors 0 to 5
+		cost = baseCost * math.Exp(exponent1*float64(currentStory))
+	} else {
+		// Calculate the cost for floors 5 to 10
+		cost = costAt5 * math.Exp(exponent2*float64(currentStory-floor5))
+	}
+
+	return int(cost)
 }
 
 func (s *GameStateBuild) BuyEquipment(g *Game) {
