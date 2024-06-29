@@ -72,13 +72,13 @@ func (c *Camera) SetMode(mode CameraMode) {
 	switch mode {
 	case CameraModeTower:
 		c.SetZoom(1.5)
-		c.SetTextOffset(125)
+		c.SetTextOffset(75)
 	case CameraModeStack:
 		c.SetZoom(3)
 		c.SetTextOffset(0)
 	case CameraModeSuperZoom:
 		c.SetZoom(8.0)
-		c.SetTextOffset(-80)
+		c.SetTextOffset(-52)
 	}
 	c.SetStory(c.lastLevel)
 }
