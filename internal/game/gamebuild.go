@@ -23,14 +23,16 @@ type GameStateBuild struct {
 	readyAttempts    int
 	//
 	selectedEquipment int
+	shownBossWarning  bool
 }
 
 func (s *GameStateBuild) Begin(g *Game) {
 	// g.audioController.PlayRoomTracks()
 
 	// Add feedback if next floor is boss
-	if len(g.tower.Stories)%2 == 0 {
-		g.ui.feedback.Msg(FeedbackWarning, "get ready... the story after this is a boss!")
+	if len(g.tower.Stories)%2 == 0 && !s.shownBossWarning {
+		g.ui.feedback.Msg(FeedbackWarning, "...every 3rd floor is a boss floor... prepare yourself...")
+		s.shownBossWarning = true
 	}
 
 	// On build phase, full heal all dudes and restore uses
