@@ -1,6 +1,7 @@
 name: Shield
 description: Protects your vital bits
+profession: Knight
 type: accessory
 stats: 
-  defense: 2
+  defense: 3
   agility: -1

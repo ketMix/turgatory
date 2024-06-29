@@ -1,5 +1,6 @@
-The boss will always target the dude with the least cowardice.
-Hits from a boss will increase a dude's cowardice.
+The boss will always target the dude with the highest confidence.
+Hits from a boss will decrease a dude's confidence.
+Always be sure to have Knights in the group for tanking boss hits.
 Dudes fight alone in combat rooms but together in boss rooms.
 Enemies scale with the tower level. Even rats can be dangerous!
 Hired dudes will always be at your average dude level.

@@ -2,4 +2,5 @@ name: Ring
 description: Shiny
 type: accessory
 stats: 
+  wisdom: 1
   luck: 1

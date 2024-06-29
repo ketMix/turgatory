@@ -11,40 +11,58 @@ import (
 type Stat string
 
 const (
-	StatStrength  Stat = "Str"
-	StatWisdom    Stat = "Wis"
-	StatDefense   Stat = "Def"
-	StatAgility   Stat = "Agi"
-	StatCowardice Stat = "Cow"
-	StatLuck      Stat = "Luc"
-	StatMaxHP     Stat = "MaxHP"
-	StatCurrentHP Stat = "CurrentHP"
+	StatStrength   Stat = "Str"
+	StatWisdom     Stat = "Wis"
+	StatDefense    Stat = "Def"
+	StatAgility    Stat = "Agi"
+	StatConfidence Stat = "Con"
+	StatLuck       Stat = "Luc"
+	StatMaxHP      Stat = "MaxHP"
+	StatCurrentHP  Stat = "CurrentHP"
 )
 
 type Stats struct {
-	level     int // how much they've grown
-	currentHp int // how dead are they
-	totalHp   int // how dead could they not be
-	strength  int // how hard they hit in combat
-	wisdom    int // how well they heal, influences stat variation
-	defense   int // reduces enemy attack
-	agility   int // how fast they zip
-	cowardice int // combat priority (who gets hit first)
-	luck      int // how lucky they are
+	level      int // how much they've grown
+	currentHp  int // how dead are they
+	totalHp    int // how dead could they not be
+	strength   int // how hard they hit in combat
+	wisdom     int // how well they heal, influences stat variation
+	defense    int // reduces enemy attack
+	agility    int // how fast they zip
+	confidence int // combat priority (who gets hit first)
+	luck       int // how lucky they are
 
 	levelUpChange *Stats
 }
 
+func (s *Stats) Print() {
+	fmt.Printf("Level: %d\n", s.level)
+	fmt.Printf("HP: %d/%d\n", s.currentHp, s.totalHp)
+	fmt.Printf("Strength: %d\n", s.strength)
+	fmt.Printf("Wisdom: %d\n", s.wisdom)
+	fmt.Printf("Defense: %d\n", s.defense)
+	fmt.Printf("Agility: %d\n", s.agility)
+	fmt.Printf("Confidence: %d\n", s.confidence)
+	fmt.Printf("Luck: %d\n", s.luck)
+}
+
 // ApplyLevelUp applies the level up changes to the stats
 // with some variance depend on wisdom
-func (s *Stats) LevelUp() {
+func (s *Stats) LevelUp(isEnemy bool) {
 	// what did you think was going to happen
 	s.level += 1
 
 	// variance is a random number between 1 and (wisdom/5) + 1
-	// lowest variance is 1
+	// lowest variance is 0.75, highest is 1.25
 	variance := func() float64 {
-		return 1 + rand.Float64()
+		return rand.Float64()*0.5 + 0.75
+	}
+
+	// If is enemy, dont' apply variance
+	if isEnemy {
+		variance = func() float64 {
+			return 1
+		}
 	}
 
 	getValue := func(base int) int {
@@ -57,7 +75,7 @@ func (s *Stats) LevelUp() {
 	s.ModifyStat(StatWisdom, getValue(s.levelUpChange.wisdom))
 	s.ModifyStat(StatDefense, getValue(s.levelUpChange.defense))
 	s.ModifyStat(StatAgility, getValue(s.levelUpChange.agility))
-	s.ModifyStat(StatCowardice, getValue(s.levelUpChange.cowardice))
+	s.ModifyStat(StatConfidence, getValue(s.levelUpChange.confidence))
 	s.ModifyStat(StatLuck, getValue(s.levelUpChange.luck))
 
 	// a blesing from jesus himself
@@ -74,7 +92,7 @@ func (s *Stats) LevelDown() {
 	s.ModifyStat(StatWisdom, -s.levelUpChange.wisdom)
 	s.ModifyStat(StatDefense, -s.levelUpChange.defense)
 	s.ModifyStat(StatAgility, -s.levelUpChange.agility)
-	s.ModifyStat(StatCowardice, -s.levelUpChange.cowardice)
+	s.ModifyStat(StatConfidence, -s.levelUpChange.confidence)
 	s.ModifyStat(StatLuck, -s.levelUpChange.luck)
 
 	// cant forget this part
@@ -103,11 +121,10 @@ func (s *Stats) ModifyStat(stat Stat, amount int) {
 		if s.agility < 0 {
 			s.agility = 0
 		}
-	// Cowardice can't go below 0
-	case StatCowardice:
-		s.cowardice += amount
-		if s.cowardice < 0 {
-			s.cowardice = 0
+	case StatConfidence:
+		s.confidence += amount
+		if s.confidence < 0 {
+			s.confidence = 0
 		}
 	case StatLuck:
 		s.luck += amount
@@ -140,17 +157,19 @@ func (s *Stats) ApplyDefense(damage int) int {
 	reducedDamage := float64(damage) * (1 - defenseReduction)
 
 	// Round the result and convert back to int
-	return int(math.Round(reducedDamage))
+	return max(1, int(math.Round(reducedDamage)))
 }
 
 func NewStats(levelUpChange *Stats, isEnemy bool) *Stats {
 	// start the stats at a negative level
 	// then level up a few times in order to set the starting stats
 	startingLevels := 3
+
 	// Don't start enemy with extra levels
 	if isEnemy {
 		startingLevels = 0
 	}
+
 	// Added this because GetCalculatedStats passes nil to this func... --kts
 	level := -startingLevels
 	if levelUpChange != nil {
@@ -164,7 +183,7 @@ func NewStats(levelUpChange *Stats, isEnemy bool) *Stats {
 		wisdom:        0,
 		defense:       0,
 		agility:       0,
-		cowardice:     0,
+		confidence:    0,
 		luck:          0,
 	}
 	if levelUpChange == nil {
@@ -173,21 +192,21 @@ func NewStats(levelUpChange *Stats, isEnemy bool) *Stats {
 
 	// Level up the stats a few times
 	for i := 0; i < startingLevels; i++ {
-		stats.LevelUp()
+		stats.LevelUp(isEnemy)
 	}
 	return stats
 }
 
 func (s *Stats) Add(a *Stats) *Stats {
 	stats := &Stats{
-		currentHp: s.currentHp,
-		totalHp:   s.totalHp,
-		strength:  s.strength,
-		wisdom:    s.wisdom,
-		defense:   s.defense,
-		agility:   s.agility,
-		cowardice: s.cowardice,
-		luck:      s.luck,
+		currentHp:  s.currentHp,
+		totalHp:    s.totalHp,
+		strength:   s.strength,
+		wisdom:     s.wisdom,
+		defense:    s.defense,
+		agility:    s.agility,
+		confidence: s.confidence,
+		luck:       s.luck,
 	}
 
 	if a == nil {
@@ -200,7 +219,7 @@ func (s *Stats) Add(a *Stats) *Stats {
 	stats.ModifyStat(StatWisdom, a.wisdom)
 	stats.ModifyStat(StatDefense, a.defense)
 	stats.ModifyStat(StatAgility, a.agility)
-	stats.ModifyStat(StatCowardice, a.cowardice)
+	stats.ModifyStat(StatConfidence, a.confidence)
 	stats.ModifyStat(StatLuck, a.luck)
 
 	return stats

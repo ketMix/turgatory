@@ -7,4 +7,5 @@ professions:
   - knight
 stats: 
   agility: 1
-  defense: 3
+  defense: 5
+  confidence: 5

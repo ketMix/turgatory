@@ -4,4 +4,4 @@ type: weapon
 stats: 
   strength: 1
   agility: 1
-  cowardice: -5
+  confidence: 3

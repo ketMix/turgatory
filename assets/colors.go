@@ -25,7 +25,7 @@ var (
 	ColorDudeAgility         = color.NRGBA{200, 200, 100, 200}
 	ColorDudeDefense         = color.NRGBA{200, 200, 200, 200}
 	ColorDudeWisdom          = color.NRGBA{100, 200, 100, 200}
-	ColorDudeCowardice       = color.NRGBA{200, 100, 200, 200}
+	ColorDudeConfidence      = color.NRGBA{200, 100, 200, 200}
 	ColorDudeLuck            = color.NRGBA{100, 100, 200, 200}
 	ColorItemDescription     = color.NRGBA{128, 128, 128, 200}
 	ColorItemPerk            = color.NRGBA{255, 215, 0, 200}

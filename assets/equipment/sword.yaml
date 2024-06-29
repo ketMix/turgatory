@@ -3,4 +3,4 @@ description: Hunk of metal attached to a stick
 type: weapon
 stats: 
   strength: 2
-  cowardice: -5
+  confidence: 5

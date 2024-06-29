@@ -232,7 +232,7 @@ func (r *Room) Update(req *ActivityRequests, g *Game) {
 					}
 				}
 				goldPerDude := int(r.boss.Gold() / aliveDudes)
-				xp := r.boss.XP() / aliveDudes
+				xp := r.boss.XP() * 5
 				AddMessage(
 					MessageGood,
 					fmt.Sprintf("The %s has been defeated!", r.boss.Name()),
@@ -260,7 +260,11 @@ func (r *Room) Update(req *ActivityRequests, g *Game) {
 						amount, dodged := bossTarget.ApplyDamage(r.boss.Hit())
 						act := bossTarget.Trigger(EventDudeHit{dude: bossTarget, amount: amount})
 						if !dodged && !bossTarget.IsDead() {
-							bossTarget.stats.ModifyStat(StatCowardice, -1)
+							AddMessage(
+								MessageBad,
+								fmt.Sprintf("%s took %d damage from %s", bossTarget.name, amount, r.boss.Name()),
+							)
+							bossTarget.stats.ModifyStat(StatConfidence, -1)
 						}
 						if act != nil {
 							req.Add(act)
@@ -270,7 +274,14 @@ func (r *Room) Update(req *ActivityRequests, g *Game) {
 						if !d.IsDead() && !r.boss.IsDead() {
 							dmg, _ := d.GetDamage()
 							if dmg > 0 {
-								r.boss.Damage(dmg)
+								AddMessage(
+									MessageNeutral,
+									fmt.Sprintf("%s dealt %d damage to %s", d.Name(), dmg, r.boss.Name()),
+								)
+								isDead := r.boss.Damage(dmg)
+								if isDead {
+									break
+								}
 							}
 						}
 					}
@@ -294,7 +305,10 @@ func (r *Room) Update(req *ActivityRequests, g *Game) {
 				if err != nil {
 					fmt.Println("Error creating boss stack for", bossEnemy.String(), err)
 				}
-				r.boss = NewEnemy(bossEnemy, r.story.level+1, bossStack)
+				r.boss = NewEnemy(bossEnemy, r.story.level, bossStack)
+				fmt.Println("Boss", r.boss.Name(), "created")
+				fmt.Println("Stats:")
+				r.boss.stats.Print()
 			}
 		}
 	}
@@ -482,7 +496,7 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 		switch r.kind {
 		case Trap:
 			// Damage dude based on stats
-			e.dude.TrapDamage(r.story.level + 1)
+			e.dude.TrapDamage(r.story.level)
 			if e.dude.IsDead() {
 				return DudeDeadActivity{dude: e.dude}
 			}
@@ -626,6 +640,8 @@ func GetRequiredRooms(storyLevel int, roomCount int) []*RoomDef {
 	if level > 6 {
 		potentialCombatRooms = append(
 			potentialCombatRooms,
+			RoomTemplate{kind: Combat, size: Medium},
+			RoomTemplate{kind: Combat, size: Medium},
 			RoomTemplate{kind: Combat, size: Large},
 			RoomTemplate{kind: Combat, size: Large},
 			RoomTemplate{kind: Combat, size: Large},
@@ -647,6 +663,8 @@ func GetRequiredRooms(storyLevel int, roomCount int) []*RoomDef {
 	if level > 9 {
 		potentialCombatRooms = append(
 			potentialCombatRooms,
+			RoomTemplate{kind: Combat, size: Large},
+			RoomTemplate{kind: Combat, size: Large},
 			RoomTemplate{kind: Combat, size: Huge},
 			RoomTemplate{kind: Combat, size: Huge},
 			RoomTemplate{kind: Combat, size: Huge},

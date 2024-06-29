@@ -165,13 +165,13 @@ func NewEquipment(name string, level int, quality EquipmentQuality, perk IPerk) 
 		stack:         stack,
 		stats: &Stats{
 			levelUpChange: &Stats{
-				totalHp:   baseEquipment.Stats["totalHp"],
-				strength:  baseEquipment.Stats["strength"],
-				wisdom:    baseEquipment.Stats["wisdom"],
-				defense:   baseEquipment.Stats["defense"],
-				agility:   baseEquipment.Stats["agility"],
-				cowardice: baseEquipment.Stats["cowardice"],
-				luck:      baseEquipment.Stats["luck"],
+				totalHp:    baseEquipment.Stats["totalHp"],
+				strength:   baseEquipment.Stats["strength"],
+				wisdom:     baseEquipment.Stats["wisdom"],
+				defense:    baseEquipment.Stats["defense"],
+				agility:    baseEquipment.Stats["agility"],
+				confidence: baseEquipment.Stats["confidence"],
+				luck:       baseEquipment.Stats["luck"],
 			},
 		},
 	}
@@ -277,7 +277,7 @@ func (e *Equipment) LevelUp(maxQuality EquipmentQuality) bool {
 	if (e.stats.level+1) > 5 && e.quality >= maxQuality {
 		return false
 	}
-	e.stats.LevelUp()
+	e.stats.LevelUp(false)
 
 	// If we hit level 5 we can upgrade the quality
 	if e.stats.level == 5 && e.quality < EquipmentQualityLegendary {
@@ -361,12 +361,12 @@ func (e *Equipment) Stats() *Stats {
 		return int(math.Floor(float64(s) * m))
 	}
 	scaledStats := &Stats{
-		totalHp:   applyMultiplier(e.stats.totalHp),
-		strength:  applyMultiplier(e.stats.strength),
-		wisdom:    applyMultiplier(e.stats.wisdom),
-		defense:   applyMultiplier(e.stats.defense),
-		agility:   applyMultiplier(e.stats.agility),
-		cowardice: applyMultiplier(e.stats.cowardice),
+		totalHp:    applyMultiplier(e.stats.totalHp),
+		strength:   applyMultiplier(e.stats.strength),
+		wisdom:     applyMultiplier(e.stats.wisdom),
+		defense:    applyMultiplier(e.stats.defense),
+		agility:    applyMultiplier(e.stats.agility),
+		confidence: applyMultiplier(e.stats.confidence),
 	}
 	return scaledStats
 }

@@ -86,7 +86,7 @@ func NewDude(pk ProfessionKind, level int) *Dude {
 	dude.stats = profession.StartingStats()
 
 	for i := 0; i < level-1; i++ {
-		dude.stats.LevelUp()
+		dude.stats.LevelUp(false)
 	}
 
 	dude.inventory = make([]*Equipment, 0)
@@ -542,32 +542,32 @@ func (d *Dude) GetDamage() (int, bool) {
 	wasCrit := false
 	stats := d.GetCalculatedStats()
 
-	// Luck can cause crit
-	luckRoll := float64(stats.luck+1) * 0.1
-	randRoll := rand.Float64()
+	luckScaling := 0.1
+	logisticScaling := func(x float64, max float64) float64 {
+		return max / (1 + math.Exp(-luckScaling*(x-50)))
+	}
 
+	// Calculate crit chance
+	baseCritChance := 0.05
+	maxCritChance := 0.25
+	critChance := baseCritChance + logisticScaling(float64(stats.luck), maxCritChance-baseCritChance)
+
+	// Calculate miss chance (inverted from luck)
+	baseMissChance := 0.1
+	minMissChance := 0.01
+	missChanceReduction := logisticScaling(float64(stats.luck), baseMissChance-minMissChance)
+	missChance := math.Max(baseMissChance-missChanceReduction, minMissChance)
+
+	randRoll := rand.Float64()
 	multiplier := 1.0
-	if randRoll < luckRoll {
+	if randRoll < critChance {
 		d.AddXP(1)
 		d.floatingText("*CRIT*", color.NRGBA{255, 128, 255, 128}, 60, 1.0)
 		multiplier = 2.0
 		wasCrit = true
-	}
-
-	// Cowardice can cause miss
-	// capped at 50% miss chance
-	// 1 cowardice = 1% miss chance
-	// 100 cowardice = 50% miss chance
-	missRoll := math.Min(float64(stats.cowardice)/100.0, 0.5)
-
-	if rand.Float64() < missRoll {
+	} else if rand.Float64() < missChance {
 		d.floatingText("*miss*", color.NRGBA{128, 128, 128, 128}, 30, 0.5)
 		multiplier = 0.0
-
-		AddMessage(
-			MessageNeutral,
-			fmt.Sprintf("%s missed their attack", d.name),
-		)
 	}
 
 	amount := int(float64(stats.strength) * multiplier)
@@ -673,6 +673,7 @@ func (d *Dude) AddToInventory(eq *Equipment) {
 
 	shouldEquip := false
 	equipped := d.equipped[eq.Type()]
+
 	if equipped == nil {
 		shouldEquip = true
 	} else {
@@ -683,6 +684,19 @@ func (d *Dude) AddToInventory(eq *Equipment) {
 		}
 	}
 
+	professions := eq.professions
+	hasProfession := false
+	if len(professions) == 0 {
+		hasProfession = true
+	} else {
+		for _, p := range professions {
+			if p == d.profession {
+				hasProfession = true
+				break
+			}
+		}
+	}
+	shouldEquip = shouldEquip && hasProfession
 	if shouldEquip {
 		d.Equip(eq)
 	} else {
@@ -716,7 +730,7 @@ func (d *Dude) AddXP(xp int) {
 	nextLevelXP := d.NextLevelXP()
 	if d.xp >= nextLevelXP {
 		d.xp -= nextLevelXP
-		d.stats.LevelUp()
+		d.stats.LevelUp(false)
 		d.floatingText("LEVEL UP", color.NRGBA{100, 255, 255, 255}, 80, 1)
 		AddMessage(
 			MessageGood,
@@ -976,11 +990,15 @@ func (d *Dude) TrapDamage(roomLevel int) {
 	trapRoll := rand.Float64()
 
 	if trapRoll > threshold {
+		AddMessage(
+			MessageNeutral,
+			fmt.Sprintf("%s dodged damage from a trap", d.name),
+		)
 		return
 	}
 
 	// Damage based on room level
-	damage := roomLevel * 2
+	damage := (roomLevel + 1) * 3
 
 	amount, miss := d.ApplyDamage(damage)
 	if !miss {

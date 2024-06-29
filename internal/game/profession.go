@@ -156,47 +156,47 @@ func getStartingStats(kind ProfessionKind, level int) *Stats {
 	switch kind {
 	case Knight:
 		return NewStats(&Stats{
-			level:     level,
-			totalHp:   7,
-			strength:  2,
-			wisdom:    1,
-			defense:   3,
-			agility:   1,
-			cowardice: -1, // balls get bigger
-			luck:      0,
+			level:      level,
+			totalHp:    7,
+			strength:   2,
+			wisdom:     1,
+			defense:    3,
+			agility:    1,
+			confidence: 5, // balls get bigger
+			luck:       0,
 		}, false)
 	case Cleric:
 		return NewStats(&Stats{
-			level:     level,
-			totalHp:   5,
-			strength:  1,
-			wisdom:    3,
-			defense:   1,
-			agility:   2,
-			cowardice: 2, // balls get smaller
-			luck:      0,
+			level:      level,
+			totalHp:    5,
+			strength:   1,
+			wisdom:     3,
+			defense:    1,
+			agility:    2,
+			confidence: 1, // balls get smaller
+			luck:       0,
 		}, false)
 	case Vagabond:
 		return NewStats(&Stats{
-			level:     level,
-			totalHp:   7,
-			strength:  3,
-			wisdom:    1,
-			defense:   2,
-			agility:   1,
-			cowardice: 1,
-			luck:      0,
+			level:      level,
+			totalHp:    7,
+			strength:   3,
+			wisdom:     1,
+			defense:    2,
+			agility:    1,
+			confidence: 3,
+			luck:       0,
 		}, false)
 	case Ranger:
 		return NewStats(&Stats{
-			level:     1,
-			totalHp:   5,
-			strength:  2,
-			wisdom:    1,
-			defense:   1,
-			agility:   3,
-			cowardice: 3,
-			luck:      0,
+			level:      1,
+			totalHp:    5,
+			strength:   2,
+			wisdom:     1,
+			defense:    1,
+			agility:    3,
+			confidence: 0,
+			luck:       0,
 		}, false)
 	default:
 		// you useless jobless bum

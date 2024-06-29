@@ -216,7 +216,7 @@ func (ui *UI) Layout(o *UIOptions) {
 		float64(o.Width)/2-ui.bossPanel.panel.Width()/2,
 		float64(o.Height)/8-ui.bossPanel.panel.Height()/2,
 	)
-	ui.bossPanel.panel.padding = 2 * o.Scale
+	ui.bossPanel.panel.padding = 3 * o.Scale
 	ui.bossPanel.Layout(o)
 }
 
@@ -949,15 +949,15 @@ type DudeInfoPanel struct {
 
 	dude *Dude
 
-	level     *UIText
-	xp        *UIText
-	hp        *UIText
-	strength  *UIText
-	agility   *UIText
-	defense   *UIText
-	wisdom    *UIText
-	cowardice *UIText
-	luck      *UIText
+	level      *UIText
+	xp         *UIText
+	hp         *UIText
+	strength   *UIText
+	agility    *UIText
+	defense    *UIText
+	wisdom     *UIText
+	confidence *UIText
+	luck       *UIText
 
 	equipmentPanel *UIPanel
 	armorText      *UIText
@@ -984,7 +984,7 @@ func NewDudeInfoPanel() *DudeInfoPanel {
 		agility:          NewUIText("0 agility", assets.BodyFont, assets.ColorDudeAgility),
 		defense:          NewUIText("0 defense", assets.BodyFont, assets.ColorDudeDefense),
 		wisdom:           NewUIText("0 wisdom", assets.BodyFont, assets.ColorDudeWisdom),
-		cowardice:        NewUIText("0 cowardice", assets.BodyFont, assets.ColorDudeCowardice),
+		confidence:       NewUIText("0 confidence", assets.BodyFont, assets.ColorDudeConfidence),
 		luck:             NewUIText("0 luck", assets.BodyFont, assets.ColorDudeLuck),
 		equipmentPanel:   NewUIPanel(PanelStyleInteractive),
 		armorText:        NewUIText("    nakie", assets.BodyFont, assets.ColorDudeDefense),
@@ -1055,8 +1055,8 @@ func NewDudeInfoPanel() *DudeInfoPanel {
 	dip.defense.ignoreScale = true
 	dip.panel.AddChild(dip.wisdom)
 	dip.wisdom.ignoreScale = true
-	dip.panel.AddChild(dip.cowardice)
-	dip.cowardice.ignoreScale = true
+	dip.panel.AddChild(dip.confidence)
+	dip.confidence.ignoreScale = true
 	dip.panel.AddChild(dip.luck)
 	dip.luck.ignoreScale = true
 
@@ -1090,7 +1090,7 @@ func (dip *DudeInfoPanel) SyncDude() {
 	dip.agility.SetText(fmt.Sprintf("%s agility", PaddedIntString(stats.agility, 4)))
 	dip.defense.SetText(fmt.Sprintf("%s defense", PaddedIntString(stats.defense, 4)))
 	dip.wisdom.SetText(fmt.Sprintf("%s wisdom", PaddedIntString(stats.wisdom, 4)))
-	dip.cowardice.SetText(fmt.Sprintf("%s cowardice", PaddedIntString(stats.cowardice, 4)))
+	dip.confidence.SetText(fmt.Sprintf("%s confidence", PaddedIntString(stats.confidence, 4)))
 	dip.luck.SetText(fmt.Sprintf("%s luck", PaddedIntString(stats.luck, 4)))
 
 	if armor, ok := dip.dude.equipped[EquipmentTypeArmor]; ok {
@@ -1330,12 +1330,12 @@ type EquipmentDetailsPanel struct {
 	uses            *UIText
 	small           bool
 
-	agility   *UIText
-	strength  *UIText
-	defense   *UIText
-	wisdom    *UIText
-	cowardice *UIText
-	luck      *UIText
+	agility    *UIText
+	strength   *UIText
+	defense    *UIText
+	wisdom     *UIText
+	confidence *UIText
+	luck       *UIText
 
 	swapButton  *ButtonPanel
 	sellButton  *ButtonPanel
@@ -1358,7 +1358,7 @@ func NewEquipmentDetailsPanel(small bool) *EquipmentDetailsPanel {
 		strength:        NewUIText("", assets.BodyFont, assets.ColorDudeStrength),
 		defense:         NewUIText("", assets.BodyFont, assets.ColorDudeDefense),
 		wisdom:          NewUIText("", assets.BodyFont, assets.ColorDudeWisdom),
-		cowardice:       NewUIText("", assets.BodyFont, assets.ColorDudeCowardice),
+		confidence:      NewUIText("", assets.BodyFont, assets.ColorDudeConfidence),
 		luck:            NewUIText("", assets.BodyFont, assets.ColorDudeLuck),
 		small:           small,
 	}
@@ -1397,7 +1397,7 @@ func NewEquipmentDetailsPanel(small bool) *EquipmentDetailsPanel {
 	edp.strength.ignoreScale = true
 	edp.defense.ignoreScale = true
 	edp.wisdom.ignoreScale = true
-	edp.cowardice.ignoreScale = true
+	edp.confidence.ignoreScale = true
 	edp.luck.ignoreScale = true
 	edp.panel.AddChild(edp.title)
 	edp.panel.AddChild(edp.level)
@@ -1409,7 +1409,7 @@ func NewEquipmentDetailsPanel(small bool) *EquipmentDetailsPanel {
 	edp.panel.AddChild(edp.strength)
 	edp.panel.AddChild(edp.defense)
 	edp.panel.AddChild(edp.wisdom)
-	edp.panel.AddChild(edp.cowardice)
+	edp.panel.AddChild(edp.confidence)
 	edp.panel.AddChild(edp.luck)
 	edp.panel.sizeChildren = true
 	return edp
@@ -1450,7 +1450,7 @@ func (edp *EquipmentDetailsPanel) SetEquipment(equipment *Equipment) {
 		edp.strength.SetText(fmt.Sprintf("%s strength", PaddedIntString(equipment.stats.strength, 4)))
 		edp.defense.SetText(fmt.Sprintf("%s defense", PaddedIntString(equipment.stats.defense, 4)))
 		edp.wisdom.SetText(fmt.Sprintf("%s wisdom", PaddedIntString(equipment.stats.wisdom, 4)))
-		edp.cowardice.SetText(fmt.Sprintf("%s cowardice", PaddedIntString(equipment.stats.cowardice, 4)))
+		edp.confidence.SetText(fmt.Sprintf("%s confidence", PaddedIntString(equipment.stats.confidence, 4)))
 		edp.luck.SetText(fmt.Sprintf("%s luck", PaddedIntString(equipment.stats.luck, 4)))
 
 		edp.sellButton.text.SetText(fmt.Sprintf("Sell for\n%dgp", equipment.GoldValue()))

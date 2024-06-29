@@ -4,5 +4,5 @@ type: armor
 professions: 
  - knight
 stats: 
-  strength: 1
-  defense: 5
+  defense: 7
+  confidence: 15

@@ -56,25 +56,27 @@ func (e EnemyKind) BossStack() string {
 func (e EnemyKind) Stats() *Stats {
 	switch e {
 	case EnemyRat:
-		return &Stats{strength: 1, defense: 1, totalHp: 15, luck: 1}
+		return &Stats{strength: 3, defense: 3, totalHp: 30}
 	case EnemySlime:
-		return &Stats{strength: 2, defense: 2, totalHp: 20, luck: 1}
+		return &Stats{strength: 6, defense: 6, totalHp: 50}
 	case EnemySkelly:
-		return &Stats{strength: 3, defense: 3, totalHp: 25, luck: 1}
+		return &Stats{strength: 9, defense: 9, totalHp: 100}
 	case EnemyEbi:
-		return &Stats{strength: 4, defense: 4, totalHp: 30, luck: 1}
+		return &Stats{strength: 12, defense: 12, totalHp: 200}
 	case EnemyBossRat:
-		return &Stats{strength: 4, defense: 4, totalHp: 150, luck: 1}
+		return &Stats{strength: 15, defense: 25, totalHp: 1000}
 	case EnemyBossSlime:
-		return &Stats{strength: 5, defense: 5, totalHp: 200, luck: 1}
+		return &Stats{strength: 30, defense: 50, totalHp: 1500}
 	case EnemyBossSkelly:
-		return &Stats{strength: 5, defense: 5, totalHp: 300, luck: 1}
+		return &Stats{strength: 30, defense: 35, totalHp: 2000} // level two by default so double these
 	case EnemyBossEbi:
-		return &Stats{strength: 7, defense: 7, totalHp: 400, luck: 1}
+		return &Stats{strength: 40, defense: 40, totalHp: 2000} // level three by default so triple these
 	default:
-		return &Stats{strength: 1, defense: 0, totalHp: 1, luck: 1}
+		return &Stats{strength: 1, defense: 0, totalHp: 1}
 	}
 }
+
+const ENEMY_SCALE = 1.0
 
 type Enemy struct {
 	name  EnemyKind
@@ -83,13 +85,20 @@ type Enemy struct {
 }
 
 func NewEnemy(name EnemyKind, level int, stack *render.Stack) *Enemy {
-	if level < 1 {
-		level = 1
-	}
+	level = max(1, level/4)
+
 	stats := NewStats(name.Stats(), true)
 	for i := 0; i < level; i++ {
-		stats.LevelUp()
+		stats.LevelUp(true)
 	}
+
+	// Modify stats by stat scale
+	stats.strength = int(float64(stats.strength) * ENEMY_SCALE)
+	stats.defense = int(float64(stats.defense) * ENEMY_SCALE)
+	stats.luck = int(float64(stats.luck) * ENEMY_SCALE)
+	stats.totalHp = int(float64(stats.totalHp) * ENEMY_SCALE)
+	stats.currentHp = stats.totalHp
+
 	return &Enemy{
 		name:  name,
 		stack: stack,
@@ -167,9 +176,10 @@ func (e *Enemy) Name() string {
 }
 
 func (e *Enemy) XP() int {
-	return e.stats.totalHp
+	return min(1, e.stats.level) * 10
 }
 
+// Random gold multiplier between 0.5 and 1.25
 func (e *Enemy) Gold() int {
 	randMultiplier := 0.5 + rand.Float64()
 	return int(float64(e.stats.totalHp) * randMultiplier)
@@ -179,18 +189,18 @@ func (e *Enemy) IsDead() bool {
 	return e.stats.currentHp <= 0
 }
 
-// Hit target with lowest cowardice
+// Hit target with highest confidence
 func (e *Enemy) GetTarget(dudes []*Dude) *Dude {
 	if len(dudes) == 0 {
 		return nil
 	}
 
-	lowestCowardice := math.MaxInt32
+	highestConfidence := 0
 	var target *Dude
 	for _, d := range dudes {
 		stats := d.GetCalculatedStats()
-		if stats.cowardice < lowestCowardice && !d.IsDead() {
-			lowestCowardice = d.stats.cowardice
+		if stats.confidence >= highestConfidence && !d.IsDead() {
+			highestConfidence = d.stats.confidence
 			target = d
 		}
 	}

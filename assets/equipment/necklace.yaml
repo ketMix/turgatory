@@ -2,4 +2,5 @@ name: Necklace
 description: Looks pretty
 type: accessory
 stats: 
+  strength: 1
   luck: 1
