@@ -274,14 +274,7 @@ func (g *Game) Init() {
 	}
 	g.ui.speedPanel.autoplayButton.onCheck = func(kind UICheckKind) {
 		if kind == UICheckClick {
-			g.autoplay = !g.autoplay
-		}
-		if g.autoplay {
-			g.ui.speedPanel.autoplayButton.SetImage("autoplay")
-			g.ui.speedPanel.autoplayButton.tooltip = "autoplay on"
-		} else {
-			g.ui.speedPanel.autoplayButton.SetImage("autoplay-no")
-			g.ui.speedPanel.autoplayButton.tooltip = "autoplay off"
+			g.ToggleAutoplay()
 		}
 	}
 	g.ui.speedPanel.musicButton.onCheck = func(kind UICheckKind) {
@@ -335,6 +328,21 @@ func (g *Game) Init() {
 	g.equipment = make([]*Equipment, 0)
 	g.state = &GameStatePre{}
 	g.state.Begin(g)
+}
+
+func (g *Game) ToggleAutoplay() {
+	g.SetAutoplay(!g.autoplay)
+}
+
+func (g *Game) SetAutoplay(autoplay bool) {
+	g.autoplay = autoplay
+	if g.autoplay {
+		g.ui.speedPanel.autoplayButton.SetImage("autoplay")
+		g.ui.speedPanel.autoplayButton.tooltip = "autoplay on"
+	} else {
+		g.ui.speedPanel.autoplayButton.SetImage("autoplay-no")
+		g.ui.speedPanel.autoplayButton.tooltip = "autoplay off"
+	}
 }
 
 func (g *Game) TogglePause() {

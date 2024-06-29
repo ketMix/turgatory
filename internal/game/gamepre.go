@@ -22,6 +22,9 @@ type GameStatePre struct {
 func (s *GameStatePre) Begin(g *Game) {
 	// TODO: Hide UI crap.
 
+	// Always turn off autoplay (maybe???)
+	g.SetAutoplay(false)
+
 	s.title = NewUIText("Time is your purgatory...", assets.DisplayFont, assets.ColorHeading)
 	s.title2 = NewUIText("choose wisely.", assets.DisplayFont, assets.ColorHeading)
 
