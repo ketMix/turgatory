@@ -527,13 +527,17 @@ func (mp *MessagePanel) Update(o *UIOptions) {
 
 	rpx, rpy := mp.Position()
 	mx, my := IntToFloat2(ebiten.CursorPosition())
+	tx, ty := IntToFloat2(ebiten.TouchPosition(0))
+	if tx != 0 || ty != 0 {
+		mx, my = tx, ty
+	}
 
 	maxX := rpx + float64(mp.width)
 	maxY := rpy + mp.height
 
 	//_, ph := mp.topleft.Size()
 
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) || inpututil.IsTouchJustReleased(0) {
 		if mx > rpx && mx < maxX && my > rpy && my < maxY {
 			mp.pinned = !mp.pinned
 			/*if mp.drawered {

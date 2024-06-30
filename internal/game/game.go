@@ -210,7 +210,11 @@ func (g *Game) DrawTower(screen *ebiten.Image) {
 
 func (g *Game) CheckUI() (bool, UICheckKind) {
 	mx, my := IntToFloat2(ebiten.CursorPosition())
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+	tx, ty := IntToFloat2(ebiten.TouchPosition(0))
+	if tx != 0 || ty != 0 {
+		mx, my = tx, ty
+	}
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) || inpututil.IsTouchJustReleased(0) {
 		if g.ui.Check(mx, my, UICheckClick) {
 			return true, UICheckClick
 		}
