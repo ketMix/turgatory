@@ -136,7 +136,7 @@ jobs:
       env:
         BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
         CHANNEL: windows
-        ITCH_GAME: ebijam24
+        ITCH_GAME: turgatory
         ITCH_USER: kettek
         PACKAGE: ebijam24.exe
         VERSION: ${{github.ref_name}}
@@ -157,7 +157,7 @@ jobs:
       env:
         BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
         CHANNEL: mac
-        ITCH_GAME: ebijam24
+        ITCH_GAME: turgatory
         ITCH_USER: kettek
         PACKAGE: ebijam24
         VERSION: ${{github.ref_name}}
@@ -178,7 +178,7 @@ jobs:
       env:
         BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
         CHANNEL: linux
-        ITCH_GAME: ebijam24
+        ITCH_GAME: turgatory
         ITCH_USER: kettek
         PACKAGE: ebijam24
         VERSION: ${{github.ref_name}}
@@ -198,7 +198,7 @@ jobs:
         CHANNEL: web
         ITCH_GAME: ebijam24
         ITCH_USER: kettek
-        PACKAGE: dist/web
+        PACKAGE: web
         VERSION: ${{github.ref_name}}
 
 
