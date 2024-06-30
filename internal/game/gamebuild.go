@@ -334,7 +334,7 @@ func (s *GameStateBuild) Update(g *Game) GameState {
 	if handled, kind := g.CheckUI(); !handled {
 		// Check for mouse hover and click.
 		if kind == UICheckHover {
-			mx, my := IntToFloat2(ebiten.CursorPosition())
+			mx, my := g.CursorPosition()
 
 			// Center of screen.
 			cx := float64(g.lastWidth) / 2

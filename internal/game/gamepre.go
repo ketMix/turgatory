@@ -127,14 +127,11 @@ func (s *GameStatePre) Update(g *Game) GameState {
 	s.info.Layout(nil, &g.uiOptions)
 	s.info.SetPosition(w/2-s.info.Width()/2, y)
 
-	mx, my := IntToFloat2(ebiten.CursorPosition())
 	click := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
 	if len(g.releasedTouchIDs) > 0 && inpututil.IsTouchJustReleased(g.releasedTouchIDs[0]) {
 		click = true
-		mx, my = IntToFloat2(inpututil.TouchPositionInPreviousTick(g.releasedTouchIDs[0]))
-	} else if len(g.touchIDs) > 0 {
-		mx, my = IntToFloat2(ebiten.TouchPosition(g.touchIDs[0]))
 	}
+	mx, my := g.CursorPosition()
 	if s.short.Check(mx, my, UICheckHover) {
 		if click {
 			s.short.Check(mx, my, UICheckClick)

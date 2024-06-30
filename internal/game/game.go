@@ -213,13 +213,8 @@ func (g *Game) DrawTower(screen *ebiten.Image) {
 }
 
 func (g *Game) CheckUI() (bool, UICheckKind) {
-	mx, my := IntToFloat2(ebiten.CursorPosition())
+	mx, my := g.CursorPosition()
 
-	if len(g.releasedTouchIDs) > 0 && inpututil.IsTouchJustReleased(g.releasedTouchIDs[0]) {
-		mx, my = IntToFloat2(inpututil.TouchPositionInPreviousTick(g.releasedTouchIDs[0]))
-	} else if len(g.touchIDs) > 0 {
-		mx, my = IntToFloat2(ebiten.TouchPosition(g.touchIDs[0]))
-	}
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) || len(g.releasedTouchIDs) > 0 {
 		if g.ui.Check(mx, my, UICheckClick) {
 			return true, UICheckClick
@@ -254,6 +249,17 @@ func (g *Game) CheckUI() (bool, UICheckKind) {
 		return false, UICheckHover
 	}
 	return false, UICheckNone
+}
+
+func (g *Game) CursorPosition() (float64, float64) {
+	mx, my := IntToFloat2(ebiten.CursorPosition())
+
+	if len(g.releasedTouchIDs) > 0 && inpututil.IsTouchJustReleased(g.releasedTouchIDs[0]) {
+		mx, my = IntToFloat2(inpututil.TouchPositionInPreviousTick(g.releasedTouchIDs[0]))
+	} else if len(g.touchIDs) > 0 {
+		mx, my = IntToFloat2(ebiten.TouchPosition(g.touchIDs[0]))
+	}
+	return mx, my
 }
 
 func (g *Game) UpdateInfo() {
