@@ -767,10 +767,11 @@ func GetOptionalRooms(storyLevel int, roomSpace int) []*RoomDef {
 	rooms := make([]*RoomDef, 0)
 	attempts := 0
 	for i := 0; i < roomSpace; {
+		attempts++
 		room := potentialRooms[rand.Intn(len(potentialRooms))]
 
 		if i+int(room.size) > roomSpace {
-			if attempts > 10 {
+			if attempts > 11 {
 				break
 			}
 			continue
