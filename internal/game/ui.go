@@ -537,7 +537,7 @@ func (mp *MessagePanel) Update(o *UIOptions) {
 
 	//_, ph := mp.topleft.Size()
 
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) || inpututil.IsTouchJustReleased(0) {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		if mx > rpx && mx < maxX && my > rpy && my < maxY {
 			mp.pinned = !mp.pinned
 			/*if mp.drawered {

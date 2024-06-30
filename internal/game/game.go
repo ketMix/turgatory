@@ -33,6 +33,8 @@ type Game struct {
 	equipment             []*Equipment
 	autoplay              bool
 	playedTitleSong       bool
+	touchIDs              []ebiten.TouchID
+	releasedTouchIDs      []ebiten.TouchID
 }
 
 type GameState interface {
@@ -64,6 +66,8 @@ func (g *Game) Update() error {
 	g.cursorX, g.cursorY = g.camera.ScreenToWorld(float64(g.mouseX), float64(g.mouseY))
 
 	g.camera.Update()
+	g.touchIDs = ebiten.AppendTouchIDs(g.touchIDs[:0])
+	g.releasedTouchIDs = inpututil.AppendJustReleasedTouchIDs(g.releasedTouchIDs[:0])
 
 	// Move this stuff elsewhere, probs.
 	/*if ebiten.IsKeyPressed(ebiten.KeyUp) {
@@ -210,11 +214,13 @@ func (g *Game) DrawTower(screen *ebiten.Image) {
 
 func (g *Game) CheckUI() (bool, UICheckKind) {
 	mx, my := IntToFloat2(ebiten.CursorPosition())
-	tx, ty := IntToFloat2(ebiten.TouchPosition(0))
-	if tx != 0 || ty != 0 {
-		mx, my = tx, ty
+
+	if len(g.releasedTouchIDs) > 0 && inpututil.IsTouchJustReleased(g.releasedTouchIDs[0]) {
+		mx, my = IntToFloat2(inpututil.TouchPositionInPreviousTick(g.releasedTouchIDs[0]))
+	} else if len(g.touchIDs) > 0 {
+		mx, my = IntToFloat2(ebiten.TouchPosition(g.touchIDs[0]))
 	}
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) || inpututil.IsTouchJustReleased(0) {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) || len(g.releasedTouchIDs) > 0 {
 		if g.ui.Check(mx, my, UICheckClick) {
 			return true, UICheckClick
 		}

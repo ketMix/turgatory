@@ -25,7 +25,7 @@ func (s *GameStateWin) End(g *Game) {
 
 func (s *GameStateWin) Update(g *Game) GameState {
 	s.wobbler += 0.05
-	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) || (len(g.releasedTouchIDs) > 0 && inpututil.IsTouchJustReleased(g.releasedTouchIDs[0])) {
 		return &GameStatePre{}
 	}
 	g.camera.SetRotation(g.camera.Rotation() + 0.005)

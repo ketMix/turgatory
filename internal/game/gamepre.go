@@ -2,6 +2,7 @@ package game
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
 )
@@ -127,20 +128,27 @@ func (s *GameStatePre) Update(g *Game) GameState {
 	s.info.SetPosition(w/2-s.info.Width()/2, y)
 
 	mx, my := IntToFloat2(ebiten.CursorPosition())
+	click := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
+	if len(g.releasedTouchIDs) > 0 && inpututil.IsTouchJustReleased(g.releasedTouchIDs[0]) {
+		click = true
+		mx, my = IntToFloat2(inpututil.TouchPositionInPreviousTick(g.releasedTouchIDs[0]))
+	} else if len(g.touchIDs) > 0 {
+		mx, my = IntToFloat2(ebiten.TouchPosition(g.touchIDs[0]))
+	}
 	if s.short.Check(mx, my, UICheckHover) {
-		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		if click {
 			s.short.Check(mx, my, UICheckClick)
 		}
 	} else if s.medium.Check(mx, my, UICheckHover) {
-		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		if click {
 			s.medium.Check(mx, my, UICheckClick)
 		}
 	} else if s.long.Check(mx, my, UICheckHover) {
-		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		if click {
 			s.long.Check(mx, my, UICheckClick)
 		}
 	} else if s.infinite.Check(mx, my, UICheckHover) {
-		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		if click {
 			s.infinite.Check(mx, my, UICheckClick)
 		}
 	} else {
