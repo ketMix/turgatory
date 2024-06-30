@@ -313,7 +313,7 @@ func (s *GameStateBuild) Update(g *Game) GameState {
 				j -= int(s.focusedRoom.size)
 			}
 			attempts++
-			if j >= 7 || attempts > 10 {
+			if j < 0 || j >= 7 || attempts > 10 {
 				break
 			}
 		}
