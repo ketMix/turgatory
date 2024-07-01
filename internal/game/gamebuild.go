@@ -92,6 +92,7 @@ func (s *GameStateBuild) Begin(g *Game) {
 	g.ui.equipmentPanel.onBuyClick = func() {
 		s.BuyEquipment(g)
 	}
+
 	g.ui.equipmentPanel.onSortClick = func(sp SortProperty) {
 		if g.equipment == nil || len(g.equipment) == 0 {
 			return
@@ -136,10 +137,14 @@ func (s *GameStateBuild) Begin(g *Game) {
 			g.ui.equipmentPanel.SetEquipment(afterAuto)
 		}
 	}
-	g.ui.equipmentPanel.buyButton.text.SetText(fmt.Sprintf("Random Loot\n%dgp", s.EquipmentCost()))
+	g.ui.equipmentPanel.onSellAllClick = func() {
+		s.SellAllEquipment(g)
+	}
+	g.ui.equipmentPanel.buyButton.text.SetText(fmt.Sprintf("Buy Loot\n%dgp", s.EquipmentCost()))
 	g.ui.equipmentPanel.buyButton.Enable()
 	g.ui.equipmentPanel.sortButton.Enable()
 	g.ui.equipmentPanel.autoEquipButton.Enable()
+	g.ui.equipmentPanel.sellAllButton.Enable()
 	g.ui.equipmentPanel.onItemClick = func(which int) {
 		g.ui.equipmentPanel.list.selected = which
 		s.selectedEquipment = which
@@ -251,10 +256,13 @@ func (s *GameStateBuild) Begin(g *Game) {
 		g.UpdateInfo()
 	}
 
-	g.ui.dudePanel.buyButton.onClick = func() {
+	g.ui.dudePanel.onBuyClick = func() {
 		s.BuyDude(g)
 	}
-	g.ui.dudePanel.buyButton.text.SetText(fmt.Sprintf("Random Dude\n%dgp", s.DudeCost(len(g.dudes))))
+	g.ui.dudePanel.onFillClick = func() {
+		s.FillDudes(g)
+	}
+	g.ui.dudePanel.buyButton.text.SetText(fmt.Sprintf("Hire Dude\n%dgp", s.DudeCost(len(g.dudes))))
 	g.ui.dudePanel.buyButton.disabled = false
 
 	g.ui.roomPanel.buyButton.onClick = func() {
@@ -315,11 +323,12 @@ func (s *GameStateBuild) End(g *Game) {
 	}
 	g.ui.buttonPanel.hidden = true
 	g.ui.roomInfoPanel.hidden = true
-	g.ui.roomPanel.buyButton.disabled = true
-	g.ui.dudePanel.buyButton.disabled = true
-	g.ui.equipmentPanel.autoEquipButton.disabled = true
-	g.ui.equipmentPanel.buyButton.disabled = true
-	g.ui.equipmentPanel.sortButton.disabled = true
+	g.ui.roomPanel.buyButton.Disable()
+	g.ui.dudePanel.buyButton.Disable()
+	g.ui.equipmentPanel.autoEquipButton.Disable()
+	g.ui.equipmentPanel.buyButton.Disable()
+	g.ui.equipmentPanel.sortButton.Disable()
+	g.ui.equipmentPanel.sellAllButton.Disable()
 	g.ui.dudeInfoPanel.equipmentDetails.sellButton.hidden = true
 	g.ui.dudeInfoPanel.equipmentDetails.swapButton.hidden = true
 }
@@ -333,10 +342,21 @@ func (s *GameStateBuild) Update(g *Game) GameState {
 
 	if g.autoplay {
 		if s.nextStory != nil {
-			if s.nextStory.level%3 == 0 {
-				s.BuyDude(g)
+			// Always dude-maxxin
+			s.FillDudes(g)
+
+			// Auto-equip the gear
+			if len(g.equipment) > 0 {
+				g.ui.equipmentPanel.autoEquipButton.onClick()
+			}
+			// Auto-sell the remaining gear
+			if len(g.equipment) > 0 {
+				for _, e := range g.equipment {
+					s.SellEquipment(g, e)
+				}
 			}
 		}
+
 		j := 0
 		attempts := 0
 		for i := 0; i < len(s.availableRooms); {
@@ -604,12 +624,12 @@ func (s *GameStateBuild) DudeCost(dudeCount int) int {
 	return int(cost)
 }
 
-func (s *GameStateBuild) BuyDude(g *Game) {
+func (s *GameStateBuild) BuyDude(g *Game) bool {
 	// COST?
 	cost := s.DudeCost(len(g.dudes))
 	if g.gold < cost {
 		g.ui.feedback.Msg(FeedbackBad, fmt.Sprintf("need more gold to purchase a dude! (%d)", cost))
-		return
+		return false
 	}
 	g.gold -= cost
 
@@ -624,13 +644,14 @@ func (s *GameStateBuild) BuyDude(g *Game) {
 	profession := WeightedRandomProfessionKind(g.dudes)
 	dude := NewDude(profession, level)
 	g.dudes = append(g.dudes, dude)
-	g.ui.dudePanel.buyButton.text.SetText(fmt.Sprintf("Random Dude\n%dgp", s.DudeCost(len(g.dudes))))
+	g.ui.dudePanel.buyButton.text.SetText(fmt.Sprintf("Hire Dude\n%dgp", s.DudeCost(len(g.dudes))))
 	g.UpdateInfo()
 
 	AddMessage(
 		MessageNeutral,
 		fmt.Sprintf("Hired %s (Level %d %s) for %d gold.", dude.Name(), level, profession.String(), cost),
 	)
+	return true
 }
 
 func (s *GameStateBuild) EquipmentCost() int {
@@ -696,4 +717,22 @@ func (s *GameStateBuild) SellEquipment(g *Game, e *Equipment) {
 	// Trigger on sell event
 	e.Activate(EventSell{equipment: e, dudes: g.GetAliveDudes()})
 	g.UpdateInfo()
+}
+
+func (s *GameStateBuild) FillDudes(g *Game) {
+	for {
+		if !s.BuyDude(g) {
+			break
+		}
+	}
+}
+
+func (s *GameStateBuild) SellAllEquipment(g *Game) {
+	equipmentList := make([]*Equipment, len(g.equipment))
+	copy(equipmentList, g.equipment)
+	for _, e := range equipmentList {
+		s.SellEquipment(g, e)
+	}
+	g.equipment = make([]*Equipment, 0)
+	g.ui.equipmentPanel.SetEquipment(g.equipment)
 }

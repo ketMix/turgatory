@@ -839,9 +839,11 @@ type DudePanel struct {
 	dudes       []*Dude
 	title       *UIText
 	buyButton   *ButtonPanel
+	fillButton  *ButtonPanel
+	onBuyClick  func()
+	onFillClick func()
 	onItemClick func(index int)
 	onItemHover func(index int)
-	onBuyClick  func()
 }
 
 func MakeDudePanel() DudePanel {
@@ -851,10 +853,16 @@ func MakeDudePanel() DudePanel {
 		list:  NewUIItemList(DirectionVertical),
 		count: NewUIText("0", assets.BodyFont, assets.ColorHeading),
 	}
-	btn := MakeButtonPanel(assets.BodyFont, PanelStyleButtonAttached)
-	dp.buyButton = &btn
+
+	buy := MakeButtonPanel(assets.BodyFont, PanelStyleButtonAttached)
+	dp.buyButton = &buy
 	dp.buyButton.text.center = true
-	dp.buyButton.text.SetText("Buy\nRandom Dude")
+	dp.buyButton.text.SetText("Hire Dude")
+
+	fill := MakeButtonPanel(assets.BodyFont, PanelStyleButton)
+	dp.fillButton = &fill
+	dp.fillButton.text.center = true
+	dp.fillButton.text.SetText("Fill")
 
 	dp.panel.AddChild(dp.title)
 	dp.panel.AddChild(dp.list)
@@ -954,6 +962,12 @@ func (dp *DudePanel) Layout(o *UIOptions) {
 	dp.buyButton.Layout(nil, o)
 	dp.buyButton.text.SetPosition(dp.buyButton.text.X(), dp.buyButton.text.Y()+4*o.Scale)
 	dp.buyButton.SetPosition(dp.panel.X()+dp.panel.Width()/2-dp.buyButton.Width()/2, dp.panel.Y()+dp.panel.Height()-10*o.Scale)
+
+	dp.fillButton.SetSize(dp.panel.Width(), 48)
+	dp.fillButton.Layout(nil, o)
+	dp.fillButton.text.SetPosition(dp.fillButton.text.X(), dp.fillButton.text.Y()+4*o.Scale)
+	// Next to buy button
+	dp.fillButton.SetPosition(dp.buyButton.X()+dp.buyButton.Width()+4*o.Scale, dp.panel.Y()+dp.panel.Height()-5*o.Scale)
 }
 
 func (dp *DudePanel) Update(o *UIOptions) {
@@ -976,11 +990,18 @@ func (dp *DudePanel) Check(mx, my float64, kind UICheckKind) bool {
 		}
 		return true
 	}
+	if dp.fillButton.Check(mx, my, kind) {
+		if kind == UICheckClick && dp.onFillClick != nil {
+			dp.onFillClick()
+		}
+		return true
+	}
 	return false
 }
 
 func (dp *DudePanel) Draw(o *render.Options) {
 	dp.buyButton.Draw(o)
+	dp.fillButton.Draw(o)
 	dp.panel.Draw(o)
 	dp.count.Draw(o)
 }
@@ -1289,12 +1310,14 @@ type EquipmentPanel struct {
 	autoEquipButton *ButtonPanel
 	buyButton       *ButtonPanel
 	sortButton      *ButtonPanel
+	sellAllButton   *ButtonPanel
 	sortMethod      SortProperty
 	showDetails     bool
 	details         *EquipmentDetailsPanel
 
 	onAutoEquipClick func()
 	onBuyClick       func()
+	onSellAllClick   func()
 	onSortClick      func(sortMethod SortProperty)
 	onItemClick      func(index int)
 	onItemHover      func(index int)
@@ -1312,7 +1335,7 @@ func MakeEquipmentPanel() EquipmentPanel {
 	buy := MakeButtonPanel(assets.BodyFont, PanelStyleButtonAttached)
 	ep.buyButton = &buy
 	ep.buyButton.text.center = true
-	ep.buyButton.text.SetText("Buy\nRandom Loot")
+	ep.buyButton.text.SetText("Buy Loot")
 
 	// Sort
 	sort := MakeButtonPanel(assets.BodyFont, PanelStyleButton)
@@ -1326,7 +1349,12 @@ func MakeEquipmentPanel() EquipmentPanel {
 	ep.autoEquipButton.text.center = true
 	ep.autoEquipButton.text.SetText("Auto\nEquip")
 
-	// Sort button
+	// Sell All
+	sellAll := MakeButtonPanel(assets.BodyFont, PanelStyleButton)
+	ep.sellAllButton = &sellAll
+	ep.sellAllButton.text.center = true
+	ep.sellAllButton.text.SetText("Sell\nAll")
+
 	ep.list.spaceBetween = -2
 	ep.panel.AddChild(ep.title)
 	ep.panel.AddChild(ep.list)
@@ -1360,23 +1388,30 @@ func (ep *EquipmentPanel) Layout(o *UIOptions) {
 	ep.panel.padding = 6 * o.Scale
 	ep.list.SetSize(ep.panel.Width(), ep.panel.Height()-ep.panel.padding*2-ep.title.Height())
 
-	// Buy button (below)
+	// Buy button
 	ep.buyButton.SetSize(ep.panel.Width(), 48)
 	ep.buyButton.Layout(nil, o)
 	ep.buyButton.text.SetPosition(ep.buyButton.text.X(), ep.buyButton.text.Y()+1*o.Scale)
 	ep.buyButton.SetPosition(ep.panel.X()+ep.panel.Width()/2-ep.buyButton.Width()/2, ep.panel.Y()+ep.panel.Height()-5*o.Scale)
 
-	// Sort button (right top)
+	// Sort button
 	// ep.sortButton.SetSize(1, 1)
 	// ep.sortButton.Layout(nil, o)
 	// ep.sortButton.text.SetPosition(ep.sortButton.text.X(), ep.sortButton.text.Y()+0*o.Scale)
 	// ep.sortButton.SetPosition(ep.panel.X()+ep.panel.Width()-ep.sortButton.Width()/2, ep.panel.Y()+5*o.Scale)
 
-	// Auto equip button (right top)
+	// Auto equip button
 	ep.autoEquipButton.SetSize(ep.panel.Width(), 48)
 	ep.autoEquipButton.Layout(nil, o)
 	ep.autoEquipButton.text.SetPosition(ep.autoEquipButton.text.X(), ep.autoEquipButton.text.Y()+0*o.Scale)
 	ep.autoEquipButton.SetPosition(ep.panel.X()+ep.panel.Width()-ep.autoEquipButton.Width()/2+10*o.Scale, ep.panel.Y()+ep.panel.Height()-5*o.Scale)
+
+	// Sell all button
+	ep.sellAllButton.SetSize(ep.panel.Width(), 48)
+	ep.sellAllButton.Layout(nil, o)
+	ep.sellAllButton.text.SetPosition(ep.sellAllButton.text.X(), ep.sellAllButton.text.Y()+0*o.Scale)
+	// Right of auto equip button
+	ep.sellAllButton.SetPosition(ep.autoEquipButton.panel.X()+ep.autoEquipButton.panel.Width()+4*o.Scale, ep.autoEquipButton.panel.Y())
 
 	ep.panel.Layout(nil, o)
 	ep.details.Layout(o)
@@ -1424,6 +1459,14 @@ func (ep *EquipmentPanel) Check(mx, my float64, kind UICheckKind) bool {
 		}
 		return true
 	}
+	if ep.sellAllButton.Check(mx, my, kind) {
+		if kind == UICheckClick {
+			if ep.onSellAllClick != nil {
+				ep.onSellAllClick()
+			}
+		}
+		return true
+	}
 
 	if ep.panel.Check(mx, my, kind) {
 		return true
@@ -1443,6 +1486,7 @@ func (ep *EquipmentPanel) Draw(o *render.Options) {
 	ep.buyButton.Draw(o)
 	if ep.equipment != nil && len(ep.equipment) != 0 {
 		ep.autoEquipButton.Draw(o)
+		ep.sellAllButton.Draw(o)
 		ep.sortButton.Draw(o)
 	}
 }
