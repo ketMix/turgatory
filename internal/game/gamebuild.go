@@ -138,7 +138,8 @@ func (s *GameStateBuild) Begin(g *Game) {
 	}
 	g.ui.equipmentPanel.buyButton.text.SetText(fmt.Sprintf("Random Loot\n%dgp", s.EquipmentCost()))
 	g.ui.equipmentPanel.buyButton.Enable()
-
+	g.ui.equipmentPanel.sortButton.Enable()
+	g.ui.equipmentPanel.autoEquipButton.Enable()
 	g.ui.equipmentPanel.onItemClick = func(which int) {
 		g.ui.equipmentPanel.list.selected = which
 		s.selectedEquipment = which
@@ -316,7 +317,9 @@ func (s *GameStateBuild) End(g *Game) {
 	g.ui.roomInfoPanel.hidden = true
 	g.ui.roomPanel.buyButton.disabled = true
 	g.ui.dudePanel.buyButton.disabled = true
+	g.ui.equipmentPanel.autoEquipButton.disabled = true
 	g.ui.equipmentPanel.buyButton.disabled = true
+	g.ui.equipmentPanel.sortButton.disabled = true
 	g.ui.dudeInfoPanel.equipmentDetails.sellButton.hidden = true
 	g.ui.dudeInfoPanel.equipmentDetails.swapButton.hidden = true
 }

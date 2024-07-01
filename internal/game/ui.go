@@ -230,7 +230,7 @@ func (ui *UI) Layout(o *UIOptions) {
 	)
 	ui.bossPanel.panel.SetPosition(
 		float64(o.Width)/2-ui.bossPanel.panel.Width()/2,
-		float64(o.Height)/8-ui.bossPanel.panel.Height()/2,
+		float64(o.Height)/8-ui.bossPanel.panel.Height()/2+4*o.Scale,
 	)
 	ui.bossPanel.panel.padding = 3 * o.Scale
 	ui.bossPanel.Layout(o)
@@ -1439,10 +1439,12 @@ func (ep *EquipmentPanel) Draw(o *render.Options) {
 	if ep.showDetails {
 		ep.details.Draw(o)
 	}
-	ep.autoEquipButton.Draw(o)
-	ep.buyButton.Draw(o)
-	ep.sortButton.Draw(o)
 
+	ep.buyButton.Draw(o)
+	if ep.equipment != nil && len(ep.equipment) != 0 {
+		ep.autoEquipButton.Draw(o)
+		ep.sortButton.Draw(o)
+	}
 }
 
 type EquipmentDetailsPanel struct {
@@ -1973,7 +1975,7 @@ func (bp *BossPanel) Layout(o *UIOptions) {
 	bp.text.Layout(nil, o)
 	bp.panel.Layout(nil, o)
 	// Force text's position
-	bp.text.SetPosition(bp.panel.X()+bp.panel.Width()/2-bp.text.Width()/2, bp.panel.Y()+bp.panel.Height()/2-bp.text.Height()/2-3)
+	bp.text.SetPosition(bp.panel.X()+bp.panel.Width()/2-bp.text.Width()/2, bp.panel.Y()+bp.panel.Height()/2-bp.text.Height()/2-3+4*o.Scale)
 }
 
 func (bp *BossPanel) Update(o *UIOptions) {
