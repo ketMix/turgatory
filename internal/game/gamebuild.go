@@ -89,11 +89,55 @@ func (s *GameStateBuild) Begin(g *Game) {
 		g.ui.roomInfoPanel.showRequired = selected.required
 	}
 
-	g.ui.equipmentPanel.buyButton.onClick = func() {
+	g.ui.equipmentPanel.onBuyClick = func() {
 		s.BuyEquipment(g)
 	}
+	g.ui.equipmentPanel.onSortClick = func(sp SortProperty) {
+		if g.equipment == nil || len(g.equipment) == 0 {
+			return
+		}
+		g.equipment = SortEquipment(sp, g.equipment)
+		g.ui.equipmentPanel.SetEquipment(g.equipment)
+	}
+	g.ui.equipmentPanel.onAutoEquipClick = func() {
+		// Sort equipment by level, then iterate through dudes and attempt to equip.
+		if g.equipment == nil || len(g.equipment) == 0 {
+			return
+		}
+		// Sort equipment by level
+		equips := SortEquipment(SortPropertyLevel, g.equipment)
+
+		newList := make([]*Equipment, 0)
+		afterAuto := make([]*Equipment, len(equips))
+		copy(afterAuto, equips)
+
+		// Equip highest level dudes first
+		sorted := SortDudes(SortPropertyLevel, g.dudes)
+		equipped := 0
+		for _, d := range sorted {
+			for _, e := range afterAuto {
+				if d.ShouldEquip(e) {
+					old := d.Equip(e)
+					equipped++
+					if old != nil {
+						newList = append(newList, old)
+					}
+				} else {
+					newList = append(newList, e)
+				}
+			}
+			afterAuto = make([]*Equipment, len(newList))
+			copy(afterAuto, newList)
+			newList = make([]*Equipment, 0)
+		}
+
+		if equipped > 0 {
+			g.equipment = afterAuto
+			g.ui.equipmentPanel.SetEquipment(afterAuto)
+		}
+	}
 	g.ui.equipmentPanel.buyButton.text.SetText(fmt.Sprintf("Random Loot\n%dgp", s.EquipmentCost()))
-	g.ui.equipmentPanel.buyButton.disabled = false
+	g.ui.equipmentPanel.buyButton.Enable()
 
 	g.ui.equipmentPanel.onItemClick = func(which int) {
 		g.ui.equipmentPanel.list.selected = which
@@ -125,18 +169,10 @@ func (s *GameStateBuild) Begin(g *Game) {
 			return
 		}
 		equipType := e.Type()
-		professions := e.professions
 		profession := g.selectedDude.profession
 
 		// Check if the dude can equip the item.
-		canEquip := len(professions) == 0
-		for _, p := range professions {
-			if p == profession {
-				canEquip = canEquip || true
-			}
-		}
-
-		if !canEquip {
+		if !e.CanEquip(profession) {
 			g.ui.feedback.Msg(FeedbackBad, fmt.Sprintf("%s cannot equip %s", g.selectedDude.Name(), e.Name()))
 			return
 		}
@@ -147,6 +183,8 @@ func (s *GameStateBuild) Begin(g *Game) {
 			if unequipped != nil {
 				// Add to game equipment.
 				g.equipment = append(g.equipment, unequipped)
+
+				g.equipment = SortEquipment(g.ui.equipmentPanel.sortMethod, g.equipment)
 				g.ui.equipmentPanel.SetEquipment(g.equipment)
 			}
 		}

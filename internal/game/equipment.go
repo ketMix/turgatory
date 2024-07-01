@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"math"
 	"math/rand"
+	"sort"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/ebijam24/assets"
@@ -96,6 +97,7 @@ func (et EquipmentType) String() string {
 		return "Unknown"
 	}
 }
+
 func RandomEquipmentType() EquipmentType {
 	types := []EquipmentType{EquipmentTypeWeapon, EquipmentTypeArmor, EquipmentTypeAccessory}
 	return types[rand.Intn(len(types))]
@@ -117,6 +119,15 @@ type Equipment struct {
 	stack       *render.Stack    // How to draw the equipment
 	professions []ProfessionKind // If restricted to a profession
 	Draw        func(*render.Options)
+}
+
+func EquipmentLevelSort(i, j *Equipment) bool {
+	a := i.LevelWithQuality()
+	b := j.LevelWithQuality()
+	if a == b {
+		return i.name < j.name
+	}
+	return a < b
 }
 
 // Fetches the equipment by name
@@ -372,7 +383,6 @@ func (e *Equipment) Stats() *Stats {
 }
 
 func (e *Equipment) CanEquip(p ProfessionKind) bool {
-	fmt.Println("Checking if we can equip", e.name, "for profession", p, "from professions", e.professions)
 	if e.professions == nil {
 		return true
 	}
@@ -453,4 +463,82 @@ func GetRandomEquipment(level int) *Equipment {
 		perk = nil
 	}
 	return NewEquipment(equipmentName, level, quality, perk)
+}
+
+// Stable sort of equipment based on a property,
+// then sort by name if the properties are equal
+func SortEquipment(sp SortProperty, equipment []*Equipment) []*Equipment {
+	if len(equipment) <= 1 {
+		return equipment
+	}
+
+	nameSort := func(i, j int) bool {
+		return equipment[i].name < equipment[j].name
+	}
+
+	professionOrder := []ProfessionKind{Vagabond, Knight, Cleric, Ranger}
+	professionSort := func(i, j int) bool {
+		// Get the index of the profession in the order
+		iIndex := -1
+		jIndex := -1
+		for k, p := range professionOrder {
+			if equipment[i].CanEquip(p) {
+				iIndex = k
+			}
+			if equipment[j].CanEquip(p) {
+				jIndex = k
+			}
+		}
+		// If the profession is not in the list, sort it to the end
+		if iIndex == -1 {
+			iIndex = len(professionOrder)
+		}
+		if jIndex == -1 {
+			jIndex = len(professionOrder)
+		}
+
+		if iIndex == jIndex {
+			return nameSort(i, j)
+		}
+		return iIndex < jIndex
+	}
+
+	typeOrder := []EquipmentType{EquipmentTypeWeapon, EquipmentTypeArmor, EquipmentTypeAccessory}
+	typeSort := func(i, j int) bool {
+		iIndex := -1
+		jIndex := -1
+		for k, t := range typeOrder {
+			if equipment[i].Type() == t {
+				iIndex = k
+			}
+			if equipment[j].Type() == t {
+				jIndex = k
+			}
+		}
+		if iIndex == jIndex {
+			return nameSort(i, j)
+		}
+		return iIndex < jIndex
+	}
+
+	levelSort := func(i, j int) bool {
+		return EquipmentLevelSort(equipment[i], equipment[j])
+	}
+
+	var sortMethod func(i, j int) bool = nameSort
+	switch sp {
+	case SortPropertyProfession:
+		sortMethod = professionSort
+	case SortPropertyLevel:
+		sortMethod = levelSort
+	case SortPropertyType:
+		sortMethod = typeSort
+	case SortPropertyName:
+	default:
+	}
+
+	e := make([]*Equipment, len(equipment))
+	copy(e, equipment)
+	sort.SliceStable(e, sortMethod)
+	return e
 }

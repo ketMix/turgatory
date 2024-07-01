@@ -221,10 +221,10 @@ func (p PerkStatBoost) Check(e Event) bool {
 	switch e := e.(type) {
 	case EventEquip:
 		e.dude.Stats().ModifyStat(p.stat, p.amount())
-		return true
+		return false
 	case EventUnequip:
 		e.dude.Stats().ModifyStat(p.stat, p.amount())
-		return true
+		return false
 	}
 	return false
 }

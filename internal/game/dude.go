@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"math"
 	"math/rand"
+	"sort"
 
 	"github.com/kettek/ebijam24/assets"
 	"github.com/kettek/ebijam24/internal/render"
@@ -644,12 +645,11 @@ func (d *Dude) UpdateGold(amount int) {
 }
 
 // Equips item to dude
-func (d *Dude) Equip(eq *Equipment) {
-	if _, ok := d.equipped[eq.Type()]; ok {
-		d.Unequip(eq.Type())
-		d.Trigger(EventUnequip{dude: d, equipment: eq}) // Event isolated to dude?
+func (d *Dude) Equip(eq *Equipment) *Equipment {
+	e := d.Unequip(eq.Type())
+	if e != nil {
+		d.Trigger(EventUnequip{dude: d, equipment: e}) // Event isolated to dude?
 	}
-
 	d.equipped[eq.Type()] = eq
 	d.Trigger(EventEquip{dude: d, equipment: eq}) // Event isolated to dude?
 
@@ -661,6 +661,7 @@ func (d *Dude) Equip(eq *Equipment) {
 		}
 	}
 	d.dirtyEquipment = true
+	return e
 }
 
 func (d *Dude) Unequip(t EquipmentType) *Equipment {
@@ -674,21 +675,55 @@ func (d *Dude) Unequip(t EquipmentType) *Equipment {
 	return nil
 }
 
-func (d *Dude) AddToInventory(eq *Equipment) {
-	d.inventory = append(d.inventory, eq)
-
-	shouldEquip := false
-	equipped := d.equipped[eq.Type()]
-
-	if equipped == nil {
-		shouldEquip = true
-	} else {
-		// If equipped item does not have perk
-		// and new item is better, equip it
-		if equipped.perk == nil && eq.LevelWithQuality() > equipped.LevelWithQuality() {
-			shouldEquip = true
+func (d *Dude) CanEquip(eq *Equipment) bool {
+	equippable := len(eq.professions) == 0
+	if !equippable {
+		for _, p := range eq.professions {
+			if p == d.profession {
+				return true
+			}
 		}
 	}
+	return false
+}
+
+// If the provided equipment should replace currently equipped item:
+//   - equipped does not have perk
+//   - new item is better
+//   - new item belongs to profession
+func (d *Dude) ShouldEquip(eq *Equipment) bool {
+	equippable := len(eq.professions) == 0
+	if !equippable {
+		for _, p := range eq.professions {
+			if p == d.profession {
+				equippable = true
+				break
+			}
+		}
+	}
+
+	equipped := d.equipped[eq.Type()]
+	if equipped == nil {
+		return equippable
+	}
+
+	newItemBetter := eq.LevelWithQuality() > equipped.LevelWithQuality()
+
+	ep := equipped.perk
+	np := eq.perk
+	if ep == nil {
+		return equippable && newItemBetter
+	} else if np == nil {
+		return false
+	}
+
+	newItemPerkBetter := np.Name() == ep.Name() && np.Quality() >= ep.Quality()
+	return equippable && newItemPerkBetter && newItemBetter
+}
+
+func (d *Dude) AddToInventory(eq *Equipment) {
+	d.inventory = append(d.inventory, eq)
+	shouldEquip := d.ShouldEquip(eq)
 
 	professions := eq.professions
 	hasProfession := false
@@ -1024,4 +1059,47 @@ func (d *Dude) TrapDamage(roomLevel int) Activity {
 
 func (d *Dude) IsDead() bool {
 	return d.stats.currentHp <= 0 || d.activity == Ded
+}
+
+func SortDudes(sp SortProperty, dudes []*Dude) []*Dude {
+	if len(dudes) <= 1 {
+		return dudes
+	}
+
+	nameSort := func(i, j int) bool {
+		return dudes[i].name < dudes[j].name
+	}
+
+	professionSort := func(i, j int) bool {
+		a := dudes[i].profession
+		b := dudes[j].profession
+		if a == b {
+			return nameSort(i, j)
+		}
+		return a < b
+	}
+
+	levelSort := func(i, j int) bool {
+		a := dudes[i].GetCalculatedStats().level
+		b := dudes[j].GetCalculatedStats().level
+		if a == b {
+			return nameSort(i, j)
+		}
+		return a < b
+	}
+
+	var sortMethod func(i, j int) bool = nameSort
+	switch sp {
+	case SortPropertyProfession:
+		sortMethod = professionSort
+	case SortPropertyLevel:
+		sortMethod = levelSort
+	case SortPropertyName:
+	default:
+	}
+
+	d := make([]*Dude, len(dudes))
+	copy(d, dudes)
+	sort.SliceStable(d, sortMethod)
+	return d
 }

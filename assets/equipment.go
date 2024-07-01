@@ -59,7 +59,6 @@ func LoadEquipment() {
 
 		e.BaseName = name
 		equipment[name] = e
-		fmt.Println("Loaded equipment: ", e)
 	}
 }
 

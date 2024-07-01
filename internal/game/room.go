@@ -312,9 +312,6 @@ func (r *Room) Update(req *ActivityRequests, g *Game) {
 					fmt.Println("Error creating boss stack for", bossEnemy.String(), err)
 				}
 				r.boss = NewEnemy(bossEnemy, r.story.level, bossStack)
-				fmt.Println("Boss", r.boss.Name(), "created")
-				fmt.Println("Stats:")
-				r.boss.stats.Print()
 			}
 		}
 	}
@@ -532,21 +529,22 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 		if e.dude.enemy != nil {
 			e.dude.enemy = nil
 		}
+
 		// Add XP
 		e.dude.AddXP(5 * (r.story.level + 1))
 
 		// Roll for any loot if the room has any
 		if r.kind.Equipment() != nil {
-			// Roll for loot on exit
-			if eq := r.RollLoot(e.dude.stats.luck); eq != nil {
-				//fmt.Println(e.dude.name, "found", eq.Name())
-
-				// Add to inventory and equip if slot is empty
-				e.dude.AddToInventory(eq)
-				AddMessage(
-					MessageLoot,
-					fmt.Sprintf("%s found %s", e.dude.name, eq.Name()),
-				)
+			if r.kind.Equipment() != nil {
+				// Roll for loot on exit
+				if eq := r.RollLoot(e.dude.stats.luck); eq != nil {
+					// Add to inventory and equip if slot is empty
+					e.dude.AddToInventory(eq)
+					AddMessage(
+						MessageLoot,
+						fmt.Sprintf("%s found %s", e.dude.name, eq.Name()),
+					)
+				}
 			}
 		}
 		// Add other leave events here

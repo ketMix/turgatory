@@ -35,6 +35,10 @@ type Stats struct {
 	levelUpChange *Stats
 }
 
+func StatsSort(a, b Stats) bool {
+	return a.level < b.level
+}
+
 func (s *Stats) Print() {
 	fmt.Printf("Level: %d\n", s.level)
 	fmt.Printf("HP: %d/%d\n", s.currentHp, s.totalHp)

@@ -242,5 +242,6 @@ func (s *GameStatePlay) CollectInventory(g *Game) {
 		return
 	}
 	AddMessage(MessageLoot, fmt.Sprintf("Collected %d items from dudes.", count))
-	g.ui.equipmentPanel.SetEquipment(g.equipment)
+	e := SortEquipment(g.ui.equipmentPanel.sortMethod, g.equipment)
+	g.ui.equipmentPanel.SetEquipment(e)
 }

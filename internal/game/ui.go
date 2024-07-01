@@ -1256,19 +1256,48 @@ func (dip *DudeInfoPanel) Draw(o *render.Options) {
 	}
 }
 
+// Could probably make this generic enough for sorting arbitrary UIItemLists
+type SortProperty int
+
+const (
+	SortPropertyLevel SortProperty = iota
+	SortPropertyType
+	SortPropertyProfession
+	SortPropertyName
+)
+
+func (sp SortProperty) String() string {
+	switch sp {
+	case SortPropertyLevel:
+		return "Level"
+	case SortPropertyType:
+		return "Type"
+	case SortPropertyProfession:
+		return "Profession"
+	case SortPropertyName:
+		return "Name"
+	default:
+		return "Unknown"
+	}
+}
+
 type EquipmentPanel struct {
-	panel       *UIPanel
-	list        *UIItemList
-	equipment   []*Equipment
-	title       *UIText
-	buyButton   *ButtonPanel
-	showDetails bool
+	panel           *UIPanel
+	list            *UIItemList
+	equipment       []*Equipment
+	title           *UIText
+	autoEquipButton *ButtonPanel
+	buyButton       *ButtonPanel
+	sortButton      *ButtonPanel
+	sortMethod      SortProperty
+	showDetails     bool
+	details         *EquipmentDetailsPanel
 
-	details *EquipmentDetailsPanel
-
-	onBuyClick  func()
-	onItemClick func(index int)
-	onItemHover func(index int)
+	onAutoEquipClick func()
+	onBuyClick       func()
+	onSortClick      func(sortMethod SortProperty)
+	onItemClick      func(index int)
+	onItemHover      func(index int)
 }
 
 func MakeEquipmentPanel() EquipmentPanel {
@@ -1278,10 +1307,26 @@ func MakeEquipmentPanel() EquipmentPanel {
 		list:    NewUIItemList(DirectionVertical),
 		details: NewEquipmentDetailsPanel(true),
 	}
-	btn := MakeButtonPanel(assets.BodyFont, PanelStyleButtonAttached)
-	ep.buyButton = &btn
+
+	// Buy button
+	buy := MakeButtonPanel(assets.BodyFont, PanelStyleButtonAttached)
+	ep.buyButton = &buy
 	ep.buyButton.text.center = true
 	ep.buyButton.text.SetText("Buy\nRandom Loot")
+
+	// Sort
+	sort := MakeButtonPanel(assets.BodyFont, PanelStyleButton)
+	ep.sortButton = &sort
+	ep.sortButton.text.center = true
+	ep.sortButton.text.SetText("Sort by\n" + (ep.sortMethod).String())
+
+	// Auto equip button
+	auto := MakeButtonPanel(assets.BodyFont, PanelStyleButton)
+	ep.autoEquipButton = &auto
+	ep.autoEquipButton.text.center = true
+	ep.autoEquipButton.text.SetText("Auto\nEquip")
+
+	// Sort button
 	ep.list.spaceBetween = -2
 	ep.panel.AddChild(ep.title)
 	ep.panel.AddChild(ep.list)
@@ -1314,10 +1359,24 @@ func (ep *EquipmentPanel) SetEquipment(equipment []*Equipment) {
 func (ep *EquipmentPanel) Layout(o *UIOptions) {
 	ep.panel.padding = 6 * o.Scale
 	ep.list.SetSize(ep.panel.Width(), ep.panel.Height()-ep.panel.padding*2-ep.title.Height())
+
+	// Buy button (below)
 	ep.buyButton.SetSize(ep.panel.Width(), 48)
 	ep.buyButton.Layout(nil, o)
-	ep.buyButton.text.SetPosition(ep.buyButton.text.X(), ep.buyButton.text.Y()+4*o.Scale)
-	ep.buyButton.SetPosition(ep.panel.X()+ep.panel.Width()/2-ep.buyButton.Width()/2, ep.panel.Y()+ep.panel.Height()-10*o.Scale)
+	ep.buyButton.text.SetPosition(ep.buyButton.text.X(), ep.buyButton.text.Y()+1*o.Scale)
+	ep.buyButton.SetPosition(ep.panel.X()+ep.panel.Width()/2-ep.buyButton.Width()/2, ep.panel.Y()+ep.panel.Height()-5*o.Scale)
+
+	// Sort button (right top)
+	// ep.sortButton.SetSize(1, 1)
+	// ep.sortButton.Layout(nil, o)
+	// ep.sortButton.text.SetPosition(ep.sortButton.text.X(), ep.sortButton.text.Y()+0*o.Scale)
+	// ep.sortButton.SetPosition(ep.panel.X()+ep.panel.Width()-ep.sortButton.Width()/2, ep.panel.Y()+5*o.Scale)
+
+	// Auto equip button (right top)
+	ep.autoEquipButton.SetSize(ep.panel.Width(), 48)
+	ep.autoEquipButton.Layout(nil, o)
+	ep.autoEquipButton.text.SetPosition(ep.autoEquipButton.text.X(), ep.autoEquipButton.text.Y()+0*o.Scale)
+	ep.autoEquipButton.SetPosition(ep.panel.X()+ep.panel.Width()-ep.autoEquipButton.Width()/2+10*o.Scale, ep.panel.Y()+ep.panel.Height()-5*o.Scale)
 
 	ep.panel.Layout(nil, o)
 	ep.details.Layout(o)
@@ -1331,6 +1390,7 @@ func (ep *EquipmentPanel) Layout(o *UIOptions) {
 }
 
 func (ep *EquipmentPanel) Update(o *UIOptions) {
+	ep.sortButton.text.SetText("Sort by\n" + (ep.sortMethod).String())
 	ep.panel.Update(o)
 	if ep.showDetails {
 		ep.details.Update(o)
@@ -1338,15 +1398,34 @@ func (ep *EquipmentPanel) Update(o *UIOptions) {
 }
 
 func (ep *EquipmentPanel) Check(mx, my float64, kind UICheckKind) bool {
-	if ep.panel.Check(mx, my, kind) {
-		return true
-	}
 	if ep.buyButton.Check(mx, my, kind) {
 		if kind == UICheckClick {
 			if ep.onBuyClick != nil {
 				ep.onBuyClick()
 			}
 		}
+		return true
+	}
+	if ep.sortButton.Check(mx, my, kind) {
+		if kind == UICheckClick {
+			ep.sortMethod = (ep.sortMethod + 1) % 4
+			if ep.onSortClick != nil {
+				ep.onSortClick(ep.sortMethod)
+			}
+
+		}
+		return true
+	}
+	if ep.autoEquipButton.Check(mx, my, kind) {
+		if kind == UICheckClick {
+			if ep.onAutoEquipClick != nil {
+				ep.onAutoEquipClick()
+			}
+		}
+		return true
+	}
+
+	if ep.panel.Check(mx, my, kind) {
 		return true
 	}
 	if ep.showDetails && ep.details.Check(mx, my, kind) {
@@ -1356,11 +1435,14 @@ func (ep *EquipmentPanel) Check(mx, my float64, kind UICheckKind) bool {
 }
 
 func (ep *EquipmentPanel) Draw(o *render.Options) {
-	ep.buyButton.Draw(o)
 	ep.panel.Draw(o)
 	if ep.showDetails {
 		ep.details.Draw(o)
 	}
+	ep.autoEquipButton.Draw(o)
+	ep.buyButton.Draw(o)
+	ep.sortButton.Draw(o)
+
 }
 
 type EquipmentDetailsPanel struct {
@@ -1791,8 +1873,8 @@ func (bp *ButtonPanel) Check(mx, my float64, kind UICheckKind) bool {
 		if kind == UICheckClick {
 			if bp.onClick != nil {
 				bp.onClick()
-				return true
 			}
+			return true
 		}
 		if kind == UICheckHover {
 			bp.hovered = true
