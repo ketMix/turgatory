@@ -533,21 +533,23 @@ func (r *Room) GetRoomEffect(e Event) Activity {
 		// Add XP
 		e.dude.AddXP(5 * (r.story.level + 1))
 
-		// Roll for any loot if the room has any
-		if r.kind.Equipment() != nil {
+		// Loot from combat is gained on enemy kill
+		if r.kind != Combat {
+			// Roll for any loot if the room has any
 			if r.kind.Equipment() != nil {
-				// Roll for loot on exit
-				if eq := r.RollLoot(e.dude.stats.luck); eq != nil {
-					// Add to inventory and equip if slot is empty
-					e.dude.AddToInventory(eq)
-					AddMessage(
-						MessageLoot,
-						fmt.Sprintf("%s found %s", e.dude.name, eq.Name()),
-					)
+				if r.kind.Equipment() != nil {
+					// Roll for loot on exit
+					if eq := r.RollLoot(e.dude.stats.luck); eq != nil {
+						// Add to inventory and equip if slot is empty
+						e.dude.AddToInventory(eq)
+						AddMessage(
+							MessageLoot,
+							fmt.Sprintf("%s found %s", e.dude.name, eq.Name()),
+						)
+					}
 				}
 			}
 		}
-		// Add other leave events here
 	case EventCenterRoom:
 		// Add center room events here
 		switch r.kind {

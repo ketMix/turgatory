@@ -421,6 +421,12 @@ func (d *Dude) Trigger(e Event) Activity {
 					MessageGood,
 					fmt.Sprintf("%s defeated %s and gained %d xp and %d gp", d.name, d.enemy.name, xp, gold),
 				)
+				if d.room != nil {
+					loot := d.room.RollLoot(d.GetCalculatedStats().luck)
+					if loot != nil {
+						d.AddToInventory(loot)
+					}
+				}
 				d.enemy = nil
 			} else {
 				takenDamage, isDodge := d.ApplyDamage(d.enemy.Hit())
