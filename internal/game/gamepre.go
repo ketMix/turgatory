@@ -69,6 +69,7 @@ func (s *GameStatePre) Begin(g *Game) {
 
 	// Init inventory
 	g.equipment = make([]*Equipment, 0)
+	g.ui.equipmentPanel.SetEquipment(g.equipment)
 
 	// Init audio tick
 	g.audioController.PlayRoomTracks()
