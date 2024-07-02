@@ -346,7 +346,7 @@ func (s *GameStateBuild) Update(g *Game) GameState {
 			s.FillDudes(g)
 
 			// Auto-equip the gear
-			if len(g.equipment) > 0 {
+			if len(g.equipment) > 0 && g.ui.equipmentPanel.autoEquipButton.onClick != nil {
 				g.ui.equipmentPanel.autoEquipButton.onClick()
 			}
 			// Auto-sell the remaining gear
