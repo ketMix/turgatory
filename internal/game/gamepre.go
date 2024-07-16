@@ -14,21 +14,22 @@ type GameStatePre struct {
 	medium   ButtonPanel
 	long     ButtonPanel
 	infinite ButtonPanel
+	sim      ButtonPanel
 	info     *UIText
 
 	//
-	gameLength   int
-	titleVolTick int
+	gameLength int
 }
 
-const AUDIO_FADE_IN_TICK = 60
-
 func (s *GameStatePre) Begin(g *Game) {
+	g.audioController.PlayTitleTrack()
+	g.audioController.SetTitleTrackVolPercent(1)
+
 	// TODO: Hide UI crap.
 	g.ui.Hide()
 
-	// Always turn off autoplay (maybe???)
-	g.SetAutoplay(false)
+	// Turn off sim mode when choosing new game
+	g.DisableSim()
 
 	s.title = NewUIText("Time is your purgatory...", assets.DisplayFont, assets.ColorHeading)
 	s.title2 = NewUIText("choose wisely.", assets.DisplayFont, assets.ColorHeading)
@@ -65,6 +66,15 @@ func (s *GameStatePre) Begin(g *Game) {
 		s.info.SetText("How long can you last?")
 	}
 	s.infinite.text.SetText("endless")
+	s.sim = MakeButtonPanel(assets.DisplayFont, PanelStyleButton)
+	s.sim.onClick = func() {
+		s.gameLength = -1
+		g.EnableSim()
+	}
+	s.sim.onHover = func() {
+		s.info.SetText("Non-interactive mode where your dudes never die and never escape.")
+	}
+	s.sim.text.SetText("simulation")
 
 	s.info = NewUIText("beep boop", assets.BodyFont, assets.ColorStory)
 
@@ -77,22 +87,12 @@ func (s *GameStatePre) Begin(g *Game) {
 	g.ui.dudeInfoPanel.SetDude(nil)
 	g.ui.dudePanel.SetDudes(g.dudes)
 	g.ui.dudeInfoPanel.equipmentDetails.SetEquipment(nil)
-
-	// Init audio tick
-	g.audioController.PlayRoomTracks()
-	g.audioController.MuteAll()
-	g.playedTitleSong = false
-	s.titleVolTick = 0
 }
 
 func (s *GameStatePre) End(g *Game) {
 	g.ui.Reveal()
 }
 func (s *GameStatePre) Update(g *Game) GameState {
-	if s.titleVolTick < AUDIO_FADE_IN_TICK {
-		s.titleVolTick++
-		g.audioController.SetTitleTrackVolPercent(float64(s.titleVolTick) / AUDIO_FADE_IN_TICK)
-	}
 
 	w, h := float64(g.uiOptions.Width), float64(g.uiOptions.Height)
 
@@ -100,6 +100,7 @@ func (s *GameStatePre) Update(g *Game) GameState {
 	s.medium.Layout(nil, &g.uiOptions)
 	s.long.Layout(nil, &g.uiOptions)
 	s.infinite.Layout(nil, &g.uiOptions)
+	s.sim.Layout(nil, &g.uiOptions)
 
 	panelsWidth := 0.0
 	panelsWidth += s.short.Width()
@@ -134,6 +135,10 @@ func (s *GameStatePre) Update(g *Game) GameState {
 	s.info.Layout(nil, &g.uiOptions)
 	s.info.SetPosition(w/2-s.info.Width()/2, y)
 
+	// Put sim mode below info
+	y += 32 + 4*g.uiOptions.Scale
+	s.sim.SetPosition(w/2-s.sim.Width()/2, y)
+
 	click := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
 	if len(g.releasedTouchIDs) > 0 && inpututil.IsTouchJustReleased(g.releasedTouchIDs[0]) {
 		click = true
@@ -154,6 +159,10 @@ func (s *GameStatePre) Update(g *Game) GameState {
 	} else if s.infinite.Check(mx, my, UICheckHover) {
 		if click {
 			s.infinite.Check(mx, my, UICheckClick)
+		}
+	} else if s.sim.Check(mx, my, UICheckHover) {
+		if click {
+			s.sim.Check(mx, my, UICheckClick)
 		}
 	} else {
 		s.info.SetText("")
@@ -177,4 +186,5 @@ func (s *GameStatePre) Draw(g *Game, screen *ebiten.Image) {
 	s.medium.Draw(opts)
 	s.long.Draw(opts)
 	s.infinite.Draw(opts)
+	s.sim.Draw(opts)
 }

@@ -24,18 +24,9 @@ type GameStateBuild struct {
 	//
 	selectedEquipment int
 	shownBossWarning  bool
-	titleFadeOutTick  int
 }
 
 func (s *GameStateBuild) Begin(g *Game) {
-	// Fade out
-	s.titleFadeOutTick = 0
-
-	if !g.playedTitleSong {
-		s.titleFadeOutTick = AUDIO_FADE_IN_TICK
-		g.playedTitleSong = true
-	}
-
 	// Add feedback if next floor is boss
 	if len(g.tower.Stories)%2 == 0 && !s.shownBossWarning {
 		g.ui.feedback.Msg(FeedbackWarning, "...every 3rd floor is a boss floor... prepare yourself...")
@@ -322,13 +313,6 @@ func (s *GameStateBuild) End(g *Game) {
 	g.ToggleEnableUI(false)
 }
 func (s *GameStateBuild) Update(g *Game) GameState {
-	if s.titleFadeOutTick >= 0 {
-		s.titleFadeOutTick--
-		g.audioController.SetTitleTrackVolPercent(float64(s.titleFadeOutTick) / AUDIO_FADE_IN_TICK)
-		// Fade in background tracks
-		g.audioController.SetBackgroundTrackVolPercent(1.0 - float64(s.titleFadeOutTick)/AUDIO_FADE_IN_TICK)
-	}
-
 	// Check if we can fill
 	if g.gold < s.DudeCost(len(g.dudes)) {
 		g.ui.dudePanel.fillButton.hidden = true
@@ -637,6 +621,9 @@ func (s *GameStateBuild) BuyDude(g *Game) bool {
 	// Random profession ??
 	profession := WeightedRandomProfessionKind(g.dudes)
 	dude := NewDude(profession, level)
+	if g.simMode {
+		dude.invincible = true
+	}
 	g.dudes = append(g.dudes, dude)
 	g.ui.dudePanel.buyButton.text.SetText(fmt.Sprintf("Hire Dude\n%dgp", s.DudeCost(len(g.dudes))))
 	g.UpdateInfo()

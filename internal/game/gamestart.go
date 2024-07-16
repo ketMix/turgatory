@@ -11,6 +11,9 @@ type GameStateStart struct {
 }
 
 func (s *GameStateStart) Begin(g *Game) {
+	g.titleFadeOutTick = TITLE_FADE_TICK
+	g.audioController.PlayRoomTracks()
+
 	if s.length == 0 {
 		s.length = 3
 	}
@@ -23,6 +26,9 @@ func (s *GameStateStart) Begin(g *Game) {
 	for i := 0; i < dudeLimit; i++ {
 		pk := professions[i%len(professions)]
 		dude := NewDude(pk, 1)
+		if g.simMode {
+			dude.invincible = true
+		}
 		s.newDudes = append(s.newDudes, dude)
 	}
 

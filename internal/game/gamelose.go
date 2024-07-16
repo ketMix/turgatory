@@ -21,6 +21,7 @@ func (s *GameStateLose) Begin(g *Game) {
 	g.audioController.PlaySfx("loss", 0.5, 0.0)
 }
 func (s *GameStateLose) End(g *Game) {
+	g.titleFadeOutTick = 1
 }
 func (s *GameStateLose) Update(g *Game) GameState {
 	s.wobbler += 0.05

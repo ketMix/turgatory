@@ -143,6 +143,10 @@ func NewAudioController() *AudioController {
 	}
 }
 
+func (a *AudioController) PlayTitleTrack() {
+	a.titleTrack.Play()
+}
+
 func (a *AudioController) PlayRoomTracks() {
 	a.tracksPaused = false
 	for _, track := range a.tracks {
@@ -151,7 +155,6 @@ func (a *AudioController) PlayRoomTracks() {
 	for _, track := range a.backgroundTracks {
 		track.Play()
 	}
-	a.titleTrack.Play()
 }
 
 func (a *AudioController) PauseRoomTracks() {

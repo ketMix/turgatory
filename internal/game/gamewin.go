@@ -21,6 +21,7 @@ func (s *GameStateWin) Begin(g *Game) {
 	g.audioController.PlaySfx("win", 0.5, 0.0)
 }
 func (s *GameStateWin) End(g *Game) {
+	g.titleFadeOutTick = 1
 }
 
 func (s *GameStateWin) Update(g *Game) GameState {

@@ -32,10 +32,13 @@ type Game struct {
 	gold                  int
 	equipment             []*Equipment
 	autoplay              bool
-	playedTitleSong       bool
+	simMode               bool
 	touchIDs              []ebiten.TouchID
 	releasedTouchIDs      []ebiten.TouchID
+	titleFadeOutTick      int
 }
+
+const TITLE_FADE_TICK = 60
 
 type GameState interface {
 	Begin(g *Game)
@@ -152,9 +155,14 @@ func (g *Game) Update() error {
 				}
 			}
 		}
-		if g.playedTitleSong {
-			g.audioController.SetStoryPanVol(roomPanVol)
-		}
+		g.audioController.SetStoryPanVol(roomPanVol)
+	}
+
+	// Fade out title and fade in game.
+	if g.titleFadeOutTick > 0 {
+		g.titleFadeOutTick--
+		g.audioController.SetTitleTrackVolPercent(float64(g.titleFadeOutTick) / TITLE_FADE_TICK)
+		g.audioController.SetBackgroundTrackVolPercent(1.0 - float64(g.titleFadeOutTick)/TITLE_FADE_TICK)
 	}
 
 	return nil
@@ -413,10 +421,16 @@ func (g *Game) Init() {
 }
 
 func (g *Game) ToggleAutoplay() {
+	if g.simMode {
+		return
+	}
 	g.SetAutoplay(!g.autoplay)
 }
 
 func (g *Game) SetAutoplay(autoplay bool) {
+	if g.simMode {
+		return
+	}
 	g.autoplay = autoplay
 	if g.autoplay {
 		g.ui.speedPanel.autoplayButton.SetImage("autoplay")
@@ -480,6 +494,16 @@ func (g *Game) GetAliveDudes() []*Dude {
 		}
 	}
 	return dudes
+}
+
+func (g *Game) EnableSim() {
+	g.SetAutoplay(true)
+	g.simMode = true
+}
+
+func (g *Game) DisableSim() {
+	g.SetAutoplay(false)
+	g.simMode = false
 }
 
 func New() *Game {

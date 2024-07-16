@@ -32,6 +32,7 @@ const (
 
 type Dude struct {
 	name         string
+	invincible   bool
 	xp           int
 	gold         int
 	profession   ProfessionKind
@@ -612,8 +613,12 @@ func (d *Dude) ApplyDamage(amount int) (int, bool) {
 	amount = stats.ApplyDefense(amount)
 	d.stats.currentHp -= amount
 
-	if d.stats.currentHp < 0 {
-		d.stats.currentHp = 0
+	if d.stats.currentHp <= 0 {
+		if d.invincible {
+			d.stats.currentHp = d.stats.totalHp
+		} else {
+			d.stats.currentHp = 0
+		}
 	}
 
 	if d.stats.currentHp == 0 {
@@ -1064,6 +1069,14 @@ func (d *Dude) TrapDamage(roomLevel int) Activity {
 }
 
 func (d *Dude) IsDead() bool {
+	if d == nil {
+		return true
+	}
+
+	// Nope, not dead
+	if d.invincible && d.stats.currentHp <= 0 {
+		d.stats.currentHp = d.stats.totalHp
+	}
 	return d.stats.currentHp <= 0 || d.activity == Ded
 }
 
