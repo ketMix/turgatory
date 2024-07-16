@@ -120,6 +120,10 @@ func (g *Game) Update() error {
 		g.camera.ZoomOut()
 	}
 
+	if inpututil.IsKeyJustPressed(ebiten.KeyF11) || inpututil.IsKeyJustPressed(ebiten.KeyF) {
+		ebiten.SetFullscreen(!ebiten.IsFullscreen())
+	}
+
 	// FIXME: For some reason Layout doesn't position the UI properly...
 	g.ui.Layout(&g.uiOptions)
 
