@@ -77,6 +77,7 @@ func (s *GameStateBuild) Begin(g *Game) {
 
 	// Generate our new rooms.
 	s.RollRooms(g)
+
 	// Add onClick handler.
 	g.ui.roomPanel.onItemClick = func(which int) {
 		g.ui.roomInfoPanel.hidden = false
@@ -141,10 +142,6 @@ func (s *GameStateBuild) Begin(g *Game) {
 		s.SellAllEquipment(g)
 	}
 	g.ui.equipmentPanel.buyButton.text.SetText(fmt.Sprintf("Buy Loot\n%dgp", s.EquipmentCost()))
-	g.ui.equipmentPanel.buyButton.Enable()
-	g.ui.equipmentPanel.sortButton.Enable()
-	g.ui.equipmentPanel.autoEquipButton.Enable()
-	g.ui.equipmentPanel.sellAllButton.Enable()
 	g.ui.equipmentPanel.onItemClick = func(which int) {
 		g.ui.equipmentPanel.list.selected = which
 		s.selectedEquipment = which
@@ -220,7 +217,7 @@ func (s *GameStateBuild) Begin(g *Game) {
 		g.ui.dudeInfoPanel.SyncDude() // Hmmm... thought g.UpdateInfo() would do this.
 		g.UpdateInfo()
 	}
-	g.ui.dudeInfoPanel.equipmentDetails.sellButton.hidden = false
+
 	g.ui.dudeInfoPanel.equipmentDetails.onSellClick = func(e *Equipment) {
 		// Selling a dude's equipment
 		if e == nil {
@@ -238,7 +235,7 @@ func (s *GameStateBuild) Begin(g *Game) {
 		// Hide the equipment details panel.
 		g.ui.dudeInfoPanel.equipmentDetails.hidden = true
 	}
-	g.ui.dudeInfoPanel.equipmentDetails.swapButton.hidden = false
+
 	g.ui.dudeInfoPanel.equipmentDetails.onSwapClick = func(e *Equipment) {
 		// Snarfing loot
 		if e == nil || g.selectedDude == nil {
@@ -263,13 +260,11 @@ func (s *GameStateBuild) Begin(g *Game) {
 		s.FillDudes(g)
 	}
 	g.ui.dudePanel.buyButton.text.SetText(fmt.Sprintf("Hire Dude\n%dgp", s.DudeCost(len(g.dudes))))
-	g.ui.dudePanel.buyButton.disabled = false
 
 	g.ui.roomPanel.buyButton.onClick = func() {
 		s.RerollRooms(g)
 	}
 	g.ui.roomPanel.buyButton.text.SetText(fmt.Sprintf("Reroll Rooms\n%dgp", s.RerollCost()))
-	g.ui.roomPanel.buyButton.disabled = false
 
 	// I guess we can allow the player to yeet whenever.
 	g.ui.buttonPanel.Enable()
@@ -309,9 +304,10 @@ func (s *GameStateBuild) Begin(g *Game) {
 		}
 	}
 	g.ui.buttonPanel.text.SetText("adventure forth!")
-	g.ui.buttonPanel.hidden = false
 
 	// Update info.
+	g.ToggleShowUI(true)
+	g.ToggleEnableUI(true)
 	g.UpdateInfo()
 }
 func (s *GameStateBuild) End(g *Game) {
@@ -321,16 +317,9 @@ func (s *GameStateBuild) End(g *Game) {
 	for _, room := range s.nextStory.rooms {
 		room.highlight = false
 	}
-	g.ui.buttonPanel.hidden = true
-	g.ui.roomInfoPanel.hidden = true
-	g.ui.roomPanel.buyButton.Disable()
-	g.ui.dudePanel.buyButton.Disable()
-	g.ui.equipmentPanel.autoEquipButton.Disable()
-	g.ui.equipmentPanel.buyButton.Disable()
-	g.ui.equipmentPanel.sortButton.Disable()
-	g.ui.equipmentPanel.sellAllButton.Disable()
-	g.ui.dudeInfoPanel.equipmentDetails.sellButton.hidden = true
-	g.ui.dudeInfoPanel.equipmentDetails.swapButton.hidden = true
+
+	g.ToggleShowUI(false)
+	g.ToggleEnableUI(false)
 }
 func (s *GameStateBuild) Update(g *Game) GameState {
 	if s.titleFadeOutTick >= 0 {
@@ -338,6 +327,11 @@ func (s *GameStateBuild) Update(g *Game) GameState {
 		g.audioController.SetTitleTrackVolPercent(float64(s.titleFadeOutTick) / AUDIO_FADE_IN_TICK)
 		// Fade in background tracks
 		g.audioController.SetBackgroundTrackVolPercent(1.0 - float64(s.titleFadeOutTick)/AUDIO_FADE_IN_TICK)
+	}
+
+	// Check if we can fill
+	if g.gold < s.DudeCost(len(g.dudes)) {
+		g.ui.dudePanel.fillButton.hidden = true
 	}
 
 	if g.autoplay {

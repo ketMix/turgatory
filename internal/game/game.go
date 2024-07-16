@@ -251,6 +251,40 @@ func (g *Game) CheckUI() (bool, UICheckKind) {
 	return false, UICheckNone
 }
 
+func (g *Game) ToggleEnableUI(enable bool) {
+	elements := []*ButtonPanel{
+		g.ui.roomPanel.buyButton,
+		g.ui.dudePanel.buyButton,
+		g.ui.equipmentPanel.autoEquipButton,
+		g.ui.equipmentPanel.buyButton,
+		g.ui.equipmentPanel.sortButton,
+		g.ui.equipmentPanel.sellAllButton,
+	}
+	for _, e := range elements {
+		if enable {
+			e.Enable()
+		} else {
+			e.Disable()
+		}
+	}
+}
+
+func (g *Game) ToggleShowUI(show bool) {
+	elements := []*ButtonPanel{
+		&g.ui.buttonPanel,
+		g.ui.dudeInfoPanel.equipmentDetails.sellButton,
+		g.ui.dudeInfoPanel.equipmentDetails.swapButton,
+		g.ui.dudePanel.fillButton,
+	}
+	if !g.ui.roomInfoPanel.hidden && !show {
+		g.ui.roomInfoPanel.hidden = true
+	}
+
+	for _, e := range elements {
+		e.hidden = !show
+	}
+}
+
 func (g *Game) CursorPosition() (float64, float64) {
 	mx, my := IntToFloat2(ebiten.CursorPosition())
 
