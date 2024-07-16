@@ -72,7 +72,7 @@ func (s *GameStatePre) Begin(g *Game) {
 		g.EnableSim()
 	}
 	s.sim.onHover = func() {
-		s.info.SetText("Non-interactive mode where your dudes never die and never escape.")
+		s.info.SetText("Minimal-interactive mode where your dudes never die and never escape.")
 	}
 	s.sim.text.SetText("simulation")
 
